@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.2...v1.0.3) (2026-11-04)
+
+
+### Code Refactoring
+
+* **build:** flatten keymap to src/qgmlwy ([#9](https://github.com/Crpaxton4/moonlander-layout/issues/9)) ([3e7720b](https://github.com/Crpaxton4/moonlander-layout/commit/3e7720b12544eaca99bccf75732f085a98739525))
+
 ## [1.0.2](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.1...v1.0.2) (2026-11-04)
 
 
