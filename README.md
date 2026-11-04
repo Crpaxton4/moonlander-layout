@@ -9,7 +9,7 @@ QMK keymap `qgmlwy` for a ZSA Moonlander (rev A), built as an
 
 ```bash
 ./setup.sh   # install QMK, ZSA's qmk_firmware, Node; test build
-make         # firmware lands in out/
+make         # firmware lands in out/; flash it with Keymapp
 ```
 
 ## Workflow
