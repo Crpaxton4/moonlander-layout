@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.1](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.0...v1.0.1) (2026-11-04)
+
+
+### Miscellaneous Chores
+
+* ignore .tmp/ scratch directory ([#3](https://github.com/Crpaxton4/moonlander-layout/issues/3)) ([df23f11](https://github.com/Crpaxton4/moonlander-layout/commit/df23f113fccefe4536528dd65d66e427e4423c26))
+
+
+### Continuous Integration
+
+* build and release only on build-relevant changes ([#5](https://github.com/Crpaxton4/moonlander-layout/issues/5)) ([89a8b30](https://github.com/Crpaxton4/moonlander-layout/commit/89a8b30ab7f9c416a9574b2fe968afd3bce721fa))
+
 ## 1.0.0 (2026-11-04)
 
 
