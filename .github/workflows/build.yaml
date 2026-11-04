@@ -1,15 +1,33 @@
 name: "Build firmware"
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
   workflow_call:
 
+# Files that feed the firmware build. PRs touching none of them skip the build
+# job; a skipped job still satisfies the required "Build firmware" check, which
+# a `paths:` trigger filter would leave pending forever.
+env:
+  BUILD_PATHS: '^(keyboards/|qmk\.json$|\.qmk-ref$|Makefile$|\.github/workflows/build\.yaml$)'
+
 jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.diff.outputs.build }}
+    steps:
+      - id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          files=$(gh pr diff ${{ github.event.pull_request.number }} --repo "$GITHUB_REPOSITORY" --name-only)
+          echo "build=$(grep -qE "$BUILD_PATHS" <<< "$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
   build:
     name: "Build firmware"
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.build == 'true') }}
     runs-on: ubuntu-latest
     container: ghcr.io/qmk/qmk_cli:latest
     steps:
