@@ -17,7 +17,7 @@ eval "$(fnm env --shell bash)"
 fnm install --lts
 npm install --prefix "$REPO_DIR"
 
-qmk setup zsa/qmk_firmware -b "$(cat "$REPO_DIR/.qmk-ref")" -H "$QMK_HOME" -y
-qmk config user.overlay_dir="$REPO_DIR"
+qmk setup zsa/qmk_firmware -b "$(cat "$REPO_DIR/src/.qmk-ref")" -H "$QMK_HOME" -y
+qmk config user.overlay_dir="$REPO_DIR/src"
 
-make -C "$REPO_DIR"
+make -C "$REPO_DIR/src"

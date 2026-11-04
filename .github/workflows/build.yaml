@@ -8,7 +8,7 @@ on:
 # job; a skipped job still satisfies the required "Build firmware" check, which
 # a `paths:` trigger filter would leave pending forever.
 env:
-  BUILD_PATHS: '^(keyboards/|qmk\.json$|\.qmk-ref$|Makefile$|\.github/workflows/build\.yaml$)'
+  BUILD_PATHS: '^(src/|\.github/workflows/build\.yaml$)'
 
 jobs:
   changes:
@@ -35,7 +35,7 @@ jobs:
 
       - name: "Read ZSA firmware branch"
         id: ref
-        run: echo "ref=$(cat .qmk-ref)" >> "$GITHUB_OUTPUT"
+        run: echo "ref=$(cat src/.qmk-ref)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v7
         with:
@@ -45,8 +45,8 @@ jobs:
           submodules: recursive
 
       - run: pip install -r qmk_firmware/requirements.txt
-      - run: qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware" user.overlay_dir="$GITHUB_WORKSPACE"
-      - run: make
+      - run: qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware" user.overlay_dir="$GITHUB_WORKSPACE/src"
+      - run: make -C src
 
       - uses: actions/upload-artifact@v7
         with:
