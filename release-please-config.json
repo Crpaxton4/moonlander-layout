@@ -1,22 +1,10 @@
 {
     "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
     "packages": {
-        ".": {
+        "src": {
             "release-type": "simple",
-            "exclude-paths": [
-                ".github",
-                ".husky",
-                ".gitignore",
-                ".release-please-manifest.json",
-                "CHANGELOG.md",
-                "LICENSE",
-                "README.md",
-                "commitlint.config.js",
-                "package-lock.json",
-                "package.json",
-                "release-please-config.json",
-                "setup.sh"
-            ],
+            "include-component-in-tag": false,
+            "changelog-path": "/CHANGELOG.md",
             "changelog-sections": [
                 { "type": "feat", "section": "Features" },
                 { "type": "fix", "section": "Bug Fixes" },
