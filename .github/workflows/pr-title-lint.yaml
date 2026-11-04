@@ -18,3 +18,14 @@ jobs:
       - uses: amannn/action-semantic-pull-request@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Keep the scope list in sync with commitlint.config.js.
+        with:
+          requireScope: true
+          scopes: |
+            firmware
+            build
+            ci
+            setup
+            repo
+            deps
+            main

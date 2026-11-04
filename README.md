@@ -19,3 +19,15 @@ All changes go to `main` through squash-merged PRs with
 [Conventional Commits](https://www.conventionalcommits.org/) titles. Every
 merge that changes `src/` is released by release-please, with the firmware
 attached.
+
+A scope is required, from this list:
+
+| Scope      | Covers                                                      |
+| ---------- | ----------------------------------------------------------- |
+| `firmware` | the keymap source                                           |
+| `build`    | build config in `src/` (`qmk.json`, `.qmk-ref`, `Makefile`) |
+| `ci`       | `.github/`                                                  |
+| `setup`    | `setup.sh`                                                  |
+| `repo`     | README, LICENSE, `.gitignore`, commit-lint config           |
+| `deps`     | npm devDependencies                                         |
+| `main`     | release-please's own release PRs                            |
