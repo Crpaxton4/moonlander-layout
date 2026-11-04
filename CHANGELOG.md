@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.1...v1.0.2) (2026-11-04)
+
+
+### Code Refactoring
+
+* **firmware:** move build inputs into src/ ([#6](https://github.com/Crpaxton4/moonlander-layout/issues/6)) ([0a9949f](https://github.com/Crpaxton4/moonlander-layout/commit/0a9949fb82adddcc27fbe97f8d5c3b853f6710d5))
+
 ## [1.0.1](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.0...v1.0.1) (2026-11-04)
 
 
