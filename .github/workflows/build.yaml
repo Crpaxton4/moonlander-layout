@@ -1,0 +1,36 @@
+name: "Build firmware"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_call:
+
+jobs:
+  build:
+    name: "Build firmware"
+    runs-on: ubuntu-latest
+    container: ghcr.io/qmk/qmk_cli:latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Read ZSA firmware branch"
+        id: ref
+        run: echo "ref=$(cat .qmk-ref)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          repository: zsa/qmk_firmware
+          ref: ${{ steps.ref.outputs.ref }}
+          path: qmk_firmware
+          submodules: recursive
+
+      - run: pip install -r qmk_firmware/requirements.txt
+      - run: qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware" user.overlay_dir="$GITHUB_WORKSPACE"
+      - run: make
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: firmware
+          path: out/
