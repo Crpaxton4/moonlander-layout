@@ -1,0 +1,6 @@
+test/nesting_ternary/nesting_ternary.c:23:31 nesting ?: is not allowed inside ?:
+test/nesting_ternary/nesting_ternary.c:24:9 nesting ?: is not allowed inside if
+test/nesting_ternary/nesting_ternary.c:25:16 nesting ?: is not allowed inside if
+test/nesting_ternary/nesting_ternary.c:29:20 nesting ?: is not allowed inside case
+4 findings in 1 files
+exit 1

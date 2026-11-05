@@ -1,0 +1,4 @@
+test/nesting_goto/nesting_goto.c:21:9 nesting goto is not allowed inside if
+test/nesting_goto/nesting_goto.c:25:13 nesting goto is not allowed inside case
+2 findings in 1 files
+exit 1
