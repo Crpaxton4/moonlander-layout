@@ -36,3 +36,12 @@ repos:
         stages: [manual]
         files: \.md$
         exclude: ^CHANGELOG\.md$
+
+  # Report-only (manual stage). The Python package installs the official
+  # actionlint binary, so neither Go nor Docker is needed.
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: v1.7.12.25
+    hooks:
+      - id: actionlint
+        name: actionlint
+        stages: [manual]
