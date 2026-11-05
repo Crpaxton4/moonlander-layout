@@ -69,7 +69,8 @@ typedef struct {
 /**
  * Layers of a layer dance, one per outcome; NO_LAYER makes an outcome do nothing.
  *
- * Two presses interrupted by another key move to the tap layer.
+ * Two presses interrupted by another key move to the tap layer. A field left out
+ * of an initializer is layer 0, a real layer, so definitions name every outcome.
  */
 typedef struct {
     /** Moved to on a single tap or an interrupted double tap. */
@@ -96,30 +97,6 @@ typedef struct {
 
 /** Layer of a layer dance outcome that does nothing; layer 0 is a real layer. */
 #define NO_LAYER UINT8_MAX
-
-/**
- * Keycode dance definition from a braced list of designated keycode_dance_t
- * fields.
- *
- * Fields left out are KC_NO or false.
- */
-#define KEYCODE_DANCE(...) {.kind = DANCE_KEYCODES, .keycodes = __VA_ARGS__}
-
-/**
- * Layer dance definition.
- *
- * Every outcome is named, NO_LAYER for none, because a left-out field would be
- * layer 0.
- */
-#define LAYER_DANCE(tap_layer, hold_layer, double_tap_layer, double_hold_layer) \
-    {                                                                           \
-        .kind = DANCE_LAYERS, .layers = {                                       \
-            .tap         = (tap_layer),                                         \
-            .hold        = (hold_layer),                                        \
-            .double_tap  = (double_tap_layer),                                  \
-            .double_hold = (double_hold_layer),                                 \
-        }                                                                       \
-    }
 
 /** Definitions of the tap dances, indexed by their slot. */
 extern const dance_t dances[DANCE_COUNT];

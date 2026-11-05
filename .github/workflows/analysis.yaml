@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-24.04
     # QMK's build image, which the compile database needs
     container: ghcr.io/qmk/qmk_cli:1.2.0@sha256:b7d7fa8fb4432b569931de5ad59098cb788f440ed61a62c5126746b71aee0f4a
-    # Report-only: findings don't fail the PR yet
-    continue-on-error: true
     permissions:
       contents: read
     # Actions are pinned to commit SHAs; the trailing comment names the release
