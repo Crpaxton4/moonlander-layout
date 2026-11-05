@@ -30,23 +30,34 @@ sudo apt-get install -y unzip
 sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
 
 # QMK CLI and toolchain
-QMK_BOOTSTRAP_LATEST="$(curl -fsSL "https://api.github.com/repos/qmk/qmk_firmware/commits?path=util/env-bootstrap.sh&per_page=1" \
+QMK_COMMITS_URL="https://api.github.com/repos/qmk/qmk_firmware/commits\
+?path=util/env-bootstrap.sh&per_page=1"
+QMK_BOOTSTRAP_URL="https://raw.githubusercontent.com/qmk/qmk_firmware/\
+$QMK_BOOTSTRAP_COMMIT/util/env-bootstrap.sh"
+QMK_BOOTSTRAP_LATEST="$(curl -fsSL "$QMK_COMMITS_URL" \
     | grep -m1 -oE '"sha": "[0-9a-f]{40}"' | cut -d'"' -f4)"
 [ "$QMK_BOOTSTRAP_LATEST" = "$QMK_BOOTSTRAP_COMMIT" ] \
-    || echo "Note: QMK bootstrap script is pinned to $QMK_BOOTSTRAP_COMMIT; latest is $QMK_BOOTSTRAP_LATEST"
-curl -fsSL "https://raw.githubusercontent.com/qmk/qmk_firmware/$QMK_BOOTSTRAP_COMMIT/util/env-bootstrap.sh" \
+    || echo "Note: QMK bootstrap script is pinned to $QMK_BOOTSTRAP_COMMIT;" \
+        "latest is $QMK_BOOTSTRAP_LATEST"
+curl -fsSL "$QMK_BOOTSTRAP_URL" \
     | sh -s -- --confirm
 export PATH="$HOME/.local/bin:$PATH"
 
 # Node via fnm. Its installer appends to ~/.bashrc on every run, so the shell
 # setup is skipped there and added here once.
-FNM_LATEST="$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/Schniz/fnm/releases/latest)"
+FNM_RELEASES_URL="https://github.com/Schniz/fnm/releases/latest"
+FNM_LATEST="$(curl -fsSL -o /dev/null -w '%{url_effective}' "$FNM_RELEASES_URL")"
 [ "${FNM_LATEST##*/}" = "$FNM_VERSION" ] \
     || echo "Note: fnm is pinned to $FNM_VERSION; latest is ${FNM_LATEST##*/}"
 curl -fsSL "https://raw.githubusercontent.com/Schniz/fnm/$FNM_VERSION/.ci/install.sh" \
     | bash -s -- --release "$FNM_VERSION" --skip-shell
 grep -qs 'fnm env' "$HOME/.bashrc" \
-    || printf '\n# fnm\nexport PATH="$HOME/.local/share/fnm:$PATH"\neval "$(fnm env --shell bash)"\n' >> "$HOME/.bashrc"
+    || cat >>"$HOME/.bashrc" <<'EOF'
+
+# fnm
+export PATH="$HOME/.local/share/fnm:$PATH"
+eval "$(fnm env --shell bash)"
+EOF
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "$(fnm env --shell bash)"
 fnm install
