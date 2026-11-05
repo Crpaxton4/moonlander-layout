@@ -16,10 +16,15 @@ export TIMEFORMAT = timing $@ %Rs
 # repo root only QMK_USERSPACE points it at this checkout's src/.
 export QMK_USERSPACE := $(CURDIR)/src
 
+# Number of make jobs in QMK's firmware build, one per CPU by default. QMK
+# itself runs one job unless told otherwise. `make QMK_JOBS=1` builds serially.
+# Only QMK's make runs in parallel, never this make's own targets.
+QMK_JOBS ?= $(shell nproc)
+
 # QMK copies built firmware into the userspace root (src/); move it into the
 # repo-level out/.
-firmware: ## Build the firmware into out/ (the default target)
-	qmk userspace-compile
+firmware: ## Build the firmware into out/ (the default target; QMK_JOBS=1 is serial)
+	qmk userspace-compile -j $(QMK_JOBS)
 	mkdir -p out
 	mv -f src/*.bin out/
 
@@ -29,7 +34,7 @@ firmware: ## Build the firmware into out/ (the default target)
 # it, so one build gives both; the link puts the database at the repo root,
 # where the tools look for it.
 compiledb: ## Build the firmware into out/ and write compile_commands.json
-	qmk compile --compiledb -kb zsa/moonlander/reva -km qgmlwy
+	qmk compile -j $(QMK_JOBS) --compiledb -kb zsa/moonlander/reva -km qgmlwy
 	mkdir -p out
 	mv -f src/*.bin out/
 	ln -sf src/compile_commands.json compile_commands.json
