@@ -8,9 +8,9 @@ build:
 clean:
 	rm -rf ../out
 
-# Compile database for clangd and the analysis tools. QMK writes it into the
+# Compile database for clang-tidy and cppcheck. QMK writes it into the
 # userspace root (src/), next to a firmware copy that `build` already covers;
-# the repo-root link lets clangd find it from any file.
+# the link puts it at the repo root, where the tools look for it.
 compiledb:
 	qmk compile --compiledb -kb zsa/moonlander/reva -km qgmlwy
 	rm -f *.bin

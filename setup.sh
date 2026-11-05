@@ -30,21 +30,6 @@ curl -fsSL "https://raw.githubusercontent.com/qmk/qmk_firmware/$QMK_BOOTSTRAP_CO
     | sh -s -- --confirm
 export PATH="$HOME/.local/bin:$PATH"
 
-# clangd for VS Code, from apt.llvm.org at the LLVM major in .llvm-version.
-# apt names it clangd-<major>, and the clangd extension looks for plain
-# `clangd` on PATH, so a link in ~/.local/bin provides that name.
-LLVM_VERSION="$(cat "$REPO_DIR/.llvm-version")"
-CODENAME="$(lsb_release -cs)"
-LLVM_KEY=/etc/apt/keyrings/apt.llvm.org.asc
-LLVM_SUITE="llvm-toolchain-$CODENAME-$LLVM_VERSION"
-sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee "$LLVM_KEY" > /dev/null
-echo "deb [signed-by=$LLVM_KEY] http://apt.llvm.org/$CODENAME/ $LLVM_SUITE main" \
-    | sudo tee /etc/apt/sources.list.d/llvm.list > /dev/null
-sudo apt-get update
-sudo apt-get install -y "clangd-$LLVM_VERSION"
-ln -sf "/usr/bin/clangd-$LLVM_VERSION" "$HOME/.local/bin/clangd"
-
 # Node via fnm. Its installer appends to ~/.bashrc on every run, so the shell
 # setup is skipped there and added here once.
 FNM_LATEST="$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/Schniz/fnm/releases/latest)"
