@@ -1,4 +1,3 @@
-// Keep the scope list in sync with .github/workflows/pr-title-lint.yaml.
 module.exports = {
     extends: ["@commitlint/config-conventional"],
     rules: {
