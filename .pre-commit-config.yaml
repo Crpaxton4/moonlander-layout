@@ -93,6 +93,22 @@ repos:
         types: [shell]
         stages: [manual]
 
+  # Report-only (manual stage). The repository's own C checker, built against
+  # the apt tree-sitter packages pinned in setup.sh and lint.yaml; it runs only
+  # in Lint, as the Static analysis container ships a different tree-sitter.
+  # require_serial: one build and one summary line. The fixtures break its rules
+  # on purpose.
+  - repo: local
+    hooks:
+      - id: check-standards
+        name: check-standards
+        entry: tools/check_standards/run
+        language: system
+        types_or: [c, inc]
+        exclude: ^tools/check_standards/fixtures/
+        require_serial: true
+        stages: [manual]
+
   # Style comes from .editorconfig. -d prints a diff instead of rewriting.
   - repo: https://github.com/scop/pre-commit-shfmt
     rev: v3.14.1-1

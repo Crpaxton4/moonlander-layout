@@ -4,3 +4,4 @@ node_modules/
 compile_commands.json
 /doxygen/
 /.claude/
+tools/check_standards/build/
