@@ -24,7 +24,7 @@ Checks: >-
 WarningsAsErrors: "*"
 
 # Only this userspace's keyboards tree is reported, never QMK or ChibiOS.
-HeaderFilterRegex: "/src/keyboards/"
+HeaderFilterRegex: "/src/qmk/keyboards/"
 
 # The compile database holds arm-none-eabi-gcc commands. clang takes its target
 # from the gcc driver name; these are the arguments it can't use:
