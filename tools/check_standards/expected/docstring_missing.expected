@@ -1,4 +1,4 @@
-fixtures/docstring_missing/source.c:1:1 file-docstring file does not begin with a /** comment
-fixtures/docstring_missing/table_row.inc:1:1 file-docstring file does not begin with a /** comment
+fixtures/src/docstring_missing.c:1:1 file-docstring file does not begin with a /** comment
+fixtures/include/docstring_missing.inc:1:1 file-docstring file does not begin with a /** comment
 2 findings in 2 files
 exit 1

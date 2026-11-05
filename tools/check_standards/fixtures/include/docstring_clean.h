@@ -1,4 +1,4 @@
-/** @file header.h
+/** @file docstring_clean.h
  * A header whose @file line also names the file.
  */
 

@@ -1,4 +1,4 @@
-fixtures/nesting_depth_violation/source.c:9:13 nesting for nested deeper than 2
-fixtures/nesting_depth_violation/source.c:12:13 nesting if nested deeper than 2
+fixtures/src/nesting_depth_violation.c:9:13 nesting for nested deeper than 2
+fixtures/src/nesting_depth_violation.c:12:13 nesting if nested deeper than 2
 2 findings in 1 files
 exit 1

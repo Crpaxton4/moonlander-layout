@@ -1,6 +1,6 @@
-fixtures/nesting_ternary_violation/source.c:6:31 nesting ?: is not allowed inside ?:
-fixtures/nesting_ternary_violation/source.c:7:9 nesting ?: is not allowed inside if
-fixtures/nesting_ternary_violation/source.c:8:16 nesting ?: is not allowed inside if
-fixtures/nesting_ternary_violation/source.c:12:20 nesting ?: is not allowed inside case
+fixtures/src/nesting_ternary_violation.c:6:31 nesting ?: is not allowed inside ?:
+fixtures/src/nesting_ternary_violation.c:7:9 nesting ?: is not allowed inside if
+fixtures/src/nesting_ternary_violation.c:8:16 nesting ?: is not allowed inside if
+fixtures/src/nesting_ternary_violation.c:12:20 nesting ?: is not allowed inside case
 4 findings in 1 files
 exit 1

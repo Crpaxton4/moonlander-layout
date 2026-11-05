@@ -1,6 +1,6 @@
-fixtures/nesting_if_violation/source.c:7:9 nesting if is not allowed inside if
-fixtures/nesting_if_violation/source.c:10:9 nesting for is not allowed inside if
-fixtures/nesting_if_violation/source.c:14:9 nesting if is not allowed inside if
-fixtures/nesting_if_violation/source.c:21:9 nesting while is not allowed inside if
+fixtures/src/nesting_if_violation.c:7:9 nesting if is not allowed inside if
+fixtures/src/nesting_if_violation.c:10:9 nesting for is not allowed inside if
+fixtures/src/nesting_if_violation.c:14:9 nesting if is not allowed inside if
+fixtures/src/nesting_if_violation.c:21:9 nesting while is not allowed inside if
 4 findings in 1 files
 exit 1

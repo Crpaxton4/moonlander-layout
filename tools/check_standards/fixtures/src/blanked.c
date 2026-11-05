@@ -6,8 +6,8 @@
 #include <stdint.h>
 
 static const uint8_t PROGMEM rows[][2] = {
-#include "../docstring_clean/table_row.inc"
-#include "../docstring_missing/table_row.inc"
+#include "docstring_clean.inc"
+#include "docstring_missing.inc"
 };
 
 uint8_t first_cell(void) {

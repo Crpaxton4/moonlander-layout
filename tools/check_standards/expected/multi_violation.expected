@@ -1,8 +1,8 @@
-fixtures/multi_violation/source.c:1:1 file-docstring file does not begin with a /** comment
-fixtures/multi_violation/source.c:5:9 nesting if is not allowed inside if
-fixtures/multi_violation/source.c:8:9 nesting while is not allowed inside if
-fixtures/multi_violation/source.c:18:13 nesting for is not allowed inside case
-fixtures/multi_violation/source.c:23:13 nesting if is not allowed inside case
-fixtures/multi_violation/source.c:33:13 nesting if nested deeper than 2
+fixtures/src/multi_violation.c:1:1 file-docstring file does not begin with a /** comment
+fixtures/src/multi_violation.c:5:9 nesting if is not allowed inside if
+fixtures/src/multi_violation.c:8:9 nesting while is not allowed inside if
+fixtures/src/multi_violation.c:18:13 nesting for is not allowed inside case
+fixtures/src/multi_violation.c:23:13 nesting if is not allowed inside case
+fixtures/src/multi_violation.c:33:13 nesting if nested deeper than 2
 6 findings in 1 files
 exit 1

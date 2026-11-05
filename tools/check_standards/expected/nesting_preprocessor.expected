@@ -1,3 +1,3 @@
-fixtures/nesting_preprocessor/source.c:16:9 nesting if is not allowed inside if
+fixtures/src/nesting_preprocessor.c:16:9 nesting if is not allowed inside if
 1 findings in 1 files
 exit 1
