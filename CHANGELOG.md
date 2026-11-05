@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.19](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.18...v1.0.19) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** simplify layer lighting ([#60](https://github.com/Crpaxton4/moonlander-layout/issues/60)) ([424b8ee](https://github.com/Crpaxton4/moonlander-layout/commit/424b8ee6a6bb9263a279c3c9a660875a9173ed9b))
+
+## [1.0.18](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.17...v1.0.18) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** remove unused keymap leftovers ([#58](https://github.com/Crpaxton4/moonlander-layout/issues/58)) ([b513da0](https://github.com/Crpaxton4/moonlander-layout/commit/b513da094b6945c7cbf78c77f5242e5ba81be0a0))
+
+## [1.0.17](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.16...v1.0.17) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** split the keymap into feature modules ([#56](https://github.com/Crpaxton4/moonlander-layout/issues/56)) ([440207b](https://github.com/Crpaxton4/moonlander-layout/commit/440207bd0ca3df04a093565aa12af1fada7a422d))
+
 ## [1.0.16](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.15...v1.0.16) (2026-11-05)
 
 
