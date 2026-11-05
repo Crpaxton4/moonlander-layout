@@ -30,4 +30,4 @@ RGB hsv_to_rgb_with_value(HSV hsv);
  *
  * @param layer Layer whose colours to show, an index into `ledmap`.
  */
-void set_layer_color(int layer);
+void set_layer_color(uint8_t layer);
