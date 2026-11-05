@@ -1,0 +1,30 @@
+/** @file
+ * Window manager layer lighting: the window keys in shades of purple, lavender
+ * and violet, the top left key back to the base layer white, and the remaining
+ * lights as on the base layer.
+ */
+
+// clang-format off
+[LAYER_WINDOW_MANAGER] = {
+    // left half, outer column first
+    COLOR_WHITE,      COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_187,
+    COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,
+    COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_GREEN_92,
+    COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_PINK,
+    COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_LAVENDER,   COLOR_PURPLE_186,
+    COLOR_VIOLET,     COLOR_OFF,        COLOR_OFF,        COLOR_LAVENDER,
+    COLOR_VIOLET,     COLOR_PURPLE_186, COLOR_PURPLE_186,
+    // left thumb keys, then the large thumb key
+    COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_187,
+    // right half, outer column first
+    COLOR_OFF,        COLOR_OFF,        COLOR_OFF,        COLOR_PURPLE_187, COLOR_PURPLE_187,
+    COLOR_OFF,        COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_BLUE_179,
+    COLOR_OFF,        COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_BLUE_179,
+    COLOR_OFF,        COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_186, COLOR_BLUE_179,
+    COLOR_OFF,        COLOR_PURPLE_187, COLOR_PURPLE_187, COLOR_PURPLE_186, COLOR_BLUE_179,
+    COLOR_VIOLET,     COLOR_OFF,        COLOR_OFF,        COLOR_BLUE_179,
+    COLOR_VIOLET,     COLOR_COOL_WHITE, COLOR_SCARLET,
+    // right thumb keys, then the large thumb key
+    COLOR_BLUE_179,   COLOR_BLUE_179,   COLOR_BLUE_179,   COLOR_ORANGE
+},
+    // clang-format on
