@@ -13,7 +13,9 @@ env:
 jobs:
   lint:
     name: "Lint"
-    runs-on: ubuntu-latest
+    # Same Ubuntu release as the development machine, so apt-pinned tools
+    # (shellcheck) have identical versions
+    runs-on: ubuntu-24.04
     # Report-only: findings don't fail the PR yet
     continue-on-error: true
     permissions:
