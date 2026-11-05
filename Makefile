@@ -11,25 +11,25 @@ export TIMEFORMAT = timing $@ %Rs
 
 ##@ Firmware
 
-# The QMK userspace is src/. QMK looks for qmk.json in the current directory
+# The QMK userspace is src/qmk/. QMK looks for qmk.json in the current directory
 # and its parents, then in QMK_USERSPACE, then in user.overlay_dir, so from the
-# repo root only QMK_USERSPACE points it at this checkout's src/.
-export QMK_USERSPACE := $(CURDIR)/src
+# repo root only QMK_USERSPACE points it at this checkout's src/qmk/.
+export QMK_USERSPACE := $(CURDIR)/src/qmk
 
 # Number of make jobs in QMK's firmware build, one per CPU by default. QMK
 # itself runs one job unless told otherwise. `make QMK_JOBS=1` builds serially.
 # Only QMK's make runs in parallel, never this make's own targets.
 QMK_JOBS ?= $(shell nproc)
 
-# QMK copies built firmware into the userspace root (src/); move it into the
+# QMK copies built firmware into the userspace root (src/qmk/); move it into the
 # repo-level .build/.
 firmware: ## Build the firmware into .build/ (the default target; QMK_JOBS=1 is serial)
 	qmk userspace-compile -j $(QMK_JOBS)
 	mkdir -p .build
-	mv -f src/*.bin .build/
+	mv -f src/qmk/*.bin .build/
 
 # Compile database for clang-tidy. QMK builds the firmware to record the
-# compile commands, and writes the database into the userspace root (src/),
+# compile commands, and writes the database into the userspace root (src/qmk/),
 # next to the firmware copy. Both go into .build/, so one build gives both. QMK
 # has no option for the database's location. Each entry holds an absolute
 # directory, and its file is relative to that directory or absolute, so the
@@ -37,14 +37,14 @@ firmware: ## Build the firmware into .build/ (the default target; QMK_JOBS=1 is 
 compiledb: ## Build the firmware and the compile database into .build/
 	qmk compile -j $(QMK_JOBS) --compiledb -kb zsa/moonlander/reva -km qgmlwy
 	mkdir -p .build
-	mv -f src/*.bin src/compile_commands.json .build/
+	mv -f src/qmk/*.bin src/qmk/compile_commands.json .build/
 
 .PHONY: firmware compiledb
 
 ##@ Static analysis
 
 # This userspace's C sources, the only files analysed
-C_SOURCES := $(shell find src/keyboards -name '*.c' | LC_ALL=C sort)
+C_SOURCES := $(shell find src/qmk/keyboards -name '*.c' | LC_ALL=C sort)
 
 # Every check that `analyze` runs
 ANALYZE_CHECKS := clang-tidy

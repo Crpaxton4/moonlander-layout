@@ -3,7 +3,7 @@
 # from Doxygen's defaults and every rule the check enforces.
 
 # Sources: the userspace's C files, including the keymap grid files
-INPUT = src/keyboards
+INPUT = src/qmk/keyboards
 RECURSIVE = YES
 FILE_PATTERNS = *.c *.h *.inc
 EXTENSION_MAPPING = inc=C

@@ -30,7 +30,7 @@ concurrency:
 # of them skip the firmware job; a skipped job still satisfies its required
 # check, which a `paths:` trigger filter would leave pending forever.
 env:
-  FIRMWARE_PATHS: '^src/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$'
+  FIRMWARE_PATHS: '^src/qmk/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$'
   # The uv release that setup-uv installs. Must match UV_VERSION in lint.yaml
   UV_VERSION: "0.13.7"
 
@@ -87,7 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # src/.qmk-ref holds a pinned commit on ZSA's firmware25 branch, bumped
+      # src/qmk/.qmk-ref holds a pinned commit on ZSA's firmware25 branch, bumped
       # by hand. checkout takes a commit SHA as ref. The qmk_firmware checkout
       # is cached; the key holds the pinned commit and the submodule list, and
       # every run checks the checkout against the pin, so a cache never serves
@@ -95,7 +95,7 @@ jobs:
       - name: "Compute ZSA firmware cache key"
         id: qmk
         run: |
-          ref=$(cat src/.qmk-ref)
+          ref=$(cat src/qmk/.qmk-ref)
           submodules_hash=$(sha256sum <<< "$QMK_SUBMODULES" | cut -c1-16)
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
           echo "key=qmk-firmware-$RUNNER_OS-$ref-$submodules_hash" | tee -a "$GITHUB_OUTPUT"
@@ -248,7 +248,7 @@ jobs:
           "$(uv tool dir)/qmk/bin/python" --version
       - run: >-
           qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
-          user.overlay_dir="$GITHUB_WORKSPACE/src"
+          user.overlay_dir="$GITHUB_WORKSPACE/src/qmk"
 
       # One QMK build gives both the firmware in .build/ and the compile database
       - name: "Build firmware and compile database"
