@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.6...v1.0.7) (2026-11-05)
+
+
+### Continuous Integration
+
+* **tooling:** doxygen documentation check ([#30](https://github.com/Crpaxton4/moonlander-layout/issues/30)) ([d8ce2b0](https://github.com/Crpaxton4/moonlander-layout/commit/d8ce2b092faf1c20c08f4202cfe0a6ceeafe2c6a))
+
 ## [1.0.6](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.5...v1.0.6) (2026-11-05)
 
 
