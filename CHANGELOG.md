@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.13](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.12...v1.0.13) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** name tap counts and the rgblight mode ([#48](https://github.com/Crpaxton4/moonlander-layout/issues/48)) ([74fe4fa](https://github.com/Crpaxton4/moonlander-layout/commit/74fe4fa0fba0c19b92d11cefca400d14a3482aad))
+
 ## [1.0.12](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.11...v1.0.12) (2026-11-05)
 
 
