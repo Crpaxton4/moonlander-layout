@@ -12,13 +12,15 @@ AllowShortLoopsOnASingleLine: "false"
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: "false"
-BinPackArguments: "true"
-BinPackParameters: "true"
 ColumnLimit: "88"
 IndentCaseLabels: "true"
 IndentPPDirectives: AfterHash
 IndentWidth: "4"
 MaxEmptyLinesToKeep: "1"
+PackArguments:
+    BinPack: BinPack
+PackParameters:
+    BinPack: BinPack
 PointerAlignment: Right
 SortIncludes: "false"
 SpaceBeforeAssignmentOperators: "true"
