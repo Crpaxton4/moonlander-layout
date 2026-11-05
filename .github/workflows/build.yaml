@@ -40,13 +40,26 @@ jobs:
     # the job runs.
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.firmware != 'false') }}
     runs-on: ubuntu-24.04
-    # QMK's build image, which the firmware and the compile database need.
-    # Pinned by digest so the firmware toolchain changes only on purpose.
-    # Dependabot can't update it: bump the tag and digest of a new qmk_cli
-    # release together.
-    container: ghcr.io/qmk/qmk_cli:1.2.0@sha256:b7d7fa8fb4432b569931de5ad59098cb788f440ed61a62c5126746b71aee0f4a
     permissions:
       contents: read
+    env:
+      # QMK's prebuilt toolchains (qmk/qmk_toolchains) and flashing tools
+      # (qmk/qmk_flashutils), the releases in QMK's qmk_cli 1.2.0 image. The
+      # build uses the ARM toolchain, and dfu-suffix from the flashing tools,
+      # which appends the DFU suffix to the firmware. Each is pinned by release
+      # and the sha256 of its Linux x64 asset, so the firmware toolchain
+      # changes only on purpose: a new toolchain release changes the firmware
+      # bytes. Bump each release and its sha256 together, by hand.
+      QMK_TOOLCHAINS_RELEASE: "v15.2.0-1"
+      QMK_TOOLCHAINS_SHA256: "6b136919e3526f3f373e91f7d011a006e968a3169262d33cf6efa3e6c605c3ca"
+      QMK_FLASHUTILS_RELEASE: "20260318"
+      QMK_FLASHUTILS_SHA256: "acb2f17ff5e6c555c657d0203fe647ea535fa98d214af8bf428015c7d0a20a15"
+      # The QMK CLI from PyPI, the version in the same image. Bump it by hand.
+      QMK_CLI_VERSION: "1.2.0"
+      # uv resolves the QMK CLI's dependencies and qmk_firmware's unpinned
+      # requirements as PyPI had them at this time, so every run installs the
+      # same versions. Bump it by hand.
+      QMK_PYTHON_DEPS_DATE: "2026-11-05T00:00:00Z"
     # Actions are pinned to commit SHAs; the trailing comment names the release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -64,7 +77,78 @@ jobs:
           path: qmk_firmware
           submodules: recursive
 
-      - run: pip install -r qmk_firmware/requirements.txt
+      # The release assets are cached. The key holds both release pins and the
+      # runner image; every run checks each asset against its sha256 pin, so a
+      # cache never serves another release.
+      - name: "Compute QMK toolchain cache key"
+        id: toolchain-key
+        run: |
+          key="qmk-toolchain-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
+          key="$key-$QMK_TOOLCHAINS_RELEASE-$QMK_FLASHUTILS_RELEASE"
+          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+      - name: "Restore QMK toolchain"
+        id: toolchain-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/qmk-assets
+          key: ${{ steps.toolchain-key.outputs.key }}
+
+      # The toolchain asset is named after the GCC version: the release tag
+      # without its leading `v` and its trailing build number
+      - name: "Download QMK toolchain"
+        if: ${{ steps.toolchain-cache.outputs.cache-hit != 'true' }}
+        working-directory: ${{ runner.temp }}
+        run: |
+          gcc_version="${QMK_TOOLCHAINS_RELEASE#v}"
+          gcc_version="${gcc_version%-*}"
+          base="https://github.com/qmk"
+          mkdir -p qmk-assets
+          curl -fsSL -o qmk-assets/toolchains.tar.zst \
+            "$base/qmk_toolchains/releases/download/$QMK_TOOLCHAINS_RELEASE/qmk_toolchains-gcc$gcc_version-host_linuxX64.tar.zst"
+          curl -fsSL -o qmk-assets/flashutils.tar.zst \
+            "$base/qmk_flashutils/releases/download/$QMK_FLASHUTILS_RELEASE/qmk_flashutils-$QMK_FLASHUTILS_RELEASE-linuxX64.tar.zst"
+
+      # Unpacks the ARM toolchain, without the AVR and RISC-V ones, and
+      # dfu-suffix into QMK_DISTRIB_DIR, as QMK's bootstrap lays them out. The
+      # QMK CLI puts QMK_DISTRIB_DIR/bin first on PATH.
+      - name: "Install QMK toolchain"
+        working-directory: ${{ runner.temp }}
+        run: |
+          sha256sum -c - <<EOF
+          $QMK_TOOLCHAINS_SHA256  qmk-assets/toolchains.tar.zst
+          $QMK_FLASHUTILS_SHA256  qmk-assets/flashutils.tar.zst
+          EOF
+          dir="$RUNNER_TEMP/qmk-distrib"
+          mkdir -p "$dir"
+          tar --zstd -xf qmk-assets/toolchains.tar.zst -C "$dir" \
+            --strip-components=1 --exclude=avr --exclude='avr-*' \
+            --exclude='riscv32-unknown-elf*'
+          tar --zstd -xf qmk-assets/flashutils.tar.zst -C "$dir/bin" ./dfu-suffix
+          echo "QMK_DISTRIB_DIR=$dir" >> "$GITHUB_ENV"
+          echo "$dir/bin" >> "$GITHUB_PATH"
+          "$dir/bin/arm-none-eabi-gcc" --version
+          "$dir/bin/dfu-suffix" --version
+
+      # Saved only after the assets match their sha256 pins, and before the
+      # build, so a build failure doesn't discard them
+      - name: "Save QMK toolchain"
+        if: ${{ steps.toolchain-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/qmk-assets
+          key: ${{ steps.toolchain-key.outputs.key }}
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      # qmk_firmware's Python code runs in the QMK CLI's environment, so its
+      # requirements go into the same tool environment
+      - name: "Install QMK CLI"
+        run: |
+          uv tool install --exclude-newer "$QMK_PYTHON_DEPS_DATE" \
+            --with-requirements qmk_firmware/requirements.txt \
+            "qmk==$QMK_CLI_VERSION"
+          qmk --version
+          "$(uv tool dir)/qmk/bin/python" --version
       - run: >-
           qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
           user.overlay_dir="$GITHUB_WORKSPACE/src"
@@ -76,16 +160,14 @@ jobs:
       # The steps from here on run even when an earlier one failed, so a
       # failing build still runs the analysis and a failing check still
       # uploads the firmware; the job fails at the end.
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        if: ${{ !cancelled() && !inputs.skip-analysis }}
       - name: "Install clang-tidy"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         run: |
           uv tool install "clang-tidy==$(cat .llvm-version)"
           clang-tidy --version
 
-      # The official release binary, as setup.sh installs it. The image's own
-      # doxygen, if any, may differ, so this one goes first on PATH.
+      # The official release binary, as setup.sh installs it. It goes first on
+      # PATH, so no other doxygen on the runner shadows it.
       - name: "Install Doxygen"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         env:
