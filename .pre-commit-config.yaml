@@ -108,10 +108,10 @@ repos:
     hooks:
       - id: check-standards
         name: check-standards
-        entry: tools/check_standards/run.sh
+        entry: src/check_standards/run.sh
         language: system
         types_or: [c, inc]
-        exclude: ^tools/check_standards/test/
+        exclude: ^test/check_standards/
         require_serial: true
         stages: [pre-commit, manual]
 

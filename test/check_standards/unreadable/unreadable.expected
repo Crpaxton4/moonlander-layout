@@ -1,0 +1,6 @@
+test/check_standards/unreadable/unreadable_first.c:7:9 nesting if is not allowed inside if
+test/check_standards/unreadable/unreadable_second.c:1:1 io-error No such file or directory
+test/check_standards/unreadable/unreadable_third.h:1:1 file-docstring file does not begin with a /** comment
+test/check_standards/unreadable/unreadable_third.h:6:9 nesting while is not allowed inside while
+4 findings in 3 files
+exit 1

@@ -1,4 +1,0 @@
-test/nesting_depth/nesting_depth.c:27:13 nesting for nested deeper than 2
-test/nesting_depth/nesting_depth.c:30:13 nesting if nested deeper than 2
-2 findings in 1 files
-exit 1

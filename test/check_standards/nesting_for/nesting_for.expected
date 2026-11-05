@@ -1,0 +1,5 @@
+test/check_standards/nesting_for/nesting_for.c:23:9 nesting while is not allowed inside for
+test/check_standards/nesting_for/nesting_for.c:26:9 nesting do is not allowed inside for
+test/check_standards/nesting_for/nesting_for.c:29:9 nesting switch is not allowed inside for
+3 findings in 1 files
+exit 1
