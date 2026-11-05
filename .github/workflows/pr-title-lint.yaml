@@ -9,11 +9,17 @@ on:
       - edited
       - synchronize
 
+# A new push or edit cancels the PR's older run
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-pr-title:
     name: "Validate PR title"
     # Pinned to the development machine's Ubuntu release so CI tools match local ones.
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
       contents: read
     steps:
