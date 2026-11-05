@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.18](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.17...v1.0.18) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** remove unused keymap leftovers ([#58](https://github.com/Crpaxton4/moonlander-layout/issues/58)) ([b513da0](https://github.com/Crpaxton4/moonlander-layout/commit/b513da094b6945c7cbf78c77f5242e5ba81be0a0))
+
 ## [1.0.17](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.16...v1.0.17) (2026-11-05)
 
 
