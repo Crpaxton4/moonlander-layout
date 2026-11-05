@@ -12,6 +12,9 @@ QMK_HOME="$HOME/qmk_firmware"
 # fixes both its install script and the binary it downloads.
 QMK_BOOTSTRAP_COMMIT="08c662f286ddfd12a985f57b584b02eca5af0ae6"
 FNM_VERSION="v1.39.0"
+# ZSA's qmk_firmware branch for the Moonlander. src/.qmk-ref pins a commit on
+# this branch; CI builds from the same commit.
+QMK_BRANCH="firmware25"
 # Must match PRE_COMMIT_VERSION in .github/workflows/lint.yaml
 PRE_COMMIT_VERSION="4.7.0"
 # Must match SHELLCHECK_VERSION in .github/workflows/lint.yaml
@@ -94,8 +97,20 @@ tar -xzf "$DOXYGEN_TARBALL" -C "$HOME/.local/bin" --strip-components=2 \
     "doxygen-$DOXYGEN_VERSION/bin/doxygen"
 rm -f "$DOXYGEN_TARBALL"
 
-# ZSA's qmk_firmware fork, with QMK pointed at this repo's userspace
-qmk setup zsa/qmk_firmware -b "$(cat "$REPO_DIR/src/.qmk-ref")" -H "$QMK_HOME" -y
+# ZSA's qmk_firmware fork at the pinned commit, with QMK pointed at this
+# repo's userspace. `qmk setup` clones a branch, or keeps an existing clone as
+# it is, so the pinned commit and its submodules are checked out after it.
+QMK_URL="https://github.com/zsa/qmk_firmware"
+QMK_COMMIT="$(cat "$REPO_DIR/src/.qmk-ref")"
+QMK_LATEST="$(git ls-remote "$QMK_URL" "refs/heads/$QMK_BRANCH" | cut -f1)"
+[ "$QMK_LATEST" = "$QMK_COMMIT" ] \
+    || echo "Note: ZSA qmk_firmware is pinned to $QMK_COMMIT;" \
+        "latest $QMK_BRANCH is $QMK_LATEST"
+qmk setup zsa/qmk_firmware -b "$QMK_BRANCH" -H "$QMK_HOME" -y
+git -C "$QMK_HOME" cat-file -e "$QMK_COMMIT^{commit}" 2>/dev/null \
+    || git -C "$QMK_HOME" fetch "$QMK_URL" "$QMK_COMMIT"
+git -C "$QMK_HOME" checkout --detach "$QMK_COMMIT"
+git -C "$QMK_HOME" submodule update --init --recursive
 qmk config user.overlay_dir="$REPO_DIR/src"
 
 make -C "$REPO_DIR"
