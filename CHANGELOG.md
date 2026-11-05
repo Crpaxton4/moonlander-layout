@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.15](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.14...v1.0.15) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** make rgb scaling conversions explicit ([#52](https://github.com/Crpaxton4/moonlander-layout/issues/52)) ([53122bc](https://github.com/Crpaxton4/moonlander-layout/commit/53122bcd36ad854ba0aace756035df03833c8524))
+
 ## [1.0.14](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.13...v1.0.14) (2026-11-05)
 
 
