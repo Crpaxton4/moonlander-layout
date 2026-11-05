@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.21](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.20...v1.0.21) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** table-driven tap dances ([#62](https://github.com/Crpaxton4/moonlander-layout/issues/62)) ([79c7737](https://github.com/Crpaxton4/moonlander-layout/commit/79c7737b08aa4ade48f7890f7943ae409aac1f1b))
+
 ## [1.0.20](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.19...v1.0.20) (2026-11-05)
 
 
