@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.27](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.26...v1.0.27) (2026-11-05)
+
+
+### Build System
+
+* **build:** move the qmk userspace into src/qmk/ ([#103](https://github.com/Crpaxton4/moonlander-layout/issues/103)) ([14c31db](https://github.com/Crpaxton4/moonlander-layout/commit/14c31db69c8eeb67c9fd0c644a496b798a3a4045))
+
 ## [1.0.26](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.25...v1.0.26) (2026-11-05)
 
 
