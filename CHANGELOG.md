@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.3...v1.0.4) (2026-11-05)
+
+
+### Code Refactoring
+
+* **build:** re-nest keymap under QMK's keymaps path ([#12](https://github.com/Crpaxton4/moonlander-layout/issues/12)) ([78b9b0f](https://github.com/Crpaxton4/moonlander-layout/commit/78b9b0f2e8fa3c5f8ce52cacc8f82cdca77d044d))
+
 ## [1.0.3](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.2...v1.0.3) (2026-11-04)
 
 
