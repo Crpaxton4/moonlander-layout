@@ -51,7 +51,7 @@ repos:
         # `clang-format -i`, so the entry is replaced as well as the args.
         entry: clang-format
         args: [--dry-run, -Werror]
-        
+
   # Report-only (manual stage). Prettier reads .editorconfig; .prettierignore
   # skips the files tools write. require_serial gives one run per hook, so the
   # findings end in a single summary line.
@@ -72,7 +72,7 @@ repos:
         types_or: [markdown]
         require_serial: true
         stages: [manual]
-        
+
   # Report-only (manual stage). pre-commit builds actionlint with a Go toolchain
   # it downloads itself when Go is not installed.
   - repo: https://github.com/rhysd/actionlint
@@ -81,7 +81,7 @@ repos:
       - id: actionlint
         name: actionlint
         stages: [manual]
-        
+
   # apt's shellcheck, pinned in setup.sh and lint.yaml. actionlint lints
   # workflow run: blocks with the same binary.
   - repo: local
