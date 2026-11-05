@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.25](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.24...v1.0.25) (2026-11-05)
+
+
+### Code Refactoring
+
+* **build:** one makefile at the repo root ([#76](https://github.com/Crpaxton4/moonlander-layout/issues/76)) ([07961a1](https://github.com/Crpaxton4/moonlander-layout/commit/07961a19fa91738c2eeff4d4e5c56c8e2d8461d2))
+
 ## [1.0.24](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.23...v1.0.24) (2026-11-05)
 
 
