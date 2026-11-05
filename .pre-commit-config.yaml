@@ -36,3 +36,24 @@ repos:
         stages: [manual]
         files: \.md$
         exclude: ^CHANGELOG\.md$
+
+  # Report-only (manual stage). Prettier reads .editorconfig; .prettierignore
+  # skips the files tools write. require_serial gives one run per hook, so the
+  # findings end in a single summary line.
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx --no -- prettier --check
+        language: system
+        types_or: [json, yaml]
+        require_serial: true
+        stages: [manual]
+      # Markdown is checked separately so its findings can be gated on their own
+      - id: prettier-markdown
+        name: prettier-markdown
+        entry: npx --no -- prettier --check
+        language: system
+        types_or: [markdown]
+        require_serial: true
+        stages: [manual]
