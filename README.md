@@ -24,12 +24,10 @@ A scope is required, from this list:
 
 | Scope      | Covers                                                      |
 | ---------- | ----------------------------------------------------------- |
-| `firmware` | the keymap source |
+| `firmware` | the keymap source                                           |
 | `build`    | build config in `src/` (`qmk.json`, `.qmk-ref`, `Makefile`) |
 | `ci`       | `.github/`                                                  |
 | `setup`    | `setup.sh`                                                  |
 | `repo`     | README, LICENSE, `.gitignore`, commit-lint config           |
 | `deps`     | npm devDependencies                                         |
 | `main`     | release-please's own release PRs                            |
-
-This temporary line is longer than the 88-column limit that .editorconfig sets for every file.
