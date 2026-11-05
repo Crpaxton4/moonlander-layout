@@ -250,7 +250,7 @@ jobs:
           qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
           user.overlay_dir="$GITHUB_WORKSPACE/src"
 
-      # One QMK build gives both the firmware in out/ and the compile database
+      # One QMK build gives both the firmware in .build/ and the compile database
       - name: "Build firmware and compile database"
         run: make compiledb
 
@@ -310,10 +310,13 @@ jobs:
             ' "$RUNNER_TEMP/analyze.log"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # The firmware only. upload-artifact stores the files relative to out/,
-      # so the release step finds the .bin at the artifact's root.
+      # The firmware only. upload-artifact stores the files relative to
+      # .build/, so the release step finds the .bin at the artifact's root.
+      # .build/ is a dot directory, which upload-artifact skips unless
+      # include-hidden-files is on.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: firmware
-          path: out/*.bin
+          path: .build/*.bin
+          include-hidden-files: true
