@@ -1,5 +1,5 @@
 # Documentation check for the userspace's C sources, run by
-# `make -C src analyze` from the repo root. It lists the settings that differ
+# `make analyze` from the repo root. It lists the settings that differ
 # from Doxygen's defaults and every rule the check enforces.
 
 # Sources: the userspace's C files, including the keymap grid files

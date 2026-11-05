@@ -79,10 +79,10 @@ uv tool install "pre-commit==$PRE_COMMIT_VERSION"
 git -C "$REPO_DIR" config --unset core.hooksPath || true
 pre-commit install
 
-# clang-tidy for `make -C src analyze`, the same LLVM release as clang-format
+# clang-tidy for `make analyze`, the same LLVM release as clang-format
 uv tool install "clang-tidy==$(cat "$REPO_DIR/.llvm-version")"
 
-# Doxygen for `make -C src analyze`: the official release binary, the same build
+# Doxygen for `make analyze`: the official release binary, the same build
 # CI runs, whatever the distro packages. Only the binary leaves the tarball.
 DOXYGEN_URL="https://github.com/doxygen/doxygen/releases/download/\
 Release_${DOXYGEN_VERSION//./_}/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz"
@@ -98,4 +98,4 @@ rm -f "$DOXYGEN_TARBALL"
 qmk setup zsa/qmk_firmware -b "$(cat "$REPO_DIR/src/.qmk-ref")" -H "$QMK_HOME" -y
 qmk config user.overlay_dir="$REPO_DIR/src"
 
-make -C "$REPO_DIR/src"
+make -C "$REPO_DIR"

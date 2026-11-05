@@ -63,7 +63,7 @@ jobs:
       - name: "Run static analysis"
         run: |
           set -o pipefail
-          make -C src analyze 2>&1 | tee "$RUNNER_TEMP/analyze.log"
+          make analyze 2>&1 | tee "$RUNNER_TEMP/analyze.log"
 
       - name: "Summarize timings"
         if: ${{ !cancelled() }}
