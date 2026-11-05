@@ -44,7 +44,8 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-    env:
+    # The ccache-seed job uses the same pins
+    env: &firmware-env
       # QMK's prebuilt toolchains (qmk/qmk_toolchains) and flashing tools
       # (qmk/qmk_flashutils), the releases in QMK's qmk_cli 1.2.0 image. The
       # build uses the ARM toolchain, and dfu-suffix from the flashing tools,
@@ -82,7 +83,7 @@ jobs:
       # another commit.
       - name: "Compute ZSA firmware cache key"
         id: qmk
-        run: |
+        run: &qmk-key-run |
           ref=$(cat src/.qmk-ref)
           submodules_hash=$(sha256sum <<< "$QMK_SUBMODULES" | cut -c1-16)
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
@@ -90,7 +91,7 @@ jobs:
       - name: "Restore ZSA firmware"
         id: qmk-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
+        with: &qmk-restore-with
           path: qmk_firmware
           key: ${{ steps.qmk.outputs.key }}
 
@@ -98,7 +99,7 @@ jobs:
       - name: "Check out ZSA firmware"
         if: ${{ steps.qmk-cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
+        with: &qmk-checkout-with
           repository: zsa/qmk_firmware
           ref: ${{ steps.qmk.outputs.ref }}
           path: qmk_firmware
@@ -108,7 +109,7 @@ jobs:
       - name: "Check out ZSA firmware submodules"
         if: ${{ steps.qmk-cache.outputs.cache-hit != 'true' }}
         working-directory: qmk_firmware
-        run: |
+        run: &qmk-submodules-run |
           read -ra submodules <<< "$QMK_SUBMODULES"
           git submodule update --init --depth 1 --jobs "${#submodules[@]}" -- "${submodules[@]}"
 
@@ -119,7 +120,7 @@ jobs:
         working-directory: qmk_firmware
         env:
           QMK_REF: ${{ steps.qmk.outputs.ref }}
-        run: |
+        run: &qmk-verify-run |
           set -o pipefail
           read -ra submodules <<< "$QMK_SUBMODULES"
           head=$(git rev-parse HEAD)
@@ -153,14 +154,14 @@ jobs:
       # cache never serves another release.
       - name: "Compute QMK toolchain cache key"
         id: toolchain-key
-        run: |
+        run: &toolchain-key-run |
           key="qmk-toolchain-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
           key="$key-$QMK_TOOLCHAINS_RELEASE-$QMK_FLASHUTILS_RELEASE"
           echo "key=$key" | tee -a "$GITHUB_OUTPUT"
       - name: "Restore QMK toolchain"
         id: toolchain-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
+        with: &toolchain-restore-with
           path: ${{ runner.temp }}/qmk-assets
           key: ${{ steps.toolchain-key.outputs.key }}
 
@@ -169,7 +170,7 @@ jobs:
       - name: "Download QMK toolchain"
         if: ${{ steps.toolchain-cache.outputs.cache-hit != 'true' }}
         working-directory: ${{ runner.temp }}
-        run: |
+        run: &toolchain-download-run |
           gcc_version="${QMK_TOOLCHAINS_RELEASE#v}"
           gcc_version="${gcc_version%-*}"
           base="https://github.com/qmk"
@@ -184,7 +185,7 @@ jobs:
       # QMK CLI puts QMK_DISTRIB_DIR/bin first on PATH.
       - name: "Install QMK toolchain"
         working-directory: ${{ runner.temp }}
-        run: |
+        run: &toolchain-install-run |
           sha256sum -c - <<EOF
           $QMK_TOOLCHAINS_SHA256  qmk-assets/toolchains.tar.zst
           $QMK_FLASHUTILS_SHA256  qmk-assets/flashutils.tar.zst
@@ -212,11 +213,11 @@ jobs:
       # uv downloads the QMK CLI and clang-tidy from PyPI faster than the
       # Actions cache restores them, so uv's cache is off
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
+        with: &setup-uv-with
           version: ${{ env.UV_VERSION }}
           enable-cache: false
       - name: "Check uv"
-        run: |
+        run: &check-uv-run |
           actual=$(uv --version || true)
           echo "$actual"
           read -r _ version _ <<< "$actual"
@@ -228,32 +229,37 @@ jobs:
       # qmk_firmware's Python code runs in the QMK CLI's environment, so its
       # requirements go into the same tool environment
       - name: "Install QMK CLI"
-        run: |
+        run: &qmk-cli-run |
           uv tool install --exclude-newer "$QMK_PYTHON_DEPS_DATE" \
             --with-requirements qmk_firmware/requirements.txt \
             "qmk==$QMK_CLI_VERSION"
           qmk --version
           "$(uv tool dir)/qmk/bin/python" --version
-      - run: >-
+      - run: &qmk-config-run >-
           qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
           user.overlay_dir="$GITHUB_WORKSPACE/src"
 
-      # ccache keeps the compiled objects between runs. The release build
-      # compiles without it, so a cache never goes into a release. The cache
-      # holds one build's objects. Each run that writes to it saves it under a
-      # new key, and a run restores the newest entry under the prefix, which
-      # holds the runner image, the toolchain release and the ccache release.
-      # ccache also hashes the compiler binary and every source and header, so
-      # an entry never serves an object built from other inputs. The paths are
-      # the same on every run, so no base directory is set.
+      # ccache keeps the compiled objects between runs. This job compiles
+      # through ccache only when a cache entry exists; without one it compiles
+      # without ccache, so a missing cache costs it no time, and the
+      # ccache-seed job fills the cache in parallel. The release build
+      # compiles without ccache, so a cache never goes into a release. An
+      # entry holds the pinned ccache release asset and one build's objects.
+      # Each run that writes objects saves them under a new key, and a run
+      # restores the newest entry under the prefix, which holds the runner
+      # image, the toolchain release and the ccache release. ccache also
+      # hashes the compiler binary and every source and header, so an entry
+      # never serves an object built from other inputs. The paths are the same
+      # on every run, so no base directory is set.
       - name: "Compute ccache cache key"
         id: ccache-key
         if: ${{ !inputs.skip-analysis }}
-        run: |
+        run: &ccache-key-run |
           prefix="ccache-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
           prefix="$prefix-$QMK_TOOLCHAINS_RELEASE-$CCACHE_VERSION-"
           echo "prefix=$prefix" | tee -a "$GITHUB_OUTPUT"
       - name: "Restore ccache"
+        id: ccache-cache
         if: ${{ !inputs.skip-analysis }}
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -265,20 +271,19 @@ jobs:
       # QMK_PATH_PREFIX puts a link of that name to ccache first. The compile
       # database records the link, which clang-tidy reads as the compiler.
       # QMK's USE_CCACHE would record `ccache` as the compiler instead. ccache
-      # runs the real compiler from CCACHE_PATH. The stamp marks the start of
-      # the build.
+      # runs the real compiler from CCACHE_PATH. Depend mode takes the headers
+      # from the compiler's dependency file, so a cache miss runs no extra
+      # preprocessor pass. The stamp marks the start of the build.
       - name: "Install ccache"
         id: ccache
-        if: ${{ !inputs.skip-analysis }}
-        working-directory: ${{ runner.temp }}
-        run: |
-          name="ccache-$CCACHE_VERSION-linux-x86_64-musl-static"
-          curl -fsSL -o ccache.tar.xz \
-            "https://github.com/ccache/ccache/releases/download/v$CCACHE_VERSION/$name.tar.xz"
-          echo "$CCACHE_SHA256  ccache.tar.xz" | sha256sum -c -
+        if: ${{ steps.ccache-cache.outputs.cache-matched-key != '' }}
+        run: &ccache-install-run |
+          dir="$RUNNER_TEMP/ccache"
+          echo "$CCACHE_SHA256  $dir/ccache.tar.xz" | sha256sum -c -
           bin="$RUNNER_TEMP/ccache-bin"
           mkdir -p "$bin"
-          tar -xJf ccache.tar.xz -C "$bin" --strip-components=1 "$name/ccache"
+          tar -xJf "$dir/ccache.tar.xz" -C "$bin" --strip-components=1 \
+            "ccache-$CCACHE_VERSION-linux-x86_64-musl-static/ccache"
           ln -s ccache "$bin/arm-none-eabi-gcc"
           version=$("$bin/ccache" --print-version)
           echo "ccache $version"
@@ -289,14 +294,15 @@ jobs:
           {
             echo "QMK_PATH_PREFIX=$bin"
             echo "CCACHE_PATH=$QMK_DISTRIB_DIR/bin"
-            echo "CCACHE_DIR=$RUNNER_TEMP/ccache"
+            echo "CCACHE_DIR=$dir/objects"
             # Hashes the compiler binary, not its mtime
             echo "CCACHE_COMPILERCHECK=content"
+            echo "CCACHE_DEPEND=true"
             # One build's objects take about 2 MB
             echo "CCACHE_MAXSIZE=50M"
           } >> "$GITHUB_ENV"
-          CCACHE_DIR="$RUNNER_TEMP/ccache" "$bin/ccache" --zero-stats
-          touch ccache-build-start
+          CCACHE_DIR="$dir/objects" "$bin/ccache" --zero-stats
+          touch "$RUNNER_TEMP/ccache-build-start"
 
       # One QMK build gives both the firmware in out/ and the compile database
       - name: "Build firmware and compile database"
@@ -308,18 +314,16 @@ jobs:
       - name: "Prune ccache"
         id: ccache-prune
         if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
-        working-directory: ${{ runner.temp }}
-        run: |
+        run: &ccache-prune-run |
           ccache="$QMK_PATH_PREFIX/ccache"
           "$ccache" --show-stats
           writes=$("$ccache" --print-stats | awk '$1 == "local_storage_write" { print $2 }')
-          "$ccache" --evict-older-than "$(( $(date +%s) - $(stat -c %Y ccache-build-start) + 1 ))s"
-          du -sh "$CCACHE_DIR"
+          "$ccache" --evict-older-than "$(( $(date +%s) - $(stat -c %Y "$RUNNER_TEMP/ccache-build-start") + 1 ))s"
           echo "save=$([ "${writes:-0}" -gt 0 ] && echo true || echo false)" | tee -a "$GITHUB_OUTPUT"
       - name: "Save ccache"
         if: ${{ !cancelled() && steps.ccache-prune.outputs.save == 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
+        with: &ccache-save-with
           path: ${{ runner.temp }}/ccache
           key: ${{ steps.ccache-key.outputs.prefix }}${{ github.run_id }}-${{ github.run_attempt }}
 
@@ -384,3 +388,112 @@ jobs:
         with:
           name: firmware
           path: out/
+
+  # Fills the ccache cache when no entry exists, in parallel with the firmware
+  # job, which then compiles without ccache. It builds as the firmware job
+  # does, through ccache, and saves the objects. With an entry it stops after
+  # the lookup. It is not a required check, and the release build skips it.
+  ccache-seed:
+    name: "Seed ccache"
+    needs: changes
+    if: ${{ !cancelled() && !inputs.skip-analysis && (github.event_name != 'pull_request' || needs.changes.outputs.firmware != 'false') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env: *firmware-env
+    steps:
+      - name: "Compute ccache cache key"
+        id: ccache-key
+        run: *ccache-key-run
+      - name: "Look up ccache"
+        id: lookup
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ${{ steps.ccache-key.outputs.prefix }}${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ${{ steps.ccache-key.outputs.prefix }}
+          lookup-only: true
+
+      # Every step from here on runs only without a cache entry. The firmware
+      # job saves the ZSA firmware and toolchain caches.
+      - if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: "Compute ZSA firmware cache key"
+        id: qmk
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: *qmk-key-run
+      - name: "Restore ZSA firmware"
+        id: qmk-cache
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with: *qmk-restore-with
+      - name: "Check out ZSA firmware"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' && steps.qmk-cache.outputs.cache-hit != 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: *qmk-checkout-with
+      - name: "Check out ZSA firmware submodules"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' && steps.qmk-cache.outputs.cache-hit != 'true' }}
+        working-directory: qmk_firmware
+        run: *qmk-submodules-run
+      - name: "Verify ZSA firmware checkout"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        working-directory: qmk_firmware
+        env:
+          QMK_REF: ${{ steps.qmk.outputs.ref }}
+        run: *qmk-verify-run
+
+      - name: "Compute QMK toolchain cache key"
+        id: toolchain-key
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: *toolchain-key-run
+      - name: "Restore QMK toolchain"
+        id: toolchain-cache
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with: *toolchain-restore-with
+      - name: "Download QMK toolchain"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' && steps.toolchain-cache.outputs.cache-hit != 'true' }}
+        working-directory: ${{ runner.temp }}
+        run: *toolchain-download-run
+      - name: "Install QMK toolchain"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        working-directory: ${{ runner.temp }}
+        run: *toolchain-install-run
+
+      - if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with: *setup-uv-with
+      - name: "Check uv"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: *check-uv-run
+      - name: "Install QMK CLI"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: *qmk-cli-run
+      - if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: *qmk-config-run
+
+      - name: "Download ccache"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ccache"
+          curl -fsSL -o "$RUNNER_TEMP/ccache/ccache.tar.xz" \
+            "https://github.com/ccache/ccache/releases/download/v$CCACHE_VERSION/ccache-$CCACHE_VERSION-linux-x86_64-musl-static.tar.xz"
+      - name: "Install ccache"
+        id: ccache
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: *ccache-install-run
+
+      # The same command as in the firmware job, so the compile commands and
+      # the cached objects are the same
+      - name: "Build firmware and compile database"
+        if: ${{ steps.lookup.outputs.cache-matched-key == '' }}
+        run: make compiledb
+
+      - name: "Prune ccache"
+        id: ccache-prune
+        if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
+        run: *ccache-prune-run
+      - name: "Save ccache"
+        if: ${{ !cancelled() && steps.ccache-prune.outputs.save == 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with: *ccache-save-with
