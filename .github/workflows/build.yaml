@@ -292,7 +292,7 @@ jobs:
       # the build.
       - name: "Install ccache"
         id: ccache
-        if: ${{ !inputs.skip-analysis && (github.event_name != 'workflow_dispatch' || steps.ccache-cache.outputs.cache-matched-key != '') }}
+        if: ${{ !inputs.skip-analysis && (github.event_name == 'push' || steps.ccache-cache.outputs.cache-matched-key != '') }}
         run: |
           dir="$RUNNER_TEMP/ccache"
           name="ccache-$CCACHE_VERSION-linux-x86_64-musl-static"
