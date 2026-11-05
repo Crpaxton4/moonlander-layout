@@ -268,10 +268,18 @@ bool rgb_matrix_indicators_user(void) {
     return true;
 }
 
+/**
+ * Per-dance record of the outcome a tap dance resolved to.
+ *
+ * The finished callback stores the outcome so the reset callback can release
+ * exactly what was registered.
+ */
 typedef struct {
-    bool    is_press_action;
+    /** Never read; present only to preserve the record's memory layout. */
+    bool is_press_action;
+    /** Outcome from dance_step() for the current sequence, or 0 after reset. */
     uint8_t step;
-} tap;
+} dance_tracker_t;
 
 enum {
     SINGLE_TAP = 1,
@@ -282,7 +290,7 @@ enum {
     MORE_TAPS
 };
 
-static tap dance_state[17];
+static dance_tracker_t dance_state[17];
 
 uint8_t dance_step(tap_dance_state_t *state);
 
