@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.23](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.22...v1.0.23) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** flatten the modded key handler ([#71](https://github.com/Crpaxton4/moonlander-layout/issues/71)) ([f4db51f](https://github.com/Crpaxton4/moonlander-layout/commit/f4db51f177699dc5928c54385bd48b18a7f9936f))
+
 ## [1.0.22](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.21...v1.0.22) (2026-11-05)
 
 
