@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.9](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.8...v1.0.9) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** name the tap dance tracker type ([#41](https://github.com/Crpaxton4/moonlander-layout/issues/41)) ([3cf9d35](https://github.com/Crpaxton4/moonlander-layout/commit/3cf9d3594e98079797e570d8e50d3e3b087d65ea))
+
+
+### Styles
+
+* **firmware:** format c sources with clang-format ([#38](https://github.com/Crpaxton4/moonlander-layout/issues/38)) ([8950c4e](https://github.com/Crpaxton4/moonlander-layout/commit/8950c4ee3117751c64b9448c5c28e20c78e28491))
+
 ## [1.0.8](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.7...v1.0.8) (2026-11-05)
 
 
