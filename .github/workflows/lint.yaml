@@ -34,11 +34,7 @@ jobs:
       # apt installs exactly the pinned version or fails.
       - name: "Install shellcheck"
         run: |
-          set -x
-          lsb_release -ds
-          time sudo apt-get install -y shellcheck=0.11.0-2
-          time sudo apt-get install -y --no-download shellcheck=0.11.0-2
-          time sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION" || true
+          sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
           shellcheck --version
 
       # One run of every hook, so a failing hook never hides another's findings.
