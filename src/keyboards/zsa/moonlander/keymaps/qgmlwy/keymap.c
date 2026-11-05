@@ -75,6 +75,34 @@ enum tap_dance_codes {
     DANCE_16,
 };
 
+/**
+ * Keymap layers, in the order of their index in `keymaps` and `ledmap`.
+ */
+enum layer {
+    /** QGMLWY alphas with mouse keys bottom right. */
+    LAYER_BASE = 0,
+    /** Base layer with arrows in place of mouse movement. */
+    LAYER_ARROWS = 1,
+    /** F1 to F20, media and volume keys. */
+    LAYER_FUNCTION_MEDIA = 2,
+    /** Ctrl+number and tab, browser and editor shortcuts. */
+    LAYER_SHORTCUTS = 3,
+    /** Alt+Ctrl+Shift+grave leader chord macros. */
+    LAYER_LAUNCHER = 4,
+    /** Ctrl/Alt/Shift+F13 to F18 bindings and window keys. */
+    LAYER_WINDOW_MANAGER = 5,
+    /** Mostly transparent gate to the text navigation layer. */
+    LAYER_NAVIGATION_GATE = 6,
+    /** Ctrl/Shift+arrows and word selection. */
+    LAYER_TEXT_NAVIGATION = 7,
+    /** Bootloader, NKRO, EEPROM clear, RGB and music keys. */
+    LAYER_SYSTEM = 8,
+    /** Every key disabled; double-hold either thumb dance to leave. */
+    LAYER_LOCK = 9,
+    /** Number of layers. */
+    LAYER_COUNT,
+};
+
 #define DUAL_FUNC_0 LT(6, KC_H)
 #define DUAL_FUNC_1 LT(12, KC_T)
 #define DUAL_FUNC_2 LT(5, KC_F3)
@@ -82,79 +110,79 @@ enum tap_dance_codes {
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT_moonlander(
+    [LAYER_BASE] = LAYOUT_moonlander(
         KC_ESCAPE,      KC_GRAVE,       KC_1,           KC_2,           KC_3,           KC_4,           KC_5,                                           KC_6,           KC_7,           KC_8,           KC_9,           KC_0,           KC_MINUS,       KC_EQUAL,
         KC_TAB,         KC_Q,           KC_G,           KC_M,           KC_L,           KC_W,           DUAL_FUNC_0,                                    TD(DANCE_1),    KC_Y,           KC_F,           KC_U,           KC_B,           KC_SCLN,        KC_BSLS,
-        LSFT(KC_TAB),   KC_D,           KC_S,           KC_T,           KC_N,           KC_R,           DUAL_FUNC_1,                                                                    OSL(3),         KC_I,           KC_A,           KC_E,           KC_O,           KC_H,           KC_QUOTE,
+        LSFT(KC_TAB),   KC_D,           KC_S,           KC_T,           KC_N,           KC_R,           DUAL_FUNC_1,                                                                    OSL(LAYER_SHORTCUTS), KC_I,           KC_A,           KC_E,           KC_O,           KC_H,           KC_QUOTE,
         KC_LEFT_SHIFT,  KC_Z,           KC_X,           KC_C,           KC_V,           KC_J,                                           KC_K,           KC_P,           KC_COMMA,       KC_DOT,         KC_SLASH,       TD(DANCE_2),
-        TD(DANCE_0),    KC_LEFT_ALT,    OSL(2),         OSL(4),         OSL(5),         KC_ENTER,                                                                                                       TO(1),          KC_MS_LEFT,     KC_MS_UP,       KC_MS_DOWN,     KC_MS_RIGHT,    TD(DANCE_3),
+        TD(DANCE_0),    KC_LEFT_ALT,    OSL(LAYER_FUNCTION_MEDIA), OSL(LAYER_LAUNCHER), OSL(LAYER_WINDOW_MANAGER), KC_ENTER,                                                                                                       TO(LAYER_ARROWS), KC_MS_LEFT,     KC_MS_UP,       KC_MS_DOWN,     KC_MS_RIGHT,    TD(DANCE_3),
         KC_SPACE,       KC_BSPC,        KC_DELETE,                      TD(DANCE_4),    TD(DANCE_5),    KC_MS_BTN1
     ),
-    [1] = LAYOUT_moonlander(
+    [LAYER_ARROWS] = LAYOUT_moonlander(
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 TO(0),          KC_LEFT,        KC_UP,          KC_DOWN,        KC_RIGHT,       KC_TRANSPARENT,
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 TO(LAYER_BASE), KC_LEFT,        KC_UP,          KC_DOWN,        KC_RIGHT,       KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [2] = LAYOUT_moonlander(
-        TO(0),          KC_TRANSPARENT, KC_F1,          KC_F2,          KC_F3,          KC_F4,          KC_F5,                                          KC_F6,          KC_F7,          KC_F8,          KC_F9,          KC_F10,         KC_TRANSPARENT, KC_TRANSPARENT,
+    [LAYER_FUNCTION_MEDIA] = LAYOUT_moonlander(
+        TO(LAYER_BASE), KC_TRANSPARENT, KC_F1,          KC_F2,          KC_F3,          KC_F4,          KC_F5,                                          KC_F6,          KC_F7,          KC_F8,          KC_F9,          KC_F10,         KC_TRANSPARENT, KC_TRANSPARENT,
         TD(DANCE_6),    KC_TRANSPARENT, KC_F11,         KC_F12,         KC_F13,         KC_F14,         KC_F15,                                         KC_F16,         KC_F17,         KC_F18,         KC_F19,         KC_F20,         KC_TRANSPARENT, KC_TRANSPARENT,
         KC_LEFT_GUI,    KC_TRANSPARENT, KC_TRANSPARENT, LGUI(KC_E),     LGUI(KC_DOT),   KC_TRANSPARENT, LALT(LGUI(KC_LBRC)),                                                                KC_TRANSPARENT, KC_TRANSPARENT, DUAL_FUNC_2,    KC_MEDIA_PLAY_PAUSE,KC_MEDIA_STOP,  DUAL_FUNC_3,    KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_F13,         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_AUDIO_MUTE,  KC_AUDIO_VOL_UP,KC_AUDIO_VOL_DOWN,KC_TRANSPARENT, KC_TRANSPARENT,
-        KC_TRANSPARENT, KC_TRANSPARENT, TO(0),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+        KC_TRANSPARENT, KC_TRANSPARENT, TO(LAYER_BASE), KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [3] = LAYOUT_moonlander(
-        TO(0),          KC_TRANSPARENT, LCTL(KC_1),     LCTL(KC_2),     LCTL(KC_3),     LCTL(KC_4),     LCTL(KC_5),                                     LCTL(KC_6),     LCTL(KC_7),     LCTL(KC_8),     LCTL(KC_9),     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+    [LAYER_SHORTCUTS] = LAYOUT_moonlander(
+        TO(LAYER_BASE), KC_TRANSPARENT, LCTL(KC_1),     LCTL(KC_2),     LCTL(KC_3),     LCTL(KC_4),     LCTL(KC_5),                                     LCTL(KC_6),     LCTL(KC_7),     LCTL(KC_8),     LCTL(KC_9),     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, LCTL(KC_G),                                     KC_TRANSPARENT, KC_TRANSPARENT, LCTL(KC_L),     LCTL(LSFT(KC_C)),TD(DANCE_8),    LCTL(KC_L),     KC_TRANSPARENT,
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_F6,          LCTL(KC_F),     KC_TRANSPARENT, LCTL(LSFT(KC_G)),                                                                TO(0),          KC_TRANSPARENT, LALT(KC_LEFT),  TD(DANCE_9),    TD(DANCE_10),   LALT(KC_RIGHT), KC_TRANSPARENT,
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_F6,          LCTL(KC_F),     KC_TRANSPARENT, LCTL(LSFT(KC_G)),                                                                TO(LAYER_BASE), KC_TRANSPARENT, LALT(KC_LEFT),  TD(DANCE_9),    TD(DANCE_10),   LALT(KC_RIGHT), KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, TD(DANCE_7),                                    KC_TRANSPARENT, TD(DANCE_11),   TD(DANCE_12),   LCTL(LSFT(KC_T)),TD(DANCE_13),   LCTL(KC_W),
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, LCTL(LSFT(KC_W)),
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [4] = LAYOUT_moonlander(
-        TO(0),          KC_TRANSPARENT, ST_MACRO_0,     ST_MACRO_1,     LCTL(KC_I),     LCTL(LSFT(KC_I)),KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+    [LAYER_LAUNCHER] = LAYOUT_moonlander(
+        TO(LAYER_BASE), KC_TRANSPARENT, ST_MACRO_0,     ST_MACRO_1,     LCTL(KC_I),     LCTL(LSFT(KC_I)),KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         ST_MACRO_2,     ST_MACRO_3,     ST_MACRO_4,     ST_MACRO_5,     ST_MACRO_6,     ST_MACRO_7,     ST_MACRO_8,                                     ST_MACRO_18,    ST_MACRO_19,    ST_MACRO_20,    ST_MACRO_21,    ST_MACRO_22,    ST_MACRO_23,    ST_MACRO_24,
         KC_TRANSPARENT, ST_MACRO_9,     ST_MACRO_10,    ST_MACRO_11,    ST_MACRO_12,    ST_MACRO_13,    ST_MACRO_14,                                                                    ST_MACRO_25,    ST_MACRO_26,    ST_MACRO_27,    ST_MACRO_28,    ST_MACRO_29,    ST_MACRO_30,    ST_MACRO_31,
         KC_TRANSPARENT, ST_MACRO_15,    KC_TRANSPARENT, ST_MACRO_16,    KC_TRANSPARENT, ST_MACRO_17,                                    ST_MACRO_32,    ST_MACRO_33,    ST_MACRO_34,    LGUI(LSFT(KC_P)),ST_MACRO_35,    ST_MACRO_36,
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, TO(0),          KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, ST_MACRO_37,
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, TO(LAYER_BASE), KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, ST_MACRO_37,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [5] = LAYOUT_moonlander(
-        TO(0),          LCTL(LSFT(KC_F13)),LCTL(LSFT(KC_F15)),LCTL(LSFT(KC_F10)),LCTL(LSFT(KC_F14)),LCTL(LSFT(KC_F16)),LCTL(LSFT(KC_F11)),                                LCTL(LSFT(KC_F17)),LCTL(LSFT(KC_F12)),KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+    [LAYER_WINDOW_MANAGER] = LAYOUT_moonlander(
+        TO(LAYER_BASE), LCTL(LSFT(KC_F13)),LCTL(LSFT(KC_F15)),LCTL(LSFT(KC_F10)),LCTL(LSFT(KC_F14)),LCTL(LSFT(KC_F16)),LCTL(LSFT(KC_F11)),                                LCTL(LSFT(KC_F17)),LCTL(LSFT(KC_F12)),KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         LCTL(LSFT(KC_F18)),ST_MACRO_38,    ST_MACRO_39,    ST_MACRO_40,    ST_MACRO_41,    KC_TRANSPARENT, LGUI(KC_C),                                     KC_TRANSPARENT, KC_TRANSPARENT, LCTL(KC_F1),    LCTL(KC_F2),    LCTL(KC_F3),    LCTL(KC_F4),    KC_TRANSPARENT,
         LALT(LSFT(KC_F1)),LCTL(LSFT(KC_F1)),LCTL(LSFT(KC_F3)),LALT(LCTL(LSFT(KC_F18))),LALT(LSFT(KC_F3)),KC_TRANSPARENT, LGUI(KC_W),                                                                     KC_TRANSPARENT, KC_TRANSPARENT, LALT(LCTL(LSFT(KC_F2))),LALT(LCTL(LSFT(KC_F8))),LALT(LCTL(LSFT(KC_F1))),LALT(LCTL(LSFT(KC_F3))),KC_TRANSPARENT,
         LALT(LCTL(LSFT(KC_F14))),LCTL(LSFT(KC_F7)),LCTL(LSFT(KC_F9)),LCTL(LSFT(KC_F6)),LCTL(LSFT(KC_F8)),LALT(LSFT(KC_F4)),                                TD(DANCE_14),   LALT(LCTL(LSFT(KC_F12))),LALT(LCTL(LSFT(KC_F15))),LALT(LCTL(LSFT(KC_F11))),LALT(LCTL(LSFT(KC_F13))),LALT(LCTL(LSFT(KC_F9))),
-        LGUI(LSFT(KC_F1)),LALT(LCTL(LSFT(KC_F5))),KC_TRANSPARENT, KC_TRANSPARENT, TO(0),          LALT(LGUI(LSFT(KC_A))),                                                                                                KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, LALT(LCTL(LSFT(KC_F10))),
+        LGUI(LSFT(KC_F1)),LALT(LCTL(LSFT(KC_F5))),KC_TRANSPARENT, KC_TRANSPARENT, TO(LAYER_BASE), LALT(LGUI(LSFT(KC_A))),                                                                                                KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, LALT(LCTL(LSFT(KC_F10))),
         LGUI(KC_PAGE_UP),LALT(KC_F4),    LGUI(LCTL(KC_ESCAPE)),                KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [6] = LAYOUT_moonlander(
-        TO(0),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(0),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+    [LAYER_NAVIGATION_GATE] = LAYOUT_moonlander(
+        TO(LAYER_BASE), KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(LAYER_BASE), KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, OSL(7),         KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, OSL(LAYER_TEXT_NAVIGATION), KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [7] = LAYOUT_moonlander(
-        TO(6),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, LCTL(KC_1),     LCTL(KC_2),     LCTL(KC_3),     LCTL(KC_4),     LCTL(KC_X),
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(0),          KC_TRANSPARENT, LCTL(KC_LEFT),  LCTL(KC_UP),    LCTL(KC_DOWN),  LCTL(KC_RIGHT), KC_TRANSPARENT,
+    [LAYER_TEXT_NAVIGATION] = LAYOUT_moonlander(
+        TO(LAYER_NAVIGATION_GATE), KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, LCTL(KC_1),     LCTL(KC_2),     LCTL(KC_3),     LCTL(KC_4),     LCTL(KC_X),
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(LAYER_BASE), KC_TRANSPARENT, LCTL(KC_LEFT),  LCTL(KC_UP),    LCTL(KC_DOWN),  LCTL(KC_RIGHT), KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, LCTL(KC_S),     KC_TRANSPARENT, KC_TRANSPARENT,                                                                 KC_TRANSPARENT, KC_TRANSPARENT, LALT(LSFT(KC_LEFT)),LCTL(LSFT(KC_UP)),LCTL(LSFT(KC_DOWN)),LALT(LSFT(KC_RIGHT)),KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, LSFT(KC_LEFT),  LSFT(KC_UP),    LSFT(KC_DOWN),  LSFT(KC_RIGHT), KC_TRANSPARENT,
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, TO(6),          KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, TO(LAYER_NAVIGATION_GATE), KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [8] = LAYOUT_moonlander(
-        TO(0),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
-        QK_BOOT,        MAGIC_TOGGLE_NKRO,EE_CLR,         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(0),          KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+    [LAYER_SYSTEM] = LAYOUT_moonlander(
+        TO(LAYER_BASE), KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+        QK_BOOT,        MAGIC_TOGGLE_NKRO,EE_CLR,         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(LAYER_BASE), KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, RGB_MODE_FORWARD,RGB_SLD,        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
-        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(9),          MU_TOGG,        MU_NEXT,        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
+        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                 TO(LAYER_LOCK), MU_TOGG,        MU_NEXT,        KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                                                                                                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,
         KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT,                 KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
     ),
-    [9] = LAYOUT_moonlander(
+    [LAYER_LOCK] = LAYOUT_moonlander(
         KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,                                          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,
         KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,                                          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,
         KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,                                                                          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_NO,
@@ -179,25 +207,25 @@ void keyboard_post_init_user(void) {
 
 // clang-format off
 const uint8_t PROGMEM ledmap[][RGB_MATRIX_LED_COUNT][3] = {
-    [0] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {139,16,255}, {5,255,255}, {180,255,255}, {180,255,255}, {180,255,255}, {18,218,204} },
+    [LAYER_BASE] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {139,16,255}, {5,255,255}, {180,255,255}, {180,255,255}, {180,255,255}, {18,218,204} },
 
-    [1] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {139,16,255}, {5,255,255}, {179,255,255}, {180,255,255}, {180,255,255}, {180,255,255} },
+    [LAYER_ARROWS] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {18,218,204}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {139,16,255}, {5,255,255}, {179,255,255}, {180,255,255}, {180,255,255}, {180,255,255} },
 
-    [2] = { {0,0,255}, {0,255,228}, {0,0,112}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {92,255,255}, {0,0,0}, {129,255,255}, {92,255,255}, {92,255,255}, {92,255,255}, {139,255,239}, {0,0,0}, {237,255,255}, {92,255,255}, {92,255,255}, {52,235,255}, {0,0,0}, {186,197,255}, {92,255,255}, {92,255,255}, {0,0,0}, {0,0,0}, {92,255,255}, {92,255,255}, {116,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {116,255,255}, {0,0,0}, {180,255,255}, {92,255,255}, {92,255,255}, {116,255,255}, {116,255,255}, {180,255,255}, {92,255,255}, {92,255,255}, {116,255,255}, {116,255,255}, {180,255,255}, {92,255,255}, {92,255,255}, {116,255,255}, {116,255,255}, {180,255,255}, {92,255,255}, {92,255,255}, {0,0,0}, {0,0,0}, {92,255,255}, {92,255,255}, {5,255,255}, {180,255,255}, {180,255,255}, {180,255,255}, {18,218,204} },
+    [LAYER_FUNCTION_MEDIA] = { {0,0,255}, {0,255,228}, {0,0,112}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {92,255,255}, {0,0,0}, {129,255,255}, {92,255,255}, {92,255,255}, {92,255,255}, {139,255,239}, {0,0,0}, {237,255,255}, {92,255,255}, {92,255,255}, {52,235,255}, {0,0,0}, {186,197,255}, {92,255,255}, {92,255,255}, {0,0,0}, {0,0,0}, {92,255,255}, {92,255,255}, {116,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {116,255,255}, {0,0,0}, {180,255,255}, {92,255,255}, {92,255,255}, {116,255,255}, {116,255,255}, {180,255,255}, {92,255,255}, {92,255,255}, {116,255,255}, {116,255,255}, {180,255,255}, {92,255,255}, {92,255,255}, {116,255,255}, {116,255,255}, {180,255,255}, {92,255,255}, {92,255,255}, {0,0,0}, {0,0,0}, {92,255,255}, {92,255,255}, {5,255,255}, {180,255,255}, {180,255,255}, {180,255,255}, {18,218,204} },
 
-    [3] = { {0,0,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {5,255,255}, {0,0,0}, {5,255,255}, {0,0,0}, {237,255,255}, {5,255,255}, {0,0,0}, {5,255,255}, {0,0,0}, {186,197,255}, {5,255,255}, {0,0,0}, {0,0,0}, {5,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {5,255,255}, {0,0,0}, {5,255,255}, {5,255,255}, {5,255,255}, {179,255,255}, {0,0,0}, {5,255,255}, {5,255,255}, {5,255,255}, {179,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {0,0,0}, {179,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {179,255,255}, {5,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {139,16,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
+    [LAYER_SHORTCUTS] = { {0,0,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {5,255,255}, {0,0,0}, {5,255,255}, {0,0,0}, {237,255,255}, {5,255,255}, {0,0,0}, {5,255,255}, {0,0,0}, {186,197,255}, {5,255,255}, {0,0,0}, {0,0,0}, {5,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {5,255,255}, {0,0,0}, {5,255,255}, {5,255,255}, {5,255,255}, {179,255,255}, {0,0,0}, {5,255,255}, {5,255,255}, {5,255,255}, {179,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {0,0,0}, {179,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {5,255,255}, {179,255,255}, {5,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {139,16,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
 
-    [4] = { {0,0,255}, {139,33,224}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {92,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {139,33,224}, {237,255,255}, {237,255,255}, {0,0,0}, {186,197,255}, {139,33,224}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {180,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
+    [LAYER_LAUNCHER] = { {0,0,255}, {139,33,224}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {92,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {139,33,224}, {237,255,255}, {237,255,255}, {0,0,0}, {186,197,255}, {139,33,224}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {179,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {237,255,255}, {0,0,0}, {237,255,255}, {237,255,255}, {180,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
 
-    [5] = { {0,0,255}, {187,195,250}, {187,195,250}, {187,195,250}, {187,195,250}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {92,255,255}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {237,255,255}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {186,197,255}, {187,252,255}, {0,0,0}, {0,0,0}, {187,129,237}, {187,252,255}, {186,197,255}, {186,197,255}, {187,195,250}, {187,195,250}, {187,195,250}, {187,195,250}, {0,0,0}, {0,0,0}, {0,0,0}, {187,195,250}, {187,195,250}, {0,0,0}, {187,195,250}, {187,195,250}, {187,195,250}, {179,255,255}, {0,0,0}, {187,195,250}, {187,195,250}, {187,195,250}, {179,255,255}, {0,0,0}, {187,195,250}, {187,195,250}, {186,197,255}, {179,255,255}, {0,0,0}, {187,195,250}, {187,195,250}, {186,197,255}, {179,255,255}, {187,252,255}, {0,0,0}, {0,0,0}, {179,255,255}, {187,252,255}, {139,16,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
+    [LAYER_WINDOW_MANAGER] = { {0,0,255}, {187,195,250}, {187,195,250}, {187,195,250}, {187,195,250}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {92,255,255}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {237,255,255}, {187,129,237}, {187,129,237}, {187,129,237}, {187,129,237}, {186,197,255}, {187,252,255}, {0,0,0}, {0,0,0}, {187,129,237}, {187,252,255}, {186,197,255}, {186,197,255}, {187,195,250}, {187,195,250}, {187,195,250}, {187,195,250}, {0,0,0}, {0,0,0}, {0,0,0}, {187,195,250}, {187,195,250}, {0,0,0}, {187,195,250}, {187,195,250}, {187,195,250}, {179,255,255}, {0,0,0}, {187,195,250}, {187,195,250}, {187,195,250}, {179,255,255}, {0,0,0}, {187,195,250}, {187,195,250}, {186,197,255}, {179,255,255}, {0,0,0}, {187,195,250}, {187,195,250}, {186,197,255}, {179,255,255}, {187,252,255}, {0,0,0}, {0,0,0}, {179,255,255}, {187,252,255}, {139,16,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
 
-    [6] = { {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {5,255,255}, {180,255,255}, {180,255,255}, {180,255,255}, {18,218,204} },
+    [LAYER_NAVIGATION_GATE] = { {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {180,255,255}, {5,255,255}, {180,255,255}, {180,255,255}, {180,255,255}, {18,218,204} },
 
-    [7] = { {0,0,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
+    [LAYER_TEXT_NAVIGATION] = { {0,0,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {66,234,255}, {66,234,255}, {66,234,255}, {66,234,255}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
 
-    [8] = { {0,0,255}, {0,255,163}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {95,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {96,255,255}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {96,255,255}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {97,255,255}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {97,255,255}, {0,0,0}, {139,16,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
+    [LAYER_SYSTEM] = { {0,0,255}, {0,255,163}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {95,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {5,255,255}, {96,255,255}, {0,0,0}, {92,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {237,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {186,197,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {96,255,255}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {97,255,255}, {179,255,255}, {0,0,0}, {0,0,0}, {0,0,0}, {97,255,255}, {0,0,0}, {139,16,255}, {5,255,255}, {179,255,255}, {179,255,255}, {179,255,255}, {18,218,204} },
 
-    [9] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,255} },
+    [LAYER_LOCK] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,255}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,255} },
 
 };
 // clang-format on
@@ -224,35 +252,35 @@ bool rgb_matrix_indicators_user(void) {
     }
     if (!keyboard_config.disable_layer_led) {
         switch (biton32(layer_state)) {
-            case 0:
-                set_layer_color(0);
+            case LAYER_BASE:
+                set_layer_color(LAYER_BASE);
                 break;
-            case 1:
-                set_layer_color(1);
+            case LAYER_ARROWS:
+                set_layer_color(LAYER_ARROWS);
                 break;
-            case 2:
-                set_layer_color(2);
+            case LAYER_FUNCTION_MEDIA:
+                set_layer_color(LAYER_FUNCTION_MEDIA);
                 break;
-            case 3:
-                set_layer_color(3);
+            case LAYER_SHORTCUTS:
+                set_layer_color(LAYER_SHORTCUTS);
                 break;
-            case 4:
-                set_layer_color(4);
+            case LAYER_LAUNCHER:
+                set_layer_color(LAYER_LAUNCHER);
                 break;
-            case 5:
-                set_layer_color(5);
+            case LAYER_WINDOW_MANAGER:
+                set_layer_color(LAYER_WINDOW_MANAGER);
                 break;
-            case 6:
-                set_layer_color(6);
+            case LAYER_NAVIGATION_GATE:
+                set_layer_color(LAYER_NAVIGATION_GATE);
                 break;
-            case 7:
-                set_layer_color(7);
+            case LAYER_TEXT_NAVIGATION:
+                set_layer_color(LAYER_TEXT_NAVIGATION);
                 break;
-            case 8:
-                set_layer_color(8);
+            case LAYER_SYSTEM:
+                set_layer_color(LAYER_SYSTEM);
                 break;
-            case 9:
-                set_layer_color(9);
+            case LAYER_LOCK:
+                set_layer_color(LAYER_LOCK);
                 break;
             default:
                 if (rgb_matrix_get_flags() == LED_FLAG_NONE) {
@@ -375,13 +403,13 @@ void dance_1_finished(tap_dance_state_t *state, void *user_data) {
     dance_state[1].step = dance_step(state);
     switch (dance_state[1].step) {
         case SINGLE_TAP:
-            layer_move(6);
+            layer_move(LAYER_NAVIGATION_GATE);
             break;
         case DOUBLE_TAP:
-            layer_move(8);
+            layer_move(LAYER_SYSTEM);
             break;
         case DOUBLE_SINGLE_TAP:
-            layer_move(6);
+            layer_move(LAYER_NAVIGATION_GATE);
             break;
     }
 }
@@ -1027,7 +1055,7 @@ void dance_15_finished(tap_dance_state_t *state, void *user_data) {
     dance_state[15].step = dance_step(state);
     switch (dance_state[15].step) {
         case DOUBLE_HOLD:
-            layer_move(0);
+            layer_move(LAYER_BASE);
             break;
     }
 }
@@ -1044,7 +1072,7 @@ void dance_16_finished(tap_dance_state_t *state, void *user_data) {
     dance_state[16].step = dance_step(state);
     switch (dance_state[16].step) {
         case DOUBLE_HOLD:
-            layer_move(0);
+            layer_move(LAYER_BASE);
             break;
     }
 }
