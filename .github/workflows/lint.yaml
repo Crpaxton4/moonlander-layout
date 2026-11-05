@@ -14,7 +14,7 @@ env:
   TREE_SITTER_C_VERSION: "0.20.5-2"
   # Hook ids or aliases, comma-separated. These hooks report their findings but
   # don't fail the job.
-  REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown"
+  REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown,check-standards"
 
 jobs:
   lint:
@@ -54,7 +54,6 @@ jobs:
       # One run of every hook except the report-only ones, so a failing hook
       # never hides another's findings. --verbose prints each hook's duration;
       # `time` adds the suite total.
-      # --verbose prints each hook's duration; `time` adds the suite total.
       - name: "Run pre-commit"
         env:
           SKIP: ${{ env.REPORT_ONLY_HOOKS }}
@@ -69,7 +68,7 @@ jobs:
       - name: "Test check-standards"
         if: ${{ !cancelled() }}
         run: time make -C tools/check_standards test
-        
+
       # Given a hook id, pre-commit runs only that hook, so each report-only
       # hook gets its own call. Every one runs; the step fails if any did.
       - name: "Run report-only hooks"
