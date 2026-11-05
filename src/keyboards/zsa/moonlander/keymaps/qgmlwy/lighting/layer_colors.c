@@ -1,4 +1,4 @@
-/** @file 
+/** @file
  * Per-layer key colours of the qgmlwy keymap: the colour table and the RGB matrix
  * callbacks that show it.
  */
