@@ -23,12 +23,15 @@ firmware: ## Build the firmware into out/ (the default target)
 	mkdir -p out
 	mv -f src/*.bin out/
 
-# Compile database for clang-tidy. QMK writes it into the userspace root
-# (src/), next to a firmware copy that `firmware` already covers; the link puts
-# it at the repo root, where the tools look for it.
-compiledb: ## Write compile_commands.json for clang-tidy
+# Compile database for clang-tidy. QMK builds the firmware to record the
+# compile commands, and writes the database into the userspace root (src/),
+# next to the firmware copy. The firmware goes into out/, as `firmware` puts
+# it, so one build gives both; the link puts the database at the repo root,
+# where the tools look for it.
+compiledb: ## Build the firmware into out/ and write compile_commands.json
 	qmk compile --compiledb -kb zsa/moonlander/reva -km qgmlwy
-	rm -f src/*.bin
+	mkdir -p out
+	mv -f src/*.bin out/
 	ln -sf src/compile_commands.json compile_commands.json
 
 .PHONY: firmware compiledb
@@ -62,7 +65,9 @@ doxygen: ## Run the Doxygen documentation check only
 # Runs every check, then fails if any did: with --keep-going a failing check
 # never stops the others, and make exits non-zero at the end. Only this inner
 # make keeps going, so the firmware build still stops at its first error. The
-# total covers the checks, not the compile database build.
+# total covers the checks, not the compile database build. After a
+# `make compiledb`, `make --assume-old=compiledb analyze` runs the checks
+# without a second build.
 analyze: compiledb ## Run every static analysis check (clang-tidy, Doxygen)
 	@TIMEFORMAT='timing analyze-total %Rs'; \
 		time $(MAKE) --keep-going --no-print-directory $(ANALYZE_CHECKS)
@@ -74,7 +79,7 @@ analyze: compiledb ## Run every static analysis check (clang-tidy, Doxygen)
 # The checker in tools/check_standards/ links Ubuntu 24.04's tree-sitter
 # packages: libtree-sitter-dev and the C grammar of tree-sitter-c-src, whose
 # generated parser is compiled in. Only the Lint job builds it, on the Ubuntu
-# release and package versions setup.sh installs; the Static analysis job's
+# release and package versions setup.sh installs; the firmware job's
 # container ships a different tree-sitter.
 
 # Root the packages are installed under: empty for the system, or a directory
