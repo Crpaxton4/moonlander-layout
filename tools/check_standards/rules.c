@@ -1,14 +1,6 @@
 /** @file
- * Standards checker for this repository's C sources: the rules that no established
- * tool checks, run over each file's tree-sitter syntax tree.
- *
- * Usage: `check_standards FILE...`
- *
- * Each file is read and parsed, and one walk over its syntax tree hands every node to
- * every rule in `rules`. Findings are collected for all files and printed once all
- * are checked, sorted by file (argument order), line and column, one per line as
- * `file:line:column rule message`, followed by `N findings in M files`, M being the
- * number of files checked. The exit status is 0 without findings and 1 with any.
+ * The checker's rules, and the walk over a file's syntax tree that hands every node
+ * to every rule in `rules`.
  *
  * Rules:
  * - `file-docstring`: the file's very first bytes open a Doxygen comment block that
@@ -32,45 +24,19 @@
  *   as inside the `if`, and a `for` header as inside the `for`.
  * - Compound statements, labels, preprocessor conditionals and every other node
  *   add no level: they pass their enclosing construct on to their children.
- *
- * An `.inc` file holds the elements of a brace initializer, so it is parsed inside
- * one; see `file_kinds`. The words of `blanked_words` and the lines of
- * `blanked_directives` are parsed as spaces.
  */
 
 #include <ctype.h>
-#include <errno.h>
-#include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <tree_sitter/api.h>
+
+#include "rules.h"
 
 /** Deepest nesting of control flow allowed in a function body. */
 #define MAX_NESTING_DEPTH 2
 
-/** Size of a finding's message, terminator included. */
-#define MESSAGE_SIZE 160
-
 /** Most characters of source a parse-error message quotes. */
 #define QUOTE_LENGTH 40
-
-/** Number of the first line and column in a finding; tree-sitter counts from 0. */
-#define FIRST_POSITION 1
-
-/** Index in `argv` of the first file to check. */
-#define FIRST_FILE_ARGUMENT 1
-
-/** Bytes read from a file at a time. */
-#define READ_CHUNK_SIZE 4096
-
-/** Factor a full array grows by. */
-#define GROWTH_FACTOR 2
-
-/** Items a growing array holds beyond twice those in use. */
-#define MIN_CAPACITY 16
 
 /** Opens a Doxygen comment block. */
 #define DOC_COMMENT_OPEN "/**"
@@ -81,27 +47,11 @@
 /** Doxygen command that documents a file. */
 #define FILE_COMMAND "@file"
 
-/** Characters that separate words on a line. */
-#define BLANKS " \t"
-
-/** Characters between a line's start and a preprocessor directive's name. */
-#define DIRECTIVE_LEAD "# \t"
-
 /** Characters that end the file name after FILE_COMMAND. */
 #define WHITESPACE " \t\r\n"
 
-/** Number of rows in the array @p array. */
-#define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
-
 /** Bit of the construct kind @p kind in a construct_t `may_contain` mask. */
 #define BIT(kind) (1U << (kind))
-
-/**
- * The C grammar, from the tree-sitter-c package's generated parser.
- *
- * @return The grammar, for ts_parser_set_language().
- */
-const TSLanguage *tree_sitter_c(void);
 
 /** Control-flow constructs of the nesting rule, each its row in `constructs`. */
 typedef enum {
@@ -168,95 +118,6 @@ static const construct_t constructs[KIND_COUNT] = {
     [KIND_TERNARY]  = {"conditional_expression", "?:", NULL, NOTHING, 1},
     [KIND_GOTO]     = {"goto_statement", "goto", NULL, NOTHING, 1},
 };
-
-/** How a kind of file is parsed: inside a wrapper that makes it a translation unit. */
-typedef struct {
-    /** End of the file names of this kind. */
-    const char *suffix;
-    /** Text parsed before the file's own. */
-    const char *before;
-    /** Text parsed after the file's own. */
-    const char *after;
-} file_kind_t;
-
-/** Files parsed inside a wrapper; every other file is parsed as it is. */
-static const file_kind_t file_kinds[] = {
-    {".inc", "static const int inc[] = {\n", "\n};\n"},
-};
-
-/** A file parsed as it is. */
-static const file_kind_t translation_unit = {"", "", ""};
-
-/**
- * Words that tree-sitter can't parse and no rule needs, replaced by spaces before
- * parsing, in comments and strings too, so every position stays where it was.
- */
-static const char *const blanked_words[] = {
-    /* AVR's program memory attribute, a macro that tree-sitter takes for a name */
-    "PROGMEM",
-};
-
-/**
- * Preprocessor directives whose lines are replaced by spaces before parsing, like
- * `blanked_words`.
- */
-static const char *const blanked_directives[] = {
-    /* tree-sitter parses an include only where a declaration or a statement can
-     * be, not inside an initializer, where the keymap's tables include their rows */
-    "include",
-};
-
-/** A growing block of bytes, NUL-terminated after each append(). */
-typedef struct {
-    /** The bytes. */
-    char *data;
-    /** Bytes in use, the terminator excluded. */
-    size_t length;
-    /** Bytes allocated. */
-    size_t capacity;
-} buffer_t;
-
-/** One finding, as printed. */
-typedef struct {
-    /** Order in which the finding was reported, the last sort key. */
-    size_t sequence;
-    /** Line, counted from FIRST_POSITION. */
-    unsigned long line;
-    /** Column in bytes, counted from FIRST_POSITION. */
-    unsigned long column;
-    /** Path of the file as given. */
-    const char *path;
-    /** Name of the rule. */
-    const char *rule;
-    /** What is wrong. */
-    char message[MESSAGE_SIZE];
-} finding_t;
-
-/** Every finding so far. */
-typedef struct {
-    /** The findings, in file order, each file's sorted once it is checked. */
-    finding_t *items;
-    /** Findings in use. */
-    size_t count;
-    /** Findings allocated. */
-    size_t capacity;
-} findings_t;
-
-/** A file being checked. */
-typedef struct {
-    /** Path of the file as given. */
-    const char *path;
-    /** What tree-sitter parses: the file's text inside its kind's wrapper. */
-    buffer_t parsed;
-    /** Offset of the file's own text in `parsed`. */
-    size_t text_start;
-    /** Length of the file's own text. */
-    size_t text_length;
-    /** Lines the wrapper adds before the file's text. */
-    uint32_t wrapper_rows;
-    /** Where findings go. */
-    findings_t *findings;
-} source_t;
 
 /** Where a node sits in a function body. */
 typedef struct {
@@ -326,273 +187,6 @@ typedef struct {
     /** Message when it doesn't. */
     const char *message;
 } docstring_check_t;
-
-/**
- * Makes room in an array for at least one item after its first @p count.
- *
- * @param items     The array, or NULL if none is allocated yet.
- * @param item_size Size of one item.
- * @param capacity  Items allocated; updated when the array grows.
- * @param count     Items in use.
- * @return The array, moved if it grew.
- */
-static void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
-    if (count < *capacity) {
-        return items;
-    }
-    *capacity   = count * GROWTH_FACTOR + MIN_CAPACITY;
-    void *grown = realloc(items, *capacity * item_size);
-    if (grown == NULL) {
-        perror("check_standards");
-        abort();
-    }
-    return grown;
-}
-
-/**
- * Makes room in a buffer for @p extra more bytes and the terminator.
- *
- * @param buffer The buffer.
- * @param extra  Bytes to add after its current length.
- */
-static void reserve_bytes(buffer_t *buffer, size_t extra) {
-    buffer->data =
-        reserve(buffer->data, sizeof(char), &buffer->capacity, buffer->length + extra);
-}
-
-/**
- * Appends a C string to a buffer.
- *
- * @param buffer The buffer.
- * @param text   The string.
- */
-static void append(buffer_t *buffer, const char *text) {
-    size_t length = strlen(text);
-    reserve_bytes(buffer, length);
-    memcpy(buffer->data + buffer->length, text, length);
-    buffer->length += length;
-    buffer->data[buffer->length] = '\0';
-}
-
-/**
- * Appends everything left in a stream to a buffer, without the terminator.
- *
- * @param buffer The buffer.
- * @param stream The stream.
- * @return 0, or the errno value of a read error.
- */
-static int append_stream(buffer_t *buffer, FILE *stream) {
-    size_t read_size = 0;
-    do {
-        reserve_bytes(buffer, READ_CHUNK_SIZE);
-        read_size =
-            fread(buffer->data + buffer->length, sizeof(char), READ_CHUNK_SIZE, stream);
-        buffer->length += read_size;
-    } while (read_size == READ_CHUNK_SIZE);
-    if (ferror(stream) != 0) {
-        return errno;
-    }
-    return 0;
-}
-
-/**
- * Tells whether a C string ends with another.
- *
- * @param text   The string.
- * @param suffix The ending looked for.
- * @return Whether @p text ends with @p suffix.
- */
-static bool ends_with(const char *text, const char *suffix) {
-    size_t text_length   = strlen(text);
-    size_t suffix_length = strlen(suffix);
-    if (suffix_length > text_length) {
-        return false;
-    }
-    return strcmp(text + text_length - suffix_length, suffix) == 0;
-}
-
-/**
- * Finds how a file is parsed.
- *
- * @param path Path of the file.
- * @return The row of `file_kinds` whose suffix @p path ends with, or
- *         `translation_unit`.
- */
-static const file_kind_t *find_file_kind(const char *path) {
-    for (size_t index = 0; index < COUNT_OF(file_kinds); index++) {
-        if (ends_with(path, file_kinds[index].suffix)) {
-            return &file_kinds[index];
-        }
-    }
-    return &translation_unit;
-}
-
-/**
- * Counts the newlines in a C string.
- *
- * @param text The string.
- * @return Number of newlines in @p text.
- */
-static uint32_t count_newlines(const char *text) {
-    uint32_t newlines = 0;
-    for (const char *at = text; *at != '\0'; at++) {
-        if (*at == '\n') {
-            newlines++;
-        }
-    }
-    return newlines;
-}
-
-/**
- * Tells whether a byte can be part of a C identifier.
- *
- * @param byte The byte.
- * @return Whether it is a letter, a digit or an underscore.
- */
-static bool is_word_byte(char byte) {
-    return isalnum((unsigned char)byte) != 0 || byte == '_';
-}
-
-/**
- * Tells whether a text starts with a whole word.
- *
- * @param text The text, NUL-terminated.
- * @param word The word.
- * @return Whether @p text starts with @p word, not followed by a word byte.
- */
-static bool starts_with_word(const char *text, const char *word) {
-    size_t length = strlen(word);
-    if (strncmp(text, word, length) != 0 || is_word_byte(text[length])) {
-        return false;
-    }
-    return true;
-}
-
-/**
- * Replaces a word of `blanked_words` with spaces if one starts at a word start.
- *
- * @param at The word start, in a NUL-terminated buffer.
- */
-static void blank_word(char *at) {
-    for (size_t index = 0; index < COUNT_OF(blanked_words); index++) {
-        if (starts_with_word(at, blanked_words[index])) {
-            memset(at, ' ', strlen(blanked_words[index]));
-        }
-    }
-}
-
-/**
- * Replaces a line with spaces if it holds a directive of `blanked_directives`.
- *
- * @param line The line start, in a NUL-terminated buffer.
- */
-static void blank_directive(char *line) {
-    const char *hash = line + strspn(line, BLANKS);
-    const char *name = hash + strspn(hash, DIRECTIVE_LEAD);
-    if (*hash != '#') {
-        return;
-    }
-    for (size_t index = 0; index < COUNT_OF(blanked_directives); index++) {
-        if (starts_with_word(name, blanked_directives[index])) {
-            memset(line, ' ', strcspn(line, "\n"));
-        }
-    }
-}
-
-/**
- * Replaces every word of `blanked_words` and every line of `blanked_directives` in
- * a buffer with spaces.
- *
- * @param buffer The buffer.
- */
-static void blank_unparsable(buffer_t *buffer) {
-    char        previous = '\n';
-    const char *end      = buffer->data + buffer->length;
-    for (char *at = buffer->data; at < end; at++) {
-        if (previous == '\n') {
-            blank_directive(at);
-        }
-        if (!is_word_byte(previous)) {
-            blank_word(at);
-        }
-        previous = *at;
-    }
-}
-
-/**
- * Reads a file into its parse buffer, inside its file kind's wrapper.
- *
- * @param source The file, with its path set and nothing loaded yet.
- * @return 0, or the errno value of the error that stopped the file being read.
- */
-static int load_source(source_t *source) {
-    const file_kind_t *kind   = find_file_kind(source->path);
-    FILE              *stream = fopen(source->path, "rb");
-    if (stream == NULL) {
-        return errno;
-    }
-    append(&source->parsed, kind->before);
-    source->text_start   = source->parsed.length;
-    source->wrapper_rows = count_newlines(kind->before);
-    int error            = append_stream(&source->parsed, stream);
-    fclose(stream);
-    source->text_length = source->parsed.length - source->text_start;
-    append(&source->parsed, kind->after);
-    blank_unparsable(&source->parsed);
-    return error;
-}
-
-/**
- * Converts a row of the parse buffer to a line of the file.
- *
- * @param source The file.
- * @param row    Row in the parse buffer, counted from 0.
- * @return The line, counted from FIRST_POSITION; rows of the wrapper count as the
- *         first line.
- */
-static unsigned long file_line(const source_t *source, uint32_t row) {
-    uint32_t file_row = row < source->wrapper_rows ? 0 : row - source->wrapper_rows;
-    return (unsigned long)file_row + FIRST_POSITION;
-}
-
-/**
- * Adds a finding without a message.
- *
- * @param source The file the finding is in.
- * @param rule   Name of the rule.
- * @param point  Where the finding is in the parse buffer.
- * @return The finding, for its message.
- */
-static finding_t *add_finding(source_t *source, const char *rule, TSPoint point) {
-    findings_t *list = source->findings;
-    list->items = reserve(list->items, sizeof(finding_t), &list->capacity, list->count);
-    finding_t *finding = &list->items[list->count];
-    *finding           = (finding_t){
-        .sequence = list->count,
-        .line     = file_line(source, point.row),
-        .column   = (unsigned long)point.column + FIRST_POSITION,
-        .path     = source->path,
-        .rule     = rule,
-    };
-    list->count++;
-    return finding;
-}
-
-/**
- * Writes the message of a finding.
- *
- * @param finding The finding.
- * @param format  printf() format of the message, followed by its arguments.
- */
-static void describe(finding_t *finding, const char *format, ...)
-    __attribute__((format(printf, 2, 3)));
-
-static void describe(finding_t *finding, const char *format, ...) {
-    va_list arguments;
-    va_start(arguments, format);
-    vsnprintf(finding->message, sizeof(finding->message), format, arguments);
-    va_end(arguments);
-}
 
 /**
  * Finds a C string in a range of bytes.
@@ -896,7 +490,7 @@ static void walk(TSTreeCursor *cursor, const parent_t *parent) {
  * @param parser The parser.
  * @param source The file, with nothing loaded yet.
  */
-static void check_source(TSParser *parser, source_t *source) {
+void check_source(TSParser *parser, source_t *source) {
     int error = load_source(source);
     if (error != 0) {
         TSPoint start = {.row = 0, .column = 0};
@@ -910,88 +504,4 @@ static void check_source(TSParser *parser, source_t *source) {
     walk(&cursor, &root);
     ts_tree_cursor_delete(&cursor);
     ts_tree_delete(tree);
-}
-
-/**
- * Orders two numbers for qsort().
- *
- * @param left  The first number.
- * @param right The second number.
- * @return Negative, zero or positive as @p left is less than, equal to or greater
- *         than @p right.
- */
-static int compare_numbers(size_t left, size_t right) {
-    return (left > right) - (left < right);
-}
-
-/**
- * Orders two findings of one file by line, column and reporting order, for qsort().
- *
- * @param first  The first finding.
- * @param second The second finding.
- * @return Negative, zero or positive as @p first goes before, with or after
- *         @p second.
- */
-static int compare_findings(const void *first, const void *second) {
-    const finding_t *one   = first;
-    const finding_t *other = second;
-    int              order = compare_numbers(one->line, other->line);
-    order = order != 0 ? order : compare_numbers(one->column, other->column);
-    return order != 0 ? order : compare_numbers(one->sequence, other->sequence);
-}
-
-/**
- * Checks the file at a path and sorts its findings.
- *
- * @param parser   The parser.
- * @param findings Where findings go.
- * @param path     Path of the file.
- */
-static void check_path(TSParser *parser, findings_t *findings, const char *path) {
-    size_t   first  = findings->count;
-    source_t source = {.path = path, .findings = findings};
-    check_source(parser, &source);
-    free(source.parsed.data);
-    if (findings->count > first) {
-        size_t count = findings->count - first;
-        qsort(findings->items + first, count, sizeof(finding_t), compare_findings);
-    }
-}
-
-/**
- * Prints every finding and the summary line.
- *
- * @param findings   The findings.
- * @param file_count Number of files checked.
- */
-static void print_findings(const findings_t *findings, int file_count) {
-    for (size_t index = 0; index < findings->count; index++) {
-        const finding_t *finding = &findings->items[index];
-        printf("%s:%lu:%lu ", finding->path, finding->line, finding->column);
-        printf("%s %s\n", finding->rule, finding->message);
-    }
-    printf("%zu findings in %d files\n", findings->count, file_count);
-}
-
-/**
- * Checks every file named on the command line, then prints the findings.
- *
- * @param argc Number of arguments, the program name included.
- * @param argv The program name, then the paths of the files to check.
- * @return EXIT_SUCCESS without findings, EXIT_FAILURE with any.
- */
-int main(int argc, char *argv[]) {
-    TSParser *parser = ts_parser_new();
-    if (!ts_parser_set_language(parser, tree_sitter_c())) {
-        fputs("check_standards: tree-sitter can't load the C grammar\n", stderr);
-        return EXIT_FAILURE;
-    }
-    findings_t findings = {.items = NULL, .count = 0, .capacity = 0};
-    for (int index = FIRST_FILE_ARGUMENT; index < argc; index++) {
-        check_path(parser, &findings, argv[index]);
-    }
-    ts_parser_delete(parser);
-    print_findings(&findings, argc - FIRST_FILE_ARGUMENT);
-    free(findings.items);
-    return findings.count == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
