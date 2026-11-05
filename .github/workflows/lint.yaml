@@ -1,0 +1,56 @@
+name: "Lint"
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # Must match PRE_COMMIT_VERSION in setup.sh
+  PRE_COMMIT_VERSION: "4.7.0"
+
+jobs:
+  lint:
+    name: "Lint"
+    runs-on: ubuntu-latest
+    # Report-only: findings don't fail the PR yet
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - run: npm ci
+
+      # setup-uv publishes no major tags, so it is pinned to a release
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: "Install pre-commit"
+        run: uv tool install "pre-commit==$PRE_COMMIT_VERSION"
+
+      # One run of every hook, so a failing hook never hides another's findings.
+      # --verbose prints each hook's duration; `time` adds the suite total.
+      - name: "Run pre-commit"
+        run: |
+          set -o pipefail
+          TIMEFORMAT='real %Rs'
+          { time pre-commit run --all-files --hook-stage manual \
+              --show-diff-on-failure --verbose; } 2>&1 \
+            | tee "$RUNNER_TEMP/pre-commit.log"
+
+      - name: "Summarize timings"
+        if: ${{ !cancelled() }}
+        run: |
+          [ -f "$RUNNER_TEMP/pre-commit.log" ] || exit 0
+          {
+            echo "| Hook | Duration |"
+            echo "| --- | --- |"
+            awk '
+              /\.\.\.(Passed|Failed)$/ {
+                name = $0
+                sub(/\.+(Passed|Failed)$/, "", name)
+              }
+              /^- duration: / { print "| " name " | " $3 " |" }
+              /^real / { print "| **Total** | " $2 " |" }
+            ' "$RUNNER_TEMP/pre-commit.log"
+          } >> "$GITHUB_STEP_SUMMARY"

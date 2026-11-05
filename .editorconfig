@@ -1,0 +1,28 @@
+# Whitespace and line rules for every file, read by editors and enforced by
+# editorconfig-checker. Modelled on QMK upstream's .editorconfig.
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 88
+
+# To match GitHub Actions formatting
+[*.{yaml,yml}]
+indent_size = 2
+
+# Two trailing spaces are a Markdown line break
+[*.md]
+trim_trailing_whitespace = false
+
+# make requires tabs in recipes
+[{Makefile,*.mk}]
+indent_style = tab
+
+# Keymap grid files keep one keyboard row per line, however long
+[*.inc]
+max_line_length = off
