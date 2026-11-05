@@ -326,15 +326,21 @@ enum {
 
 static dance_tracker_t dance_state[DANCE_COUNT];
 
+/** Tap count of a dance tapped or held once. */
+#define SINGLE_TAP_COUNT 1
+
+/** Tap count of a dance tapped twice, or tapped once and then held. */
+#define DOUBLE_TAP_COUNT 2
+
 uint8_t dance_step(tap_dance_state_t *state);
 
 uint8_t dance_step(tap_dance_state_t *state) {
-    if (state->count == 1) {
+    if (state->count == SINGLE_TAP_COUNT) {
         if (state->interrupted || !state->pressed)
             return SINGLE_TAP;
         else
             return SINGLE_HOLD;
-    } else if (state->count == 2) {
+    } else if (state->count == DOUBLE_TAP_COUNT) {
         if (state->interrupted)
             return DOUBLE_SINGLE_TAP;
         else if (state->pressed)
@@ -345,17 +351,25 @@ uint8_t dance_step(tap_dance_state_t *state) {
     return MORE_TAPS;
 }
 
+/**
+ * Tap count at which an on-each-tap dance starts repeating its single-tap key.
+ *
+ * Reaching this count sends the key once per tap so far; each further tap
+ * sends it once more.
+ */
+#define REPEAT_TAP_COUNT 3
+
 void on_dance_0(tap_dance_state_t *state, void *user_data);
 void dance_0_finished(tap_dance_state_t *state, void *user_data);
 void dance_0_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_0(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(KC_LEFT_CTRL);
         tap_code16(KC_LEFT_CTRL);
         tap_code16(KC_LEFT_CTRL);
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(KC_LEFT_CTRL);
     }
 }
@@ -429,12 +443,12 @@ void dance_2_finished(tap_dance_state_t *state, void *user_data);
 void dance_2_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_2(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(KC_LPRN);
         tap_code16(KC_LPRN);
         tap_code16(KC_LPRN);
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(KC_LPRN);
     }
 }
@@ -480,12 +494,12 @@ void dance_3_finished(tap_dance_state_t *state, void *user_data);
 void dance_3_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_3(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(KC_RPRN);
         tap_code16(KC_RPRN);
         tap_code16(KC_RPRN);
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(KC_RPRN);
     }
 }
@@ -531,12 +545,12 @@ void dance_4_finished(tap_dance_state_t *state, void *user_data);
 void dance_4_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_4(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(KC_MS_BTN3);
         tap_code16(KC_MS_BTN3);
         tap_code16(KC_MS_BTN3);
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(KC_MS_BTN3);
     }
 }
@@ -589,12 +603,12 @@ void dance_5_finished(tap_dance_state_t *state, void *user_data);
 void dance_5_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_5(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(KC_MS_BTN2);
         tap_code16(KC_MS_BTN2);
         tap_code16(KC_MS_BTN2);
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(KC_MS_BTN2);
     }
 }
@@ -680,12 +694,12 @@ void dance_7_finished(tap_dance_state_t *state, void *user_data);
 void dance_7_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_7(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_D));
         tap_code16(LCTL(KC_D));
         tap_code16(LCTL(KC_D));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_D));
     }
 }
@@ -725,12 +739,12 @@ void dance_8_finished(tap_dance_state_t *state, void *user_data);
 void dance_8_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_8(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LCTL(LSFT(KC_J)));
         tap_code16(LCTL(LSFT(KC_J)));
         tap_code16(LCTL(LSFT(KC_J)));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LCTL(LSFT(KC_J)));
     }
 }
@@ -770,12 +784,12 @@ void dance_9_finished(tap_dance_state_t *state, void *user_data);
 void dance_9_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_9(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_RBRC));
         tap_code16(LCTL(KC_RBRC));
         tap_code16(LCTL(KC_RBRC));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_RBRC));
     }
 }
@@ -815,12 +829,12 @@ void dance_10_finished(tap_dance_state_t *state, void *user_data);
 void dance_10_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_10(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_R));
         tap_code16(LCTL(KC_R));
         tap_code16(LCTL(KC_R));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_R));
     }
 }
@@ -860,12 +874,12 @@ void dance_11_finished(tap_dance_state_t *state, void *user_data);
 void dance_11_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_11(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LCTL(LSFT(KC_TAB)));
         tap_code16(LCTL(LSFT(KC_TAB)));
         tap_code16(LCTL(LSFT(KC_TAB)));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LCTL(LSFT(KC_TAB)));
     }
 }
@@ -911,12 +925,12 @@ void dance_12_finished(tap_dance_state_t *state, void *user_data);
 void dance_12_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_12(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_T));
         tap_code16(LCTL(KC_T));
         tap_code16(LCTL(KC_T));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_T));
     }
 }
@@ -962,12 +976,12 @@ void dance_13_finished(tap_dance_state_t *state, void *user_data);
 void dance_13_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_13(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_TAB));
         tap_code16(LCTL(KC_TAB));
         tap_code16(LCTL(KC_TAB));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LCTL(KC_TAB));
     }
 }
@@ -1013,12 +1027,12 @@ void dance_14_finished(tap_dance_state_t *state, void *user_data);
 void dance_14_reset(tap_dance_state_t *state, void *user_data);
 
 void on_dance_14(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == REPEAT_TAP_COUNT) {
         tap_code16(LGUI(KC_F5));
         tap_code16(LGUI(KC_F5));
         tap_code16(LGUI(KC_F5));
     }
-    if (state->count > 3) {
+    if (state->count > REPEAT_TAP_COUNT) {
         tap_code16(LGUI(KC_F5));
     }
 }
@@ -1118,6 +1132,14 @@ tap_dance_action_t tap_dance_actions[] = {
     [DANCE_15] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, dance_15_finished, dance_15_reset),
     [DANCE_16] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, dance_16_finished, dance_16_reset),
 };
+
+/**
+ * rgblight's mode number for a static single colour, RGBLIGHT_MODE_STATIC_LIGHT.
+ *
+ * Without rgblight, QMK maps rgblight_mode() to rgb_matrix_mode(), where this
+ * number selects RGB_MATRIX_SOLID_COLOR.
+ */
+#define STATIC_LIGHT_MODE 1
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
@@ -1453,7 +1475,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 return false;
             }
             if (record->event.pressed) {
-                rgblight_mode(1);
+                rgblight_mode(STATIC_LIGHT_MODE);
             }
             return false;
     }
