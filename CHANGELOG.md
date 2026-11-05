@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.24](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.23...v1.0.24) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** plain initializers in the dance table ([#73](https://github.com/Crpaxton4/moonlander-layout/issues/73)) ([f718b2d](https://github.com/Crpaxton4/moonlander-layout/commit/f718b2d8a4e104fb32d1b4b3a99edf63c5b13e94))
+
 ## [1.0.23](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.22...v1.0.23) (2026-11-05)
 
 
