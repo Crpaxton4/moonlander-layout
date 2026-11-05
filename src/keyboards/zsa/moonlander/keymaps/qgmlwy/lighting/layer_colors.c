@@ -44,7 +44,7 @@ RGB hsv_to_rgb_with_value(HSV hsv) {
     };
 }
 
-void set_layer_color(int layer) {
+void set_layer_color(uint8_t layer) {
     for (int i = 0; i < RGB_MATRIX_LED_COUNT; i++) {
         HSV hsv = {
             .h = pgm_read_byte(&ledmap[layer][i][0]),
@@ -61,6 +61,18 @@ void set_layer_color(int layer) {
 }
 
 /**
+ * Turns every LED off when the RGB matrix flags are `LED_FLAG_NONE`.
+ *
+ * With no flags set the RGB matrix effects skip every LED, which would otherwise
+ * keep the colours they last showed.
+ */
+static void turn_off_leds_if_flags_none(void) {
+    if (rgb_matrix_get_flags() == LED_FLAG_NONE) {
+        rgb_matrix_set_color_all(0, 0, 0);
+    }
+}
+
+/**
  * Shows the highest active layer's colours on every RGB matrix frame.
  *
  * Does nothing while Oryx controls the LEDs. With layer colours turned off, or
@@ -73,47 +85,11 @@ bool rgb_matrix_indicators_user(void) {
     if (rawhid_state.rgb_control) {
         return false;
     }
-    if (!keyboard_config.disable_layer_led) {
-        switch (biton32(layer_state)) {
-            case LAYER_BASE:
-                set_layer_color(LAYER_BASE);
-                break;
-            case LAYER_ARROWS:
-                set_layer_color(LAYER_ARROWS);
-                break;
-            case LAYER_FUNCTION_MEDIA:
-                set_layer_color(LAYER_FUNCTION_MEDIA);
-                break;
-            case LAYER_SHORTCUTS:
-                set_layer_color(LAYER_SHORTCUTS);
-                break;
-            case LAYER_LAUNCHER:
-                set_layer_color(LAYER_LAUNCHER);
-                break;
-            case LAYER_WINDOW_MANAGER:
-                set_layer_color(LAYER_WINDOW_MANAGER);
-                break;
-            case LAYER_NAVIGATION_GATE:
-                set_layer_color(LAYER_NAVIGATION_GATE);
-                break;
-            case LAYER_TEXT_NAVIGATION:
-                set_layer_color(LAYER_TEXT_NAVIGATION);
-                break;
-            case LAYER_SYSTEM:
-                set_layer_color(LAYER_SYSTEM);
-                break;
-            case LAYER_LOCK:
-                set_layer_color(LAYER_LOCK);
-                break;
-            default:
-                if (rgb_matrix_get_flags() == LED_FLAG_NONE) {
-                    rgb_matrix_set_color_all(0, 0, 0);
-                }
-        }
+    uint8_t layer = get_highest_layer(layer_state);
+    if (!keyboard_config.disable_layer_led && layer < LAYER_COUNT) {
+        set_layer_color(layer);
     } else {
-        if (rgb_matrix_get_flags() == LED_FLAG_NONE) {
-            rgb_matrix_set_color_all(0, 0, 0);
-        }
+        turn_off_leds_if_flags_none();
     }
 
     return true;
