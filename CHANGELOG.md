@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.19](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.18...v1.0.19) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** simplify layer lighting ([#60](https://github.com/Crpaxton4/moonlander-layout/issues/60)) ([424b8ee](https://github.com/Crpaxton4/moonlander-layout/commit/424b8ee6a6bb9263a279c3c9a660875a9173ed9b))
+
 ## [1.0.18](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.17...v1.0.18) (2026-11-05)
 
 
