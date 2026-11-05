@@ -262,16 +262,16 @@ jobs:
 
       # ccache keeps the compiled objects between runs, so a build compiles
       # only the files whose inputs changed. A cache entry holds the pinned
-      # ccache release asset and one build's objects. A run restores the newest
-      # entry under the prefix: a PR run from its own entries first, then from
-      # main's. Runs on main always compile through ccache, which fills the
-      # cache for every PR. A PR run compiles through ccache only when it
-      # restored an entry; without one it compiles with the plain compiler, so
-      # a missing cache costs it only the lookup. The release build never uses
-      # ccache, so its firmware never comes from a cache entry. ccache hashes
-      # the compiler binary and every source and header, so an entry never
-      # serves an object built from other inputs. The paths are the same on
-      # every run, so no base directory is set.
+      # ccache release asset and one build's objects, and a run restores the
+      # newest entry under the prefix. Runs on main always compile through
+      # ccache and save the entries, which every PR can restore. A PR run only
+      # reads them: it compiles through ccache only when it restored an entry;
+      # without one it compiles with the plain compiler, so a missing cache
+      # costs it only the lookup. The release build never uses ccache, so its
+      # firmware never comes from a cache entry. ccache hashes the compiler
+      # binary and every source and header, so an entry never serves an object
+      # built from other inputs. The paths are the same on every run, so no
+      # base directory is set.
       - name: "Restore ccache"
         id: ccache-cache
         if: ${{ !inputs.skip-analysis }}
@@ -330,9 +330,11 @@ jobs:
         run: make compiledb
 
       # Prints the build's hits and misses, then removes every cache file that
-      # the build didn't use, so an entry holds one build's objects. Only a
-      # build that stored new objects saves the cache: else the restored entry
-      # already holds the same files.
+      # the build didn't use, so an entry holds one build's objects. Only a run
+      # on main that stored new objects saves the cache: else the restored
+      # entry already holds the same files. A PR run never saves: its new
+      # objects are mostly the files it changed, which its next push changes
+      # again, and a save costs more time than recompiling them.
       - name: "Prune ccache"
         id: ccache-prune
         if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
@@ -345,7 +347,7 @@ jobs:
           du -sh "$RUNNER_TEMP/ccache"
           echo "save=$([ "${writes:-0}" -gt 0 ] && echo true || echo false)" | tee -a "$GITHUB_OUTPUT"
       - name: "Save ccache"
-        if: ${{ !cancelled() && steps.ccache-prune.outputs.save == 'true' }}
+        if: ${{ !cancelled() && github.event_name == 'push' && steps.ccache-prune.outputs.save == 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/ccache
