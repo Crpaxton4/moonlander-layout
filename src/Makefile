@@ -3,8 +3,6 @@
 # `timing <target> <seconds>s`.
 SHELL := /bin/bash
 export TIMEFORMAT = timing $@ %Rs
-# A failing target never stops the others; make exits non-zero at the end.
-MAKEFLAGS += --keep-going
 
 # QMK copies built firmware into the userspace root (src/); move it into the
 # repo-level out/.
@@ -43,10 +41,12 @@ clang-tidy:
 		--extra-arg=-include --extra-arg=community_modules_introspection.h \
 		$(C_SOURCES)
 
-# Runs every check, even after one fails, then fails if any did. The total
-# covers the checks, not the compile database build.
+# Runs every check, then fails if any did: with --keep-going a failing check
+# never stops the others, and make exits non-zero at the end. Only this inner
+# make keeps going, so the firmware build still stops at its first error. The
+# total covers the checks, not the compile database build.
 analyze: compiledb
 	@TIMEFORMAT='timing analyze-total %Rs'; \
-		time $(MAKE) --no-print-directory $(ANALYZE_CHECKS)
+		time $(MAKE) --keep-going --no-print-directory $(ANALYZE_CHECKS)
 
 .PHONY: clang-tidy analyze
