@@ -30,17 +30,17 @@ jobs:
     needs: changes
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.build == 'true') }}
     runs-on: ubuntu-24.04
-    # Pinned by digest so the firmware toolchain changes only on purpose. To bump,
-    # set the tag and digest of the new qmk_cli release together.
+    # Pinned by digest so the firmware toolchain changes only on purpose. Dependabot
+    # can't update it: bump the tag and digest of a new qmk_cli release together.
     container: ghcr.io/qmk/qmk_cli:1.2.0@sha256:b7d7fa8fb4432b569931de5ad59098cb788f440ed61a62c5126746b71aee0f4a
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: "Read ZSA firmware branch"
         id: ref
         run: echo "ref=$(cat src/.qmk-ref)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: zsa/qmk_firmware
           ref: ${{ steps.ref.outputs.ref }}
@@ -51,7 +51,7 @@ jobs:
       - run: qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware" user.overlay_dir="$GITHUB_WORKSPACE/src"
       - run: make -C src
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: firmware
           path: out/
