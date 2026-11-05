@@ -5,9 +5,14 @@
 # -Wdocumentation and -Wdocumentation-unknown-command come from
 # ExtraArgsBefore below; their clang-diagnostic-* entries let them through
 # the -* filter.
+#
+# bugprone-signed-bitwise is off: it reports QMK's int keycode macros (LCTL,
+# LSFT, LT, TD, LAYOUT and others) at every use, never this userspace's own
+# bitwise logic.
 Checks: >-
     -*,
     bugprone-*,
+    -bugprone-signed-bitwise,
     clang-analyzer-*,
     readability-function-size,
     readability-function-cognitive-complexity,
