@@ -25,9 +25,6 @@ env:
   # Must match TREE_SITTER_VERSION and TREE_SITTER_C_VERSION in setup.sh
   TREE_SITTER_VERSION: "0.20.8-2"
   TREE_SITTER_C_VERSION: "0.20.5-2"
-  # Hook ids or aliases, comma-separated. These hooks report their findings but
-  # don't fail the job.
-  REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown"
   # The files release-please changes. Every hook excludes them, so a PR that
   # changes only these files gets the same result as main and skips the lint
   # job; a skipped job still satisfies its required check, which a `paths:`
@@ -334,12 +331,10 @@ jobs:
           path: ${{ runner.temp }}/tree-sitter-debs
           key: ${{ steps.tree-sitter-key.outputs.key }}
 
-      # One run of every hook except the report-only ones, so a failing hook
-      # never hides another's findings. --verbose prints each hook's duration;
-      # `time` adds the suite total.
+      # One run of every hook, so a failing hook never hides another's
+      # findings. --verbose prints each hook's duration; `time` adds the suite
+      # total.
       - name: "Run pre-commit"
-        env:
-          SKIP: ${{ env.REPORT_ONLY_HOOKS }}
         run: |
           set -o pipefail
           TIMEFORMAT='real %Rs'
@@ -352,32 +347,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: time make checker-test
 
-      # Given a hook id, pre-commit runs only that hook, so each report-only
-      # hook gets its own call. Every one runs; the step fails if any did.
-      - name: "Run report-only hooks"
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          TIMEFORMAT='real %Rs'
-          IFS=, read -ra hooks <<< "$REPORT_ONLY_HOOKS"
-          { time (
-              status=0
-              for hook in "${hooks[@]}"; do
-                pre-commit run "$hook" --all-files --hook-stage manual \
-                  --show-diff-on-failure --verbose || status=1
-              done
-              exit "$status"
-            ); } 2>&1 \
-            | tee "$RUNNER_TEMP/report-only.log"
-
       - name: "Summarize timings"
         if: ${{ !cancelled() }}
         run: |
-          # One table per step: summarize <heading> <log>
-          summarize() {
-            [ -f "$2" ] || return 0
-            echo "### $1"
+          # No log when the hooks didn't run
+          log="$RUNNER_TEMP/pre-commit.log"
+          [ -f "$log" ] || exit 0
+          {
+            echo "### Hooks"
             echo
             echo "| Hook | Duration |"
             echo "| --- | --- |"
@@ -388,10 +365,6 @@ jobs:
               }
               /^- duration: / { print "| " name " | " $3 " |" }
               /^real / { print "| **Total** | " $2 " |" }
-            ' "$2"
+            ' "$log"
             echo
-          }
-          {
-            summarize "Blocking hooks" "$RUNNER_TEMP/pre-commit.log"
-            summarize "Report-only hooks" "$RUNNER_TEMP/report-only.log"
           } >> "$GITHUB_STEP_SUMMARY"

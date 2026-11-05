@@ -26,20 +26,11 @@ repos:
         stages: [pre-commit, manual]
         exclude: |
           (?x)(
-            \.md$|
+            ^CHANGELOG\.md$|
             ^\.release-please-manifest\.json$|
             ^package-lock\.json$|
             ^LICENSE$
           )
-      # Markdown is checked separately so its findings can be gated on their
-      # own. Manual stage only: CI reports them without failing the job
-      # (REPORT_ONLY_HOOKS in lint.yaml).
-      - id: editorconfig-checker
-        alias: editorconfig-checker-markdown
-        name: editorconfig-checker-markdown
-        stages: [manual]
-        files: \.md$
-        exclude: ^CHANGELOG\.md$
 
   # The rev must match .llvm-version, which pins clang-tidy to the same LLVM
   # release.
@@ -65,19 +56,9 @@ repos:
         name: prettier
         entry: npx --no -- prettier --check
         language: system
-        types_or: [json, yaml]
+        types_or: [json, markdown, yaml]
         require_serial: true
         stages: [pre-commit, manual]
-      # Markdown is checked separately so its findings can be gated on their
-      # own. Manual stage only: CI reports them without failing the job
-      # (REPORT_ONLY_HOOKS in lint.yaml).
-      - id: prettier-markdown
-        name: prettier-markdown
-        entry: npx --no -- prettier --check
-        language: system
-        types_or: [markdown]
-        require_serial: true
-        stages: [manual]
 
   # pre-commit builds actionlint with a Go toolchain it downloads itself when Go
   # is not installed.
