@@ -16,7 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: "Read ZSA firmware branch"
+      # src/.qmk-ref holds a pinned commit on ZSA's firmware25 branch, bumped
+      # by hand. checkout takes a commit SHA as ref.
+      - name: "Read ZSA firmware commit"
         id: ref
         run: echo "ref=$(cat src/.qmk-ref)" >> "$GITHUB_OUTPUT"
 
