@@ -1,6 +1,4 @@
 {
     "userspace_version": "1.0",
-    "build_targets": [
-        ["zsa/moonlander/reva", "qgmlwy"]
-    ]
+    "build_targets": [["zsa/moonlander/reva", "qgmlwy"]]
 }
