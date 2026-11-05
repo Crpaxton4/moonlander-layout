@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.5...v1.0.6) (2026-11-05)
+
+
+### Continuous Integration
+
+* **tooling:** clang-tidy and the report-only static analysis job ([#27](https://github.com/Crpaxton4/moonlander-layout/issues/27)) ([a497317](https://github.com/Crpaxton4/moonlander-layout/commit/a497317978ca0eb8738b15ba79864185b32b00e5))
+
 ## [1.0.5](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.4...v1.0.5) (2026-11-05)
 
 
