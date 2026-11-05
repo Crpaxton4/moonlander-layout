@@ -7,6 +7,8 @@ on:
 env:
   # Must match PRE_COMMIT_VERSION in setup.sh
   PRE_COMMIT_VERSION: "4.7.0"
+  # Must match SHELLCHECK_VERSION in setup.sh
+  SHELLCHECK_VERSION: "0.9.0-1"
 
 jobs:
   lint:
@@ -27,6 +29,13 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
       - name: "Install pre-commit"
         run: uv tool install "pre-commit==$PRE_COMMIT_VERSION"
+
+      # The runner image ships this version, so no `apt-get update` is needed.
+      # apt installs exactly the pinned version or fails.
+      - name: "Install shellcheck"
+        run: |
+          sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
+          shellcheck --version
 
       # One run of every hook, so a failing hook never hides another's findings.
       # --verbose prints each hook's duration; `time` adds the suite total.
