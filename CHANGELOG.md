@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.20](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.19...v1.0.20) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** table-driven macros ([#61](https://github.com/Crpaxton4/moonlander-layout/issues/61)) ([144642e](https://github.com/Crpaxton4/moonlander-layout/commit/144642e645ccd62d8a1c8900f065f3afeb7ff28f))
+
 ## [1.0.19](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.18...v1.0.19) (2026-11-05)
 
 
