@@ -8,7 +8,7 @@ on:
 # job; a skipped job still satisfies the required "Build firmware" check, which
 # a `paths:` trigger filter would leave pending forever.
 env:
-  BUILD_PATHS: '^(src/|\.github/workflows/build\.yaml$)'
+  BUILD_PATHS: '^(src/|Makefile$|\.github/workflows/build\.yaml$)'
 
 jobs:
   changes:
@@ -49,7 +49,7 @@ jobs:
 
       - run: pip install -r qmk_firmware/requirements.txt
       - run: qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware" user.overlay_dir="$GITHUB_WORKSPACE/src"
-      - run: make -C src
+      - run: make
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

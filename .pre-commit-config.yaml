@@ -108,7 +108,7 @@ repos:
     hooks:
       - id: check-standards
         name: check-standards
-        entry: tools/check_standards/run
+        entry: tools/check_standards/run.sh
         language: system
         types_or: [c, inc]
         exclude: ^tools/check_standards/fixtures/
