@@ -35,6 +35,11 @@ indent_style = tab
 [*.inc]
 max_line_length = off
 
+# Standards checker goldens hold its output as it is: one finding per line,
+# however long its path and message
+[*.expected]
+max_line_length = off
+
 # shfmt: a line continued with \ starts with its && || or | operator
 [*.sh]
 binary_next_line = true

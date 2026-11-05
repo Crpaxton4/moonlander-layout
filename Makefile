@@ -118,17 +118,26 @@ $(CHECKER): $(CHECKER_BUILD)/check_standards.o $(CHECKER_BUILD)/grammar.o \
 	$(TREE_SITTER_LIB)
 	$(CC) $(LDFLAGS) -o $@ $^
 
-# Every fixtures/<case>.expected is one test: the checker's output and exit
-# status for the files of the case. A case's files are fixtures/<case>.c, .h and
-# .inc, or ARGUMENTS_<case> when that is set. The paths are relative to
+# Every expected/<case>.expected is one test: the checker's output and exit
+# status for the input files of the case. Source fixtures are in fixtures/src/,
+# headers and included fragments in fixtures/include/, each named after its
+# case. The checker's arguments are the files among fixtures/src/<case>.c,
+# fixtures/include/<case>.h and fixtures/include/<case>.inc that exist, in that
+# order, or ARGUMENTS_<case> when that is set. The paths are relative to
 # tools/check_standards/, where the checker runs, so they match the goldens.
-ARGUMENTS_multi_file := fixtures/multi_file_first.c fixtures/multi_file_second.c
-ARGUMENTS_unreadable := fixtures/unreadable_before.c fixtures/no_such_file.c \
-	fixtures/unreadable_after.h
-CASES     := $(patsubst $(CHECKER_DIR)/fixtures/%.expected,%, \
-	$(sort $(wildcard $(CHECKER_DIR)/fixtures/*.expected)))
+#
+# A case whose files have a role after the case name lists its arguments:
+# multi_file has two sources, and unreadable also names a file that does not
+# exist, between two files that do.
+ARGUMENTS_multi_file := fixtures/src/multi_file_first.c \
+	fixtures/src/multi_file_second.c
+ARGUMENTS_unreadable := fixtures/src/unreadable_before.c \
+	fixtures/src/unreadable_missing.c fixtures/include/unreadable_after.h
+CASES     := $(patsubst $(CHECKER_DIR)/expected/%.expected,%, \
+	$(sort $(wildcard $(CHECKER_DIR)/expected/*.expected)))
 arguments  = $(or $(ARGUMENTS_$(1)),$(patsubst $(CHECKER_DIR)/%,%, \
-	$(wildcard $(addprefix $(CHECKER_DIR)/fixtures/$(1),.c .h .inc))))
+	$(wildcard $(CHECKER_DIR)/fixtures/src/$(1).c \
+	$(addprefix $(CHECKER_DIR)/fixtures/include/$(1),.h .inc))))
 CASE_TESTS := $(CASES:%=$(CHECKER_BUILD)/test/%)
 
 # Each case is its own target and only this inner make keeps going, so every
@@ -141,7 +150,7 @@ $(CASE_TESTS): $(CHECKER_BUILD)/test/%: $(CHECKER)
 	@mkdir -p $(@D)
 	@{ cd $(CHECKER_DIR) && $(CURDIR)/$(CHECKER) $(call arguments,$*); \
 		echo "exit $$?"; } >$@.out
-	@diff -u $(CHECKER_DIR)/fixtures/$*.expected $@.out
+	@diff -u $(CHECKER_DIR)/expected/$*.expected $@.out
 
 .PHONY: checker checker-test $(CASE_TESTS)
 
