@@ -33,38 +33,25 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #include "layers/lock.inc"
 };
 
-/** QMK actions of the tap dances, indexed by their slot. */
+/** QMK actions of the tap dances, indexed by slot; each plays its `dances` row. */
 tap_dance_action_t tap_dance_actions[] = {
-    [DANCE_0] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_0, dance_0_finished, dance_0_reset),
-    [DANCE_1] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, dance_1_finished, dance_1_reset),
-    [DANCE_2] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_2, dance_2_finished, dance_2_reset),
-    [DANCE_3] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_3, dance_3_finished, dance_3_reset),
-    [DANCE_4] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_4, dance_4_finished, dance_4_reset),
-    [DANCE_5] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_5, dance_5_finished, dance_5_reset),
-    [DANCE_6] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, dance_6_finished, dance_6_reset),
-    [DANCE_7] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_7, dance_7_finished, dance_7_reset),
-    [DANCE_8] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_8, dance_8_finished, dance_8_reset),
-    [DANCE_9] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_9, dance_9_finished, dance_9_reset),
-    [DANCE_10] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_10, dance_10_finished, dance_10_reset),
-    [DANCE_11] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_11, dance_11_finished, dance_11_reset),
-    [DANCE_12] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_12, dance_12_finished, dance_12_reset),
-    [DANCE_13] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_13, dance_13_finished, dance_13_reset),
-    [DANCE_14] =
-        ACTION_TAP_DANCE_FN_ADVANCED(on_dance_14, dance_14_finished, dance_14_reset),
-    [DANCE_15] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, dance_15_finished, dance_15_reset),
-    [DANCE_16] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, dance_16_finished, dance_16_reset),
+    [DANCE_0]  = ACTION_TAP_DANCE_TABLE(DANCE_0),
+    [DANCE_1]  = ACTION_TAP_DANCE_TABLE(DANCE_1),
+    [DANCE_2]  = ACTION_TAP_DANCE_TABLE(DANCE_2),
+    [DANCE_3]  = ACTION_TAP_DANCE_TABLE(DANCE_3),
+    [DANCE_4]  = ACTION_TAP_DANCE_TABLE(DANCE_4),
+    [DANCE_5]  = ACTION_TAP_DANCE_TABLE(DANCE_5),
+    [DANCE_6]  = ACTION_TAP_DANCE_TABLE(DANCE_6),
+    [DANCE_7]  = ACTION_TAP_DANCE_TABLE(DANCE_7),
+    [DANCE_8]  = ACTION_TAP_DANCE_TABLE(DANCE_8),
+    [DANCE_9]  = ACTION_TAP_DANCE_TABLE(DANCE_9),
+    [DANCE_10] = ACTION_TAP_DANCE_TABLE(DANCE_10),
+    [DANCE_11] = ACTION_TAP_DANCE_TABLE(DANCE_11),
+    [DANCE_12] = ACTION_TAP_DANCE_TABLE(DANCE_12),
+    [DANCE_13] = ACTION_TAP_DANCE_TABLE(DANCE_13),
+    [DANCE_14] = ACTION_TAP_DANCE_TABLE(DANCE_14),
+    [DANCE_15] = ACTION_TAP_DANCE_TABLE(DANCE_15),
+    [DANCE_16] = ACTION_TAP_DANCE_TABLE(DANCE_16),
 };
 
 /**
