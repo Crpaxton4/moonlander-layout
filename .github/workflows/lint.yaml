@@ -40,6 +40,7 @@ jobs:
         run: |
           files=$(gh pr diff ${{ github.event.pull_request.number }} --repo "$GITHUB_REPOSITORY" --name-only)
           echo "$files"
+          [ -n "$files" ] && exit 1
           if [ -n "$files" ] && ! grep -qvE "$RELEASE_ONLY_PATHS" <<< "$files"; then
             echo "release-only=true" >> "$GITHUB_OUTPUT"
           else
