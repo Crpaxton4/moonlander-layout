@@ -9,9 +9,12 @@ env:
   PRE_COMMIT_VERSION: "4.7.0"
   # Must match SHELLCHECK_VERSION in setup.sh
   SHELLCHECK_VERSION: "0.9.0-1"
+  # Must match TREE_SITTER_VERSION and TREE_SITTER_C_VERSION in setup.sh
+  TREE_SITTER_VERSION: "0.20.8-2"
+  TREE_SITTER_C_VERSION: "0.20.5-2"
   # Hook ids or aliases, comma-separated. These hooks report their findings but
   # don't fail the job.
-  REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown"
+  REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown,check-standards"
 
 jobs:
   lint:
@@ -40,6 +43,14 @@ jobs:
           sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
           shellcheck --version
 
+      # The check-standards hook builds against these. The runner image doesn't
+      # ship them, so the package index is fetched first.
+      - name: "Install tree-sitter"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y "libtree-sitter-dev=$TREE_SITTER_VERSION" \
+            "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
+
       # One run of every hook except the report-only ones, so a failing hook
       # never hides another's findings. --verbose prints each hook's duration;
       # `time` adds the suite total.
@@ -52,6 +63,11 @@ jobs:
           { time pre-commit run --all-files --hook-stage manual \
               --show-diff-on-failure --verbose; } 2>&1 \
             | tee "$RUNNER_TEMP/pre-commit.log"
+
+      # The checker's golden fixtures, whatever the hooks found
+      - name: "Test check-standards"
+        if: ${{ !cancelled() }}
+        run: time make -C tools/check_standards test
 
       # Given a hook id, pre-commit runs only that hook, so each report-only
       # hook gets its own call. Every one runs; the step fails if any did.

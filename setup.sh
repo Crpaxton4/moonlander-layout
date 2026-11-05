@@ -16,6 +16,10 @@ FNM_VERSION="v1.39.0"
 PRE_COMMIT_VERSION="4.7.0"
 # Must match SHELLCHECK_VERSION in .github/workflows/lint.yaml
 SHELLCHECK_VERSION="0.9.0-1"
+# Must match TREE_SITTER_VERSION and TREE_SITTER_C_VERSION in
+# .github/workflows/lint.yaml
+TREE_SITTER_VERSION="0.20.8-2"
+TREE_SITTER_C_VERSION="0.20.5-2"
 # Must match DOXYGEN_VERSION and DOXYGEN_SHA256 in .github/workflows/analysis.yaml
 DOXYGEN_VERSION="1.18.0"
 DOXYGEN_SHA256="14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
@@ -28,6 +32,10 @@ sudo apt-get install -y unzip
 
 # The shellcheck pre-commit hook and actionlint both run this binary
 sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
+
+# The check-standards hook (tools/check_standards) builds against these
+sudo apt-get install -y build-essential "libtree-sitter-dev=$TREE_SITTER_VERSION" \
+    "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
 
 # QMK CLI and toolchain
 QMK_COMMITS_URL="https://api.github.com/repos/qmk/qmk_firmware/commits\

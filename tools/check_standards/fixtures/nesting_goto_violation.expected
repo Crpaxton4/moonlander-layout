@@ -1,0 +1,4 @@
+fixtures/nesting_goto_violation.c:9:9 nesting goto is not allowed inside if
+fixtures/nesting_goto_violation.c:13:13 nesting goto is not allowed inside case
+2 findings in 1 files
+exit 1
