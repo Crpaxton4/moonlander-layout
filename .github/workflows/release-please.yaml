@@ -50,4 +50,4 @@ jobs:
 
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload --repo "$GITHUB_REPOSITORY" "${{ needs.release-please.outputs.tag_name }}" *.bin
+        run: gh release upload --repo "$GITHUB_REPOSITORY" "${{ needs.release-please.outputs.tag_name }}" ./*.bin
