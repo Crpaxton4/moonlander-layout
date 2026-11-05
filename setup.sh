@@ -57,6 +57,9 @@ uv tool install "pre-commit==$PRE_COMMIT_VERSION"
 git -C "$REPO_DIR" config --unset core.hooksPath || true
 pre-commit install
 
+# clang-tidy for `make -C src analyze`, the same LLVM release as clang-format
+uv tool install "clang-tidy==$(cat "$REPO_DIR/.llvm-version")"
+
 # ZSA's qmk_firmware fork, with QMK pointed at this repo's userspace
 qmk setup zsa/qmk_firmware -b "$(cat "$REPO_DIR/src/.qmk-ref")" -H "$QMK_HOME" -y
 qmk config user.overlay_dir="$REPO_DIR/src"

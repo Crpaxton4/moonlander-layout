@@ -37,7 +37,8 @@ repos:
         files: \.md$
         exclude: ^CHANGELOG\.md$
 
-  # Report-only (manual stage). The rev's major must match .llvm-version.
+  # Report-only (manual stage). The rev must match .llvm-version, which pins
+  # clang-tidy to the same LLVM release.
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v22.1.8
     hooks:
