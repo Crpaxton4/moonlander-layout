@@ -21,7 +21,9 @@
 #endif
 
 /**
- * Keycodes this keymap handles itself, in process_record_user().
+ * Keycodes this keymap handles itself, in the feature modules that
+ * process_record_user() dispatches to: process_macros() and
+ * process_lighting_keys().
  */
 enum custom_keycodes {
     /** Switches the RGB matrix to a solid colour. */
