@@ -14,7 +14,7 @@ env:
   TREE_SITTER_C_VERSION: "0.20.5-2"
   # Hook ids or aliases, comma-separated. These hooks report their findings but
   # don't fail the job.
-  REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown,check-standards"
+  REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown"
 
 jobs:
   lint:
