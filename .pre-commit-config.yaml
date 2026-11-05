@@ -1,0 +1,38 @@
+# Every hook runs and reports, even after an earlier one fails; the run fails
+# at the end if any hook did.
+fail_fast: false
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: local
+    hooks:
+      # Same config as the PR title check, which squash-merge turns into the
+      # commit on main
+      - id: commitlint
+        name: commitlint
+        entry: npx --no -- commitlint --edit
+        language: system
+        stages: [commit-msg]
+
+  # Report-only (manual stage). Files owned by release-please, npm or a third
+  # party are left in the form their owner writes them.
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 3.11.1
+    hooks:
+      - id: editorconfig-checker
+        name: editorconfig-checker
+        stages: [manual]
+        exclude: |
+          (?x)(
+            \.md$|
+            ^\.release-please-manifest\.json$|
+            ^package-lock\.json$|
+            ^LICENSE$
+          )
+      # Markdown is checked separately so its findings can be gated on their own
+      - id: editorconfig-checker
+        alias: editorconfig-checker-markdown
+        name: editorconfig-checker-markdown
+        stages: [manual]
+        files: \.md$
+        exclude: ^CHANGELOG\.md$

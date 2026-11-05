@@ -12,6 +12,8 @@ QMK_HOME="$HOME/qmk_firmware"
 # fixes both its install script and the binary it downloads.
 QMK_BOOTSTRAP_COMMIT="08c662f286ddfd12a985f57b584b02eca5af0ae6"
 FNM_VERSION="v1.39.0"
+# Must match PRE_COMMIT_VERSION in .github/workflows/lint.yaml
+PRE_COMMIT_VERSION="4.7.0"
 
 # fnm reads .node-version from the current directory
 cd "$REPO_DIR"
@@ -42,6 +44,13 @@ eval "$(fnm env --shell bash)"
 fnm install
 fnm use
 npm ci --prefix "$REPO_DIR"
+
+# pre-commit runs the checks and the commit-msg hook; uv comes from QMK's
+# bootstrap. `pre-commit install` refuses to run while core.hooksPath is set,
+# which husky leaves behind in existing clones.
+uv tool install "pre-commit==$PRE_COMMIT_VERSION"
+git -C "$REPO_DIR" config --unset core.hooksPath || true
+pre-commit install
 
 # ZSA's qmk_firmware fork, with QMK pointed at this repo's userspace
 qmk setup zsa/qmk_firmware -b "$(cat "$REPO_DIR/src/.qmk-ref")" -H "$QMK_HOME" -y
