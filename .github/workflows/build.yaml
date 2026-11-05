@@ -1,4 +1,5 @@
 name: "Build and analyze firmware"
+# Unchanged copy of main's workflow: a timing control for PR runs.
 
 # Runs on main fill the main-scope caches, which every PR can restore. They
 # always run the full job, whatever the push changed, and check main itself.
