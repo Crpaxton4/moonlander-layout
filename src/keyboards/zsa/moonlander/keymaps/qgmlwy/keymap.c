@@ -8,8 +8,6 @@
  */
 
 #include QMK_KEYBOARD_H
-#include "version.h"
-#define MOON_LED_LEVEL LED_LEVEL
 
 #include "dual_function/dual_function.h"
 #include "keycodes/keycodes.h"
