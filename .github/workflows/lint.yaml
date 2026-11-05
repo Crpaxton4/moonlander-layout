@@ -15,10 +15,43 @@ env:
   # Hook ids or aliases, comma-separated. These hooks report their findings but
   # don't fail the job.
   REPORT_ONLY_HOOKS: "editorconfig-checker-markdown,prettier-markdown"
+  # The files release-please changes. Every hook excludes them, so a PR that
+  # changes only these files gets the same result as main and skips the lint
+  # job; a skipped job still satisfies its required check, which a `paths:`
+  # trigger filter would leave pending forever.
+  RELEASE_ONLY_PATHS: '^(CHANGELOG\.md|\.release-please-manifest\.json)$'
 
 jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    # Pinned to the development machine's Ubuntu release so CI tools match local ones.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      release-only: ${{ steps.diff.outputs.release-only }}
+    steps:
+      # `true` only when the PR changes at least one file and every changed
+      # file is in RELEASE_ONLY_PATHS
+      - id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          files=$(gh pr diff ${{ github.event.pull_request.number }} --repo "$GITHUB_REPOSITORY" --name-only)
+          echo "$files"
+          if [ -n "$files" ] && ! grep -qvE "$RELEASE_ONLY_PATHS" <<< "$files"; then
+            echo "release-only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release-only=false" >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
     name: "Lint"
+    needs: changes
+    # Skips only when the gate says `true`: a failed gate has no output, so
+    # the job runs.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.release-only != 'true') }}
     # Same Ubuntu release as the development machine, so apt-pinned tools
     # (shellcheck) have identical versions
     runs-on: ubuntu-24.04
