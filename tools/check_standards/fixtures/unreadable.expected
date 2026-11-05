@@ -1,6 +1,0 @@
-fixtures/unreadable_before.c:7:9 nesting if is not allowed inside if
-fixtures/no_such_file.c:1:1 io-error No such file or directory
-fixtures/unreadable_after.h:1:1 file-docstring file does not begin with a /** comment
-fixtures/unreadable_after.h:6:9 nesting while is not allowed inside while
-4 findings in 3 files
-exit 1
