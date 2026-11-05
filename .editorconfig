@@ -15,6 +15,10 @@ max_line_length = 88
 [*.{yaml,yml}]
 indent_size = 2
 
+# Pinned action SHAs and image digests can't be wrapped
+[.github/workflows/*.{yaml,yml}]
+max_line_length = off
+
 # Two trailing spaces are a Markdown line break
 [*.md]
 trim_trailing_whitespace = false
