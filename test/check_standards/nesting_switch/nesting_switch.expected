@@ -1,0 +1,6 @@
+test/check_standards/nesting_switch/nesting_switch.c:29:13 nesting if is not allowed inside case
+test/check_standards/nesting_switch/nesting_switch.c:34:13 nesting for is not allowed inside case
+test/check_standards/nesting_switch/nesting_switch.c:40:13 nesting switch is not allowed inside case
+test/check_standards/nesting_switch/nesting_switch.c:46:9 nesting switch is not allowed inside for
+4 findings in 1 files
+exit 1

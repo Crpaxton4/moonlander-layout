@@ -1,0 +1,7 @@
+test/check_standards/docstring_unclosed/docstring_unclosed.c:1:1 file-docstring the opening /** comment is not closed
+test/check_standards/docstring_unclosed/docstring_unclosed.c:1:1 parse-error cannot parse `/** @file`
+test/check_standards/docstring_unclosed/docstring_unclosed.c:1:5 parse-error cannot parse `@file`
+test/check_standards/docstring_unclosed/docstring_unclosed.c:1:5 parse-error cannot parse `@file`
+test/check_standards/docstring_unclosed/docstring_unclosed.c:2:4 parse-error cannot parse `Never closed.`
+5 findings in 1 files
+exit 1

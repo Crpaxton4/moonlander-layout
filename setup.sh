@@ -36,7 +36,7 @@ sudo apt-get install -y unzip
 # The shellcheck pre-commit hook and actionlint both run this binary
 sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
 
-# The check-standards hook (tools/check_standards) builds against these
+# The check-standards hook (src/check_standards) builds against these
 sudo apt-get install -y build-essential "libtree-sitter-dev=$TREE_SITTER_VERSION" \
     "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
 

@@ -81,7 +81,7 @@ analyze: compiledb ## Run every static analysis check (clang-tidy, Doxygen)
 
 ##@ Standards checker
 
-# The checker in tools/check_standards/ links Ubuntu 24.04's tree-sitter
+# The checker in src/check_standards/ links Ubuntu 24.04's tree-sitter
 # packages: libtree-sitter-dev and the C grammar of tree-sitter-c-src, whose
 # generated parser is compiled in. Only the Lint job builds it, on the Ubuntu
 # release and package versions setup.sh installs.
@@ -105,8 +105,9 @@ CFLAGS   ?= -O2
 WARNINGS := -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
 	-Wstrict-prototypes -Wmissing-prototypes -Werror
 
-CHECKER_DIR     := tools/check_standards
-CHECKER_BUILD   := $(CHECKER_DIR)/build
+CHECKER_DIR     := src/check_standards
+CHECKER_TESTS   := test/check_standards
+CHECKER_BUILD   := .build/check_standards
 CHECKER         := $(CHECKER_BUILD)/check_standards
 CHECKER_SOURCES := $(sort $(wildcard $(CHECKER_DIR)/*.c))
 CHECKER_OBJECTS := $(CHECKER_SOURCES:$(CHECKER_DIR)/%.c=$(CHECKER_BUILD)/%.o)
@@ -133,18 +134,17 @@ $(CHECKER_BUILD)/grammar.o: $(GRAMMAR) | $(CHECKER_BUILD)
 $(CHECKER): $(CHECKER_OBJECTS) $(CHECKER_BUILD)/grammar.o $(TREE_SITTER_LIB)
 	$(CC) $(LDFLAGS) -o $@ $^
 
-# Every directory test/<case>/ is one test. Its .c, .h and .inc files are the
-# checker's arguments, in sorted order, and <case>.expected is the checker's
-# output and exit status for them. The paths are relative to
-# tools/check_standards/, where the checker runs, so they match the goldens.
+# Every directory test/check_standards/<case>/ is one test. Its .c, .h and .inc
+# files are the checker's arguments, in sorted order, and <case>.expected is the
+# checker's output and exit status for them. The checker runs from the repo
+# root, so the paths in its output match the goldens.
 # Each input is named <case>.c, <case>.h or <case>.inc, or, in a case whose
 # inputs are checked in a set order, <case>_<role> with roles that sort in that
 # order: first, second, third. An input that can't be read, as in the
 # unreadable case, is a symlink to a file that doesn't exist.
 CASES     := $(sort $(basename $(notdir \
-	$(wildcard $(CHECKER_DIR)/test/*/*.expected))))
-arguments   = $(patsubst $(CHECKER_DIR)/%,%,$(sort $(wildcard \
-	$(addprefix $(CHECKER_DIR)/test/$(1)/*,.c .h .inc))))
+	$(wildcard $(CHECKER_TESTS)/*/*.expected))))
+arguments   = $(sort $(wildcard $(addprefix $(CHECKER_TESTS)/$(1)/*,.c .h .inc)))
 CASE_TESTS := $(CASES:%=$(CHECKER_BUILD)/test/%)
 
 # Each case is its own target and only this inner make keeps going, so every
@@ -155,16 +155,15 @@ checker-test: $(CHECKER) ## Test the standards checker against its golden fixtur
 
 $(CASE_TESTS): $(CHECKER_BUILD)/test/%: $(CHECKER)
 	@mkdir -p $(@D)
-	@{ cd $(CHECKER_DIR) && $(CURDIR)/$(CHECKER) $(call arguments,$*); \
-		echo "exit $$?"; } >$@.out
-	@diff -u $(CHECKER_DIR)/test/$*/$*.expected $@.out
+	@{ $(CHECKER) $(call arguments,$*); echo "exit $$?"; } >$@.out
+	@diff -u $(CHECKER_TESTS)/$*/$*.expected $@.out
 
 .PHONY: checker checker-test $(CASE_TESTS)
 
 ##@ General
 
-clean: ## Remove .build/ and the standards checker build
-	rm -rf .build $(CHECKER_BUILD)
+clean: ## Remove .build/, which holds every build output
+	rm -rf .build
 
 # Lists every target that has a `## description`, under its `##@` group
 help: ## List the targets
