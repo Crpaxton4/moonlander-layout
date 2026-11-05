@@ -1,0 +1,3 @@
+fixtures/docstring_name_only/header.h:1:1 file-docstring the @file comment has no description
+1 findings in 1 files
+exit 1

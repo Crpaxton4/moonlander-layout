@@ -1,0 +1,5 @@
+fixtures/nesting_while_violation/source.c:7:9 nesting while is not allowed inside while
+fixtures/nesting_while_violation/source.c:10:9 nesting do is not allowed inside while
+fixtures/nesting_while_violation/source.c:15:9 nesting while is not allowed inside do
+3 findings in 1 files
+exit 1

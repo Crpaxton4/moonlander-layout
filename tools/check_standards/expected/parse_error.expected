@@ -1,0 +1,5 @@
+fixtures/parse_error/source.c:8:16 parse-error cannot parse `... 9:`
+fixtures/parse_error/source.c:16:22 parse-error missing `;`
+fixtures/parse_error/source.c:21:9 nesting if is not allowed inside if
+3 findings in 1 files
+exit 1

@@ -1,0 +1,6 @@
+fixtures/nesting_switch_violation/source.c:8:13 nesting if is not allowed inside case
+fixtures/nesting_switch_violation/source.c:13:13 nesting for is not allowed inside case
+fixtures/nesting_switch_violation/source.c:19:13 nesting switch is not allowed inside case
+fixtures/nesting_switch_violation/source.c:25:9 nesting switch is not allowed inside for
+4 findings in 1 files
+exit 1
