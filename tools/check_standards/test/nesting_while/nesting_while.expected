@@ -1,0 +1,5 @@
+test/nesting_while/nesting_while.c:27:9 nesting while is not allowed inside while
+test/nesting_while/nesting_while.c:30:9 nesting do is not allowed inside while
+test/nesting_while/nesting_while.c:35:9 nesting while is not allowed inside do
+3 findings in 1 files
+exit 1
