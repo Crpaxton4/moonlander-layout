@@ -36,3 +36,19 @@ repos:
         stages: [manual]
         files: \.md$
         exclude: ^CHANGELOG\.md$
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1-1
+    hooks:
+      - id: shellcheck
+        name: shellcheck
+        stages: [manual]
+
+  # Style comes from .editorconfig. -d prints a diff instead of rewriting.
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.14.1-1
+    hooks:
+      - id: shfmt
+        name: shfmt
+        args: [-d]
+        stages: [manual]
