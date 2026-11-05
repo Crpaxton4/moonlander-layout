@@ -103,10 +103,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 extern rgb_config_t rgb_matrix_config;
 
+/**
+ * Converts an HSV colour to RGB dimmed by the current RGB matrix brightness.
+ *
+ * Each channel of the converted colour is multiplied by the matrix brightness
+ * (`rgb_matrix_config.hsv.v`) as a fraction of `UINT8_MAX` and truncated, so
+ * the colour's own value and the user's brightness setting both apply.
+ *
+ * @param hsv Colour to convert.
+ * @return The converted colour, scaled by the matrix brightness.
+ */
 RGB hsv_to_rgb_with_value(HSV hsv) {
     RGB   rgb = hsv_to_rgb(hsv);
     float f   = (float)rgb_matrix_config.hsv.v / UINT8_MAX;
-    return (RGB){f * rgb.r, f * rgb.g, f * rgb.b};
+    return (RGB){
+        (uint8_t)(f * (float)(int)rgb.r),
+        (uint8_t)(f * (float)(int)rgb.g),
+        (uint8_t)(f * (float)(int)rgb.b),
+    };
 }
 
 void keyboard_post_init_user(void) {
