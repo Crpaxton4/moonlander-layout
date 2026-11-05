@@ -13,8 +13,13 @@ jobs:
   lint-pr-title:
     name: "Validate PR title"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
       - run: npm ci
       - env:
           TITLE: ${{ github.event.pull_request.title }}
