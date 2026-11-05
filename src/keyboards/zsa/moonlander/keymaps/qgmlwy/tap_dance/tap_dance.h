@@ -98,14 +98,12 @@ typedef struct {
 #define NO_LAYER UINT8_MAX
 
 /**
- * Keycode dance definition from designated keycode_dance_t fields.
+ * Keycode dance definition from a braced list of designated keycode_dance_t
+ * fields.
  *
  * Fields left out are KC_NO or false.
  */
-#define KEYCODE_DANCE(...)                                  \
-    {                                                       \
-        .kind = DANCE_KEYCODES, .keycodes = { __VA_ARGS__ } \
-    }
+#define KEYCODE_DANCE(...) {.kind = DANCE_KEYCODES, .keycodes = __VA_ARGS__}
 
 /**
  * Layer dance definition.
