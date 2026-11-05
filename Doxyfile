@@ -1,0 +1,30 @@
+# Documentation check for the userspace's C sources, run by
+# `make -C src analyze` from the repo root. Only settings that differ from
+# Doxygen's defaults are listed.
+
+# Sources: the userspace's C files, including the keymap grid files
+INPUT = src/keyboards
+RECURSIVE = YES
+FILE_PATTERNS = *.c *.h *.inc
+EXTENSION_MAPPING = inc=C
+OPTIMIZE_OUTPUT_FOR_C = YES
+
+# Static functions need docs too. The first sentence of a comment is its brief.
+EXTRACT_STATIC = YES
+JAVADOC_AUTOBRIEF = YES
+
+# By default Doxygen warns about undocumented entities, incomplete parameter
+# docs and malformed docs, as `file:line: message`. It checks a file's members
+# only once the file has a @file comment. On top of that: every parameter of a
+# documented function needs docs, only warnings print, and the run exits
+# non-zero once every warning is reported.
+WARN_NO_PARAMDOC = YES
+QUIET = YES
+WARN_AS_ERROR = FAIL_ON_WARNINGS
+
+# A check, not a docs site. Doxygen warns when it has no output format, so it
+# writes only XML, into a gitignored directory.
+OUTPUT_DIRECTORY = doxygen
+GENERATE_HTML = NO
+GENERATE_LATEX = NO
+GENERATE_XML = YES

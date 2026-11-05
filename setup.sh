@@ -16,6 +16,9 @@ FNM_VERSION="v1.39.0"
 PRE_COMMIT_VERSION="4.7.0"
 # Must match SHELLCHECK_VERSION in .github/workflows/lint.yaml
 SHELLCHECK_VERSION="0.9.0-1"
+# Must match DOXYGEN_VERSION and DOXYGEN_SHA256 in .github/workflows/analysis.yaml
+DOXYGEN_VERSION="1.18.0"
+DOXYGEN_SHA256="14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
 
 # fnm reads .node-version from the current directory
 cd "$REPO_DIR"
@@ -59,6 +62,18 @@ pre-commit install
 
 # clang-tidy for `make -C src analyze`, the same LLVM release as clang-format
 uv tool install "clang-tidy==$(cat "$REPO_DIR/.llvm-version")"
+
+# Doxygen for `make -C src analyze`: the official release binary, the same build
+# CI runs, whatever the distro packages. Only the binary leaves the tarball.
+DOXYGEN_URL="https://github.com/doxygen/doxygen/releases/download/\
+Release_${DOXYGEN_VERSION//./_}/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz"
+DOXYGEN_TARBALL="$(mktemp)"
+curl -fsSL -o "$DOXYGEN_TARBALL" "$DOXYGEN_URL"
+echo "$DOXYGEN_SHA256  $DOXYGEN_TARBALL" | sha256sum -c -
+mkdir -p "$HOME/.local/bin"
+tar -xzf "$DOXYGEN_TARBALL" -C "$HOME/.local/bin" --strip-components=2 \
+    "doxygen-$DOXYGEN_VERSION/bin/doxygen"
+rm -f "$DOXYGEN_TARBALL"
 
 # ZSA's qmk_firmware fork, with QMK pointed at this repo's userspace
 qmk setup zsa/qmk_firmware -b "$(cat "$REPO_DIR/src/.qmk-ref")" -H "$QMK_HOME" -y

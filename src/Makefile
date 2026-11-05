@@ -41,6 +41,15 @@ clang-tidy:
 		--extra-arg=-include --extra-arg=community_modules_introspection.h \
 		$(C_SOURCES)
 
+# Documentation check, configured by the repo-level Doxyfile, whose paths are
+# relative to the repo root
+ANALYZE_CHECKS += doxygen
+
+doxygen:
+	@cd .. && time doxygen Doxyfile
+
+.PHONY: doxygen
+
 # Runs every check, then fails if any did: with --keep-going a failing check
 # never stops the others, and make exits non-zero at the end. Only this inner
 # make keeps going, so the firmware build still stops at its first error. The
