@@ -1,14 +1,22 @@
-name: "Build firmware"
+name: "Build and analyze firmware"
 
 on:
   pull_request:
+  workflow_dispatch:
   workflow_call:
+    inputs:
+      # The release build sets it: every change on main already passed the
+      # analysis on its PR, and a failing check must not stop the release.
+      skip-analysis:
+        description: "Build the firmware only, without the static analysis"
+        type: boolean
+        default: false
 
-# Files that feed the firmware build. PRs touching none of them skip the build
-# job; a skipped job still satisfies the required "Build firmware" check, which
-# a `paths:` trigger filter would leave pending forever.
+# Files that feed the firmware build or the static analysis. PRs touching none
+# of them skip the firmware job; a skipped job still satisfies its required
+# check, which a `paths:` trigger filter would leave pending forever.
 env:
-  BUILD_PATHS: '^(src/|Makefile$|\.github/workflows/build\.yaml$)'
+  FIRMWARE_PATHS: '^src/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$'
 
 jobs:
   changes:
@@ -16,23 +24,30 @@ jobs:
     # Pinned to the development machine's Ubuntu release so CI tools match local ones.
     runs-on: ubuntu-24.04
     outputs:
-      build: ${{ steps.diff.outputs.build }}
+      firmware: ${{ steps.diff.outputs.firmware }}
     steps:
       - id: diff
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           files=$(gh pr diff ${{ github.event.pull_request.number }} --repo "$GITHUB_REPOSITORY" --name-only)
-          echo "build=$(grep -qE "$BUILD_PATHS" <<< "$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "firmware=$(grep -qE "$FIRMWARE_PATHS" <<< "$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-  build:
-    name: "Build firmware"
+  firmware:
+    name: "Build and analyze firmware"
     needs: changes
-    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.build == 'true') }}
+    # Skips only when the gate says `false`: a failed gate has no output, so
+    # the job runs.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.firmware != 'false') }}
     runs-on: ubuntu-24.04
-    # Pinned by digest so the firmware toolchain changes only on purpose. Dependabot
-    # can't update it: bump the tag and digest of a new qmk_cli release together.
+    # QMK's build image, which the firmware and the compile database need.
+    # Pinned by digest so the firmware toolchain changes only on purpose.
+    # Dependabot can't update it: bump the tag and digest of a new qmk_cli
+    # release together.
     container: ghcr.io/qmk/qmk_cli:1.2.0@sha256:b7d7fa8fb4432b569931de5ad59098cb788f440ed61a62c5126746b71aee0f4a
+    permissions:
+      contents: read
+    # Actions are pinned to commit SHAs; the trailing comment names the release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -50,10 +65,74 @@ jobs:
           submodules: recursive
 
       - run: pip install -r qmk_firmware/requirements.txt
-      - run: qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware" user.overlay_dir="$GITHUB_WORKSPACE/src"
-      - run: make
+      - run: >-
+          qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
+          user.overlay_dir="$GITHUB_WORKSPACE/src"
+
+      # One QMK build gives both the firmware in out/ and the compile database
+      - name: "Build firmware and compile database"
+        run: make compiledb
+
+      # The steps from here on run even when an earlier one failed, so a
+      # failing build still runs the analysis and a failing check still
+      # uploads the firmware; the job fails at the end.
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+      - name: "Install clang-tidy"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        run: |
+          uv tool install "clang-tidy==$(cat .llvm-version)"
+          clang-tidy --version
+
+      # The official release binary, as setup.sh installs it. The image's own
+      # doxygen, if any, may differ, so this one goes first on PATH.
+      - name: "Install Doxygen"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        env:
+          # Must match DOXYGEN_VERSION and DOXYGEN_SHA256 in setup.sh
+          DOXYGEN_VERSION: "1.18.0"
+          DOXYGEN_SHA256: "14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
+        run: |
+          tag="Release_$(echo "$DOXYGEN_VERSION" | tr . _)"
+          curl -fsSL -o "$RUNNER_TEMP/doxygen.tar.gz" \
+            "https://github.com/doxygen/doxygen/releases/download/$tag/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz"
+          echo "$DOXYGEN_SHA256  $RUNNER_TEMP/doxygen.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf "$RUNNER_TEMP/doxygen.tar.gz" -C "$HOME/.local/bin" \
+            --strip-components=2 "doxygen-$DOXYGEN_VERSION/bin/doxygen"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          which -a doxygen
+          doxygen --version
+
+      # One run of every check, so a failing check never hides another's
+      # findings. Each check prints a `timing` line, even when it fails. The
+      # compile database is the one the build step wrote, so make doesn't
+      # build it again.
+      - name: "Run static analysis"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        run: |
+          set -o pipefail
+          make --assume-old=compiledb analyze 2>&1 | tee "$RUNNER_TEMP/analyze.log"
+
+      - name: "Summarize timings"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        run: |
+          [ -f "$RUNNER_TEMP/analyze.log" ] || exit 0
+          {
+            echo "| Check | Duration |"
+            echo "| --- | --- |"
+            awk '
+              $1 == "timing" && $2 == "analyze-total" {
+                print "| **Total** | " $3 " |"
+                next
+              }
+              $1 == "timing" { print "| " $2 " | " $3 " |" }
+            ' "$RUNNER_TEMP/analyze.log"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
         with:
           name: firmware
           path: out/

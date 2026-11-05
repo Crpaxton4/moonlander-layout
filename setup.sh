@@ -23,7 +23,7 @@ SHELLCHECK_VERSION="0.9.0-1"
 # .github/workflows/lint.yaml
 TREE_SITTER_VERSION="0.20.8-2"
 TREE_SITTER_C_VERSION="0.20.5-2"
-# Must match DOXYGEN_VERSION and DOXYGEN_SHA256 in .github/workflows/analysis.yaml
+# Must match DOXYGEN_VERSION and DOXYGEN_SHA256 in .github/workflows/build.yaml
 DOXYGEN_VERSION="1.18.0"
 DOXYGEN_SHA256="14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
 
