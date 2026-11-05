@@ -30,6 +30,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          exit 1
           files=$(gh pr diff ${{ github.event.pull_request.number }} --repo "$GITHUB_REPOSITORY" --name-only)
           echo "firmware=$(grep -qE "$FIRMWARE_PATHS" <<< "$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
