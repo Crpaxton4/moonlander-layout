@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.17](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.16...v1.0.17) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** split the keymap into feature modules ([#56](https://github.com/Crpaxton4/moonlander-layout/issues/56)) ([440207b](https://github.com/Crpaxton4/moonlander-layout/commit/440207bd0ca3df04a093565aa12af1fada7a422d))
+
 ## [1.0.16](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.15...v1.0.16) (2026-11-05)
 
 
