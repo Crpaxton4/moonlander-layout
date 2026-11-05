@@ -1,4 +1,4 @@
-out/
+/.build/
 /src/*.bin
 node_modules/
 /.tmp/

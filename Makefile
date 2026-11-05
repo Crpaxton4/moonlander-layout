@@ -22,22 +22,22 @@ export QMK_USERSPACE := $(CURDIR)/src
 QMK_JOBS ?= $(shell nproc)
 
 # QMK copies built firmware into the userspace root (src/); move it into the
-# repo-level out/.
-firmware: ## Build the firmware into out/ (the default target; QMK_JOBS=1 is serial)
+# repo-level .build/.
+firmware: ## Build the firmware into .build/ (the default target; QMK_JOBS=1 is serial)
 	qmk userspace-compile -j $(QMK_JOBS)
-	mkdir -p out
-	mv -f src/*.bin out/
+	mkdir -p .build
+	mv -f src/*.bin .build/
 
 # Compile database for clang-tidy. QMK builds the firmware to record the
 # compile commands, and writes the database into the userspace root (src/),
-# next to the firmware copy. Both go into out/, so one build gives both. QMK
+# next to the firmware copy. Both go into .build/, so one build gives both. QMK
 # has no option for the database's location. Each entry holds an absolute
 # directory, and its file is relative to that directory or absolute, so the
 # move keeps every path valid.
-compiledb: ## Build the firmware and the compile database into out/
+compiledb: ## Build the firmware and the compile database into .build/
 	qmk compile -j $(QMK_JOBS) --compiledb -kb zsa/moonlander/reva -km qgmlwy
-	mkdir -p out
-	mv -f src/*.bin src/compile_commands.json out/
+	mkdir -p .build
+	mv -f src/*.bin src/compile_commands.json .build/
 
 .PHONY: firmware compiledb
 
@@ -56,7 +56,7 @@ ANALYZE_CHECKS := clang-tidy
 # gives it that same prelude. --extra-arg, unlike the ExtraArgs config option,
 # lands before the inferred command's `--`, so after QMK's own -include list.
 clang-tidy: ## Run clang-tidy only (needs the compile database)
-	@time clang-tidy --quiet -p out \
+	@time clang-tidy --quiet -p .build \
 		--extra-arg=-include --extra-arg=community_modules_introspection.h \
 		$(C_SOURCES)
 
@@ -163,8 +163,8 @@ $(CASE_TESTS): $(CHECKER_BUILD)/test/%: $(CHECKER)
 
 ##@ General
 
-clean: ## Remove out/ and the standards checker build
-	rm -rf out $(CHECKER_BUILD)
+clean: ## Remove .build/ and the standards checker build
+	rm -rf .build $(CHECKER_BUILD)
 
 # Lists every target that has a `## description`, under its `##@` group
 help: ## List the targets
