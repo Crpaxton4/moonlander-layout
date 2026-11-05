@@ -67,7 +67,7 @@ jobs:
       # The checker's golden fixtures, whatever the hooks found
       - name: "Test check-standards"
         if: ${{ !cancelled() }}
-        run: time make -C tools/check_standards test
+        run: time make checker-test
 
       # Given a hook id, pre-commit runs only that hook, so each report-only
       # hook gets its own call. Every one runs; the step fails if any did.
