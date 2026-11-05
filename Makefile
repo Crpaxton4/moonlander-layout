@@ -79,8 +79,7 @@ analyze: compiledb ## Run every static analysis check (clang-tidy, Doxygen)
 # The checker in tools/check_standards/ links Ubuntu 24.04's tree-sitter
 # packages: libtree-sitter-dev and the C grammar of tree-sitter-c-src, whose
 # generated parser is compiled in. Only the Lint job builds it, on the Ubuntu
-# release and package versions setup.sh installs; the firmware job's
-# container ships a different tree-sitter.
+# release and package versions setup.sh installs.
 
 # Root the packages are installed under: empty for the system, or a directory
 # `dpkg -x` unpacked them into
