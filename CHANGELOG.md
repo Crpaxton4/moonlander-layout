@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.12](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.11...v1.0.12) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** index tap dance state by name ([#46](https://github.com/Crpaxton4/moonlander-layout/issues/46)) ([2245872](https://github.com/Crpaxton4/moonlander-layout/commit/2245872aaf4a3a966514a4eee2f924c7b57ac807))
+
 ## [1.0.11](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.10...v1.0.11) (2026-11-05)
 
 
