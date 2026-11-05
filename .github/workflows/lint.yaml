@@ -60,10 +60,67 @@ jobs:
     # Actions are pinned to commit SHAs; the trailing comment names the release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The runner image's tool cache doesn't hold the Node release in
+      # .node-version, so setup-node downloads it on every run. Its tool cache
+      # directory for that release is cached and restored before setup-node,
+      # which then finds the release locally. The key holds the exact release
+      # and the runner image, so a cache never serves other versions.
+      - name: "Compute node cache key"
+        id: node-key
+        run: |
+          version=$(cat .node-version)
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::.node-version is '$version', not an exact release"
+            exit 1
+          fi
+          key="node-$RUNNER_OS-$RUNNER_ARCH-${ImageOS:?}-${ImageVersion:?}"
+          key="$key-$version"
+          echo "version=$version" | tee -a "$GITHUB_OUTPUT"
+          echo "path=$RUNNER_TOOL_CACHE/node/$version" | tee -a "$GITHUB_OUTPUT"
+          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+      - name: "Restore node runtime"
+        id: node-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.node-key.outputs.path }}
+          key: ${{ steps.node-key.outputs.key }}
+
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
       - run: npm ci
+
+      # The step fails if the node on PATH isn't the release in .node-version
+      # from the cached directory. npm comes with that release; npm ls prints
+      # the locked packages.
+      - name: "Check node"
+        env:
+          NODE_VERSION: ${{ steps.node-key.outputs.version }}
+          NODE_DIR: ${{ steps.node-key.outputs.path }}
+        run: |
+          actual=$(node --version || true)
+          path=$(command -v node || true)
+          echo "node $actual at $path"
+          if [ "$actual" != "v$NODE_VERSION" ]; then
+            echo "::error::node is '$actual', not the pinned v$NODE_VERSION"
+            exit 1
+          fi
+          if [[ "$path" != "$NODE_DIR"/* ]]; then
+            echo "::error::node on PATH is '$path', not in $NODE_DIR"
+            exit 1
+          fi
+          echo "npm $(npm --version)"
+          npm ls
+
+      # Saved only after the version matches its pin, and before the hooks
+      # run, so a hook failure doesn't discard it
+      - name: "Save node runtime"
+        if: ${{ steps.node-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.node-key.outputs.path }}
+          key: ${{ steps.node-key.outputs.key }}
 
       # uv downloads the pre-commit packages from PyPI faster than the Actions
       # cache restores them, so uv's cache is off
