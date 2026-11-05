@@ -30,14 +30,14 @@ firmware: ## Build the firmware into out/ (the default target; QMK_JOBS=1 is ser
 
 # Compile database for clang-tidy. QMK builds the firmware to record the
 # compile commands, and writes the database into the userspace root (src/),
-# next to the firmware copy. The firmware goes into out/, as `firmware` puts
-# it, so one build gives both; the link puts the database at the repo root,
-# where the tools look for it.
-compiledb: ## Build the firmware into out/ and write compile_commands.json
+# next to the firmware copy. Both go into out/, so one build gives both. QMK
+# has no option for the database's location. Each entry holds an absolute
+# directory, and its file is relative to that directory or absolute, so the
+# move keeps every path valid.
+compiledb: ## Build the firmware and the compile database into out/
 	qmk compile -j $(QMK_JOBS) --compiledb -kb zsa/moonlander/reva -km qgmlwy
 	mkdir -p out
-	mv -f src/*.bin out/
-	ln -sf src/compile_commands.json compile_commands.json
+	mv -f src/*.bin src/compile_commands.json out/
 
 .PHONY: firmware compiledb
 
@@ -56,7 +56,7 @@ ANALYZE_CHECKS := clang-tidy
 # gives it that same prelude. --extra-arg, unlike the ExtraArgs config option,
 # lands before the inferred command's `--`, so after QMK's own -include list.
 clang-tidy: ## Run clang-tidy only (needs the compile database)
-	@time clang-tidy --quiet -p . \
+	@time clang-tidy --quiet -p out \
 		--extra-arg=-include --extra-arg=community_modules_introspection.h \
 		$(C_SOURCES)
 
