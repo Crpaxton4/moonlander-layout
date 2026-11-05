@@ -1,0 +1,6 @@
+test/nesting_if/nesting_if.c:33:9 nesting if is not allowed inside if
+test/nesting_if/nesting_if.c:36:9 nesting for is not allowed inside if
+test/nesting_if/nesting_if.c:40:9 nesting if is not allowed inside if
+test/nesting_if/nesting_if.c:47:9 nesting while is not allowed inside if
+4 findings in 1 files
+exit 1

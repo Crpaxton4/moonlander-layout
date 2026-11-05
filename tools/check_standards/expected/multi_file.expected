@@ -1,6 +1,0 @@
-fixtures/src/multi_file_first.c:7:9 nesting if is not allowed inside if
-fixtures/src/multi_file_first.c:16:9 nesting while is not allowed inside for
-fixtures/src/multi_file_second.c:1:1 file-docstring file does not begin with a /** comment
-fixtures/src/multi_file_second.c:10:13 nesting if is not allowed inside case
-4 findings in 2 files
-exit 1
