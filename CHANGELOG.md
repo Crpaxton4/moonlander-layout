@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.8](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.7...v1.0.8) (2026-11-05)
+
+
+### Styles
+
+* **firmware:** format userspace json ([#37](https://github.com/Crpaxton4/moonlander-layout/issues/37)) ([6c25749](https://github.com/Crpaxton4/moonlander-layout/commit/6c257491c6071a94dc92fbbb59cfff52f50aa728))
+
 ## [1.0.7](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.6...v1.0.7) (2026-11-05)
 
 
