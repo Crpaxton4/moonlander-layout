@@ -107,11 +107,72 @@ jobs:
           path: ~/.cache/pre-commit
           key: ${{ steps.pre-commit-key.outputs.key }}
 
-      # The runner image ships this version, so no `apt-get update` is needed.
-      # apt installs exactly the pinned version or fails.
-      - name: "Install shellcheck"
+      # The shellcheck hook and actionlint, which checks the `run:` scripts of
+      # workflows, run the shellcheck on PATH. Its .deb file is cached. The
+      # key holds the pin and the runner image, so a cache never serves other
+      # versions.
+      - name: "Compute shellcheck cache key"
+        id: shellcheck-key
         run: |
-          sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
+          key="shellcheck-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
+          key="$key-$SHELLCHECK_VERSION"
+          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+      - name: "Restore shellcheck package"
+        id: shellcheck-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/shellcheck-deb
+          key: ${{ steps.shellcheck-key.outputs.key }}
+
+      # On a cache miss, apt fetches the package index and downloads exactly
+      # the pinned version or fails
+      - name: "Download shellcheck package"
+        if: ${{ steps.shellcheck-cache.outputs.cache-hit != 'true' }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/shellcheck-deb
+        run: |
+          sudo apt-get update
+          mkdir -p "$DEB_DIR"
+          cd "$DEB_DIR"
+          apt-get download "shellcheck=$SHELLCHECK_VERSION"
+
+      # The version is read from the .deb file; the step fails if the file is
+      # missing or the version differs from the pin. The package is unpacked,
+      # not installed, and its directory goes first on PATH through
+      # GITHUB_PATH, so later steps run it, not the runner image's shellcheck.
+      - name: "Unpack shellcheck"
+        env:
+          DEB_DIR: ${{ runner.temp }}/shellcheck-deb
+        run: |
+          actual=$(dpkg-deb -f "$DEB_DIR"/shellcheck_*.deb Version || true)
+          echo "shellcheck $actual"
+          if [ "$actual" != "$SHELLCHECK_VERSION" ]; then
+            echo "::error::shellcheck is '$actual', not the pinned $SHELLCHECK_VERSION"
+            exit 1
+          fi
+          root="$RUNNER_TEMP/shellcheck-root"
+          dpkg-deb -x "$DEB_DIR"/shellcheck_*.deb "$root"
+          echo "$root/usr/bin" >> "$GITHUB_PATH"
+
+      # Saved only after the version matches its pin, and before the hooks
+      # run, so a hook failure doesn't discard it
+      - name: "Save shellcheck package"
+        if: ${{ steps.shellcheck-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/shellcheck-deb
+          key: ${{ steps.shellcheck-key.outputs.key }}
+
+      # The hooks must find the unpacked shellcheck first on PATH
+      - name: "Check shellcheck"
+        run: |
+          expected="$RUNNER_TEMP/shellcheck-root/usr/bin/shellcheck"
+          actual=$(command -v shellcheck || true)
+          echo "shellcheck at $actual"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::shellcheck on PATH is '$actual', not $expected"
+            exit 1
+          fi
           shellcheck --version
 
       # The check-standards hook and the checker-test step build against
