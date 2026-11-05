@@ -1,3 +1,7 @@
+/** @file
+ * Build-time settings for the qgmlwy keymap: one-shot timeout, mouse keys and lighting.
+ */
+
 #undef ONESHOT_TIMEOUT
 #define ONESHOT_TIMEOUT 5000
 
@@ -27,4 +31,3 @@
 #define LAYER_STATE_16BIT
 
 #define RGB_MATRIX_STARTUP_SPD 60
-

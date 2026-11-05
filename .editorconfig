@@ -19,6 +19,10 @@ indent_size = 2
 [.github/workflows/*.{yaml,yml}]
 max_line_length = off
 
+# JSON holds unwrappable values such as schema URLs; Prettier still formats it
+[*.json]
+max_line_length = off
+
 # Two trailing spaces are a Markdown line break
 [*.md]
 trim_trailing_whitespace = false
