@@ -17,6 +17,8 @@ on:
 # check, which a `paths:` trigger filter would leave pending forever.
 env:
   FIRMWARE_PATHS: '^src/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$'
+  # The uv release that setup-uv installs. Must match UV_VERSION in lint.yaml
+  UV_VERSION: "0.13.7"
 
 jobs:
   changes:
@@ -203,7 +205,21 @@ jobs:
           path: ${{ runner.temp }}/qmk-assets
           key: ${{ steps.toolchain-key.outputs.key }}
 
+      # uv downloads the QMK CLI and clang-tidy from PyPI faster than the
+      # Actions cache restores them, so uv's cache is off
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+      - name: "Check uv"
+        run: |
+          actual=$(uv --version || true)
+          echo "$actual"
+          read -r _ version _ <<< "$actual"
+          if [ "$version" != "$UV_VERSION" ]; then
+            echo "::error::uv is '$version', not the pinned $UV_VERSION"
+            exit 1
+          fi
 
       # qmk_firmware's Python code runs in the QMK CLI's environment, so its
       # requirements go into the same tool environment
