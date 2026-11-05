@@ -36,6 +36,40 @@ jobs:
       - name: "Install pre-commit"
         run: uv tool install "pre-commit==$PRE_COMMIT_VERSION"
 
+      # pre-commit's hook environments (Python virtualenvs, the Go toolchain and
+      # the hooks built with it) are cached. Each environment is built from the
+      # rev in .pre-commit-config.yaml, so the key holds that file's hash, the
+      # pre-commit version and the runner image, whose Python the virtualenvs
+      # link to.
+      - name: "Compute pre-commit cache key"
+        id: pre-commit-key
+        env:
+          CONFIG_HASH: ${{ hashFiles('.pre-commit-config.yaml') }}
+        run: |
+          key="pre-commit-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
+          key="$key-$PRE_COMMIT_VERSION-${CONFIG_HASH:?}"
+          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+      - name: "Restore pre-commit environments"
+        id: pre-commit-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ steps.pre-commit-key.outputs.key }}
+
+      # Installs the environment of every hook in the config, whatever its
+      # stage. On a cache hit, pre-commit checks each restored environment and
+      # rebuilds any that doesn't work.
+      - name: "Install hook environments"
+        run: pre-commit install-hooks
+
+      # Saved before the hooks run, so a hook failure doesn't discard it
+      - name: "Save pre-commit environments"
+        if: ${{ steps.pre-commit-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ steps.pre-commit-key.outputs.key }}
+
       # The runner image ships this version, so no `apt-get update` is needed.
       # apt installs exactly the pinned version or fails.
       - name: "Install shellcheck"
