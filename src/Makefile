@@ -1,3 +1,11 @@
+# Recipes run in bash for its `time` keyword, which prints TIMEFORMAT even when
+# the timed command fails. $@ expands per target, so every timed recipe prints
+# `timing <target> <seconds>s`.
+SHELL := /bin/bash
+export TIMEFORMAT = timing $@ %Rs
+# A failing target never stops the others; make exits non-zero at the end.
+MAKEFLAGS += --keep-going
+
 # QMK copies built firmware into the userspace root (src/); move it into the
 # repo-level out/.
 build:
@@ -17,3 +25,28 @@ compiledb:
 	ln -sf src/compile_commands.json ../compile_commands.json
 
 .PHONY: build clean compiledb
+
+# This userspace's C sources, the only files analysed
+C_SOURCES := $(shell find keyboards -name '*.c' | LC_ALL=C sort)
+
+# Every check that `analyze` runs
+ANALYZE_CHECKS := clang-tidy
+
+# All sources in one run. keymap.c has no compile database entry: QMK compiles
+# it only inside quantum/keymap_introspection.c, after
+# community_modules_introspection.h (which declares the modules' API, such as
+# oryx.h). clang-tidy infers its command from a QMK entry, and the include
+# gives it that same prelude. --extra-arg, unlike the ExtraArgs config option,
+# lands before the inferred command's `--`, so after QMK's own -include list.
+clang-tidy:
+	@time clang-tidy --quiet -p . \
+		--extra-arg=-include --extra-arg=community_modules_introspection.h \
+		$(C_SOURCES)
+
+# Runs every check, even after one fails, then fails if any did. The total
+# covers the checks, not the compile database build.
+analyze: compiledb
+	@TIMEFORMAT='timing analyze-total %Rs'; \
+		time $(MAKE) --no-print-directory $(ANALYZE_CHECKS)
+
+.PHONY: clang-tidy analyze

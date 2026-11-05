@@ -1,0 +1,64 @@
+name: "Static analysis"
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  analysis:
+    name: "Static analysis"
+    runs-on: ubuntu-24.04
+    # QMK's build image, which the compile database needs
+    container: ghcr.io/qmk/qmk_cli:1.2.0@sha256:b7d7fa8fb4432b569931de5ad59098cb788f440ed61a62c5126746b71aee0f4a
+    # Report-only: findings don't fail the PR yet
+    continue-on-error: true
+    permissions:
+      contents: read
+    # Actions are pinned to commit SHAs; the trailing comment names the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: "Read ZSA firmware branch"
+        id: ref
+        run: echo "ref=$(cat src/.qmk-ref)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: zsa/qmk_firmware
+          ref: ${{ steps.ref.outputs.ref }}
+          path: qmk_firmware
+          submodules: recursive
+
+      - run: pip install -r qmk_firmware/requirements.txt
+      - run: >-
+          qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
+          user.overlay_dir="$GITHUB_WORKSPACE/src"
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: "Install clang-tidy"
+        run: |
+          uv tool install "clang-tidy==$(cat .llvm-version)"
+          clang-tidy --version
+
+      # One run of every check, so a failing check never hides another's
+      # findings. Each check prints a `timing` line, even when it fails.
+      - name: "Run static analysis"
+        run: |
+          set -o pipefail
+          make -C src analyze 2>&1 | tee "$RUNNER_TEMP/analyze.log"
+
+      - name: "Summarize timings"
+        if: ${{ !cancelled() }}
+        run: |
+          [ -f "$RUNNER_TEMP/analyze.log" ] || exit 0
+          {
+            echo "| Check | Duration |"
+            echo "| --- | --- |"
+            awk '
+              $1 == "timing" && $2 == "analyze-total" {
+                print "| **Total** | " $3 " |"
+                next
+              }
+              $1 == "timing" { print "| " $2 " | " $3 " |" }
+            ' "$RUNNER_TEMP/analyze.log"
+          } >> "$GITHUB_STEP_SUMMARY"
