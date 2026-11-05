@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.16](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.15...v1.0.16) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** named colours and one led map per layer ([#53](https://github.com/Crpaxton4/moonlander-layout/issues/53)) ([ba4025a](https://github.com/Crpaxton4/moonlander-layout/commit/ba4025a703d58a4a0c3674dcbbe875954640441a))
+
 ## [1.0.15](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.14...v1.0.15) (2026-11-05)
 
 
