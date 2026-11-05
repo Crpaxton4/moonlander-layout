@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.26](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.25...v1.0.26) (2026-11-05)
+
+
+### Build System
+
+* **build:** pin qmk to a commit ([#80](https://github.com/Crpaxton4/moonlander-layout/issues/80)) ([90a5963](https://github.com/Crpaxton4/moonlander-layout/commit/90a5963e7734a5db0e1d5e33346632e9a1dbe126))
+
 ## [1.0.25](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.24...v1.0.25) (2026-11-05)
 
 
