@@ -14,12 +14,17 @@ QMK_BOOTSTRAP_COMMIT="08c662f286ddfd12a985f57b584b02eca5af0ae6"
 FNM_VERSION="v1.39.0"
 # Must match PRE_COMMIT_VERSION in .github/workflows/lint.yaml
 PRE_COMMIT_VERSION="4.7.0"
+# Must match SHELLCHECK_VERSION in .github/workflows/lint.yaml
+SHELLCHECK_VERSION="0.9.0-1"
 
 # fnm reads .node-version from the current directory
 cd "$REPO_DIR"
 
 # fnm's installer needs unzip
 sudo apt-get install -y unzip
+
+# The shellcheck pre-commit hook and actionlint both run this binary
+sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
 
 # QMK CLI and toolchain
 QMK_BOOTSTRAP_LATEST="$(curl -fsSL "https://api.github.com/repos/qmk/qmk_firmware/commits?path=util/env-bootstrap.sh&per_page=1" \
