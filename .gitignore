@@ -1,4 +1,5 @@
 out/
+/src/*.bin
 node_modules/
 /.tmp/
 compile_commands.json
