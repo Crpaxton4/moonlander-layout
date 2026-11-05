@@ -13,7 +13,8 @@ env:
 jobs:
   changes:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    # Pinned to the development machine's Ubuntu release so CI tools match local ones.
+    runs-on: ubuntu-24.04
     outputs:
       build: ${{ steps.diff.outputs.build }}
     steps:
@@ -28,8 +29,10 @@ jobs:
     name: "Build firmware"
     needs: changes
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.build == 'true') }}
-    runs-on: ubuntu-latest
-    container: ghcr.io/qmk/qmk_cli:latest
+    runs-on: ubuntu-24.04
+    # Pinned by digest so the firmware toolchain changes only on purpose. To bump,
+    # set the tag and digest of the new qmk_cli release together.
+    container: ghcr.io/qmk/qmk_cli:1.2.0@sha256:b7d7fa8fb4432b569931de5ad59098cb788f440ed61a62c5126746b71aee0f4a
     steps:
       - uses: actions/checkout@v7
 

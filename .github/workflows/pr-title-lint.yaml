@@ -12,7 +12,8 @@ on:
 jobs:
   lint-pr-title:
     name: "Validate PR title"
-    runs-on: ubuntu-latest
+    # Pinned to the development machine's Ubuntu release so CI tools match local ones.
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

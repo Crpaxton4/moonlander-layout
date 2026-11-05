@@ -10,7 +10,8 @@ on:
 
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    # Pinned to the development machine's Ubuntu release so CI tools match local ones.
+    runs-on: ubuntu-24.04
     outputs:
       release_created: ${{ steps.release.outputs['src--release_created'] }}
       tag_name: ${{ steps.release.outputs['src--tag_name'] }}
@@ -39,7 +40,7 @@ jobs:
 
   publish:
     needs: [release-please, build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
