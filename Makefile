@@ -105,26 +105,32 @@ CFLAGS   ?= -O2
 WARNINGS := -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
 	-Wstrict-prototypes -Wmissing-prototypes -Werror
 
-CHECKER_DIR   := tools/check_standards
-CHECKER_BUILD := $(CHECKER_DIR)/build
-CHECKER       := $(CHECKER_BUILD)/check_standards
+CHECKER_DIR     := tools/check_standards
+CHECKER_BUILD   := $(CHECKER_DIR)/build
+CHECKER         := $(CHECKER_BUILD)/check_standards
+CHECKER_SOURCES := $(sort $(wildcard $(CHECKER_DIR)/*.c))
+CHECKER_OBJECTS := $(CHECKER_SOURCES:$(CHECKER_DIR)/%.c=$(CHECKER_BUILD)/%.o)
 
 checker: $(CHECKER) ## Build the standards checker
 
 $(CHECKER_BUILD):
 	mkdir -p $@
 
-$(CHECKER_BUILD)/check_standards.o: $(CHECKER_DIR)/check_standards.c | $(CHECKER_BUILD)
+# Each .c file of the checker compiles to its own object. -MMD -MP writes the
+# object's header dependencies to its .d file, which the next build reads, so a
+# changed header rebuilds the objects that include it.
+$(CHECKER_OBJECTS): $(CHECKER_BUILD)/%.o: $(CHECKER_DIR)/%.c | $(CHECKER_BUILD)
 	$(require_grammar)
-	$(CC) $(CPPFLAGS) $(TREE_SITTER_INC) $(CFLAGS) $(WARNINGS) -c -o $@ $<
+	$(CC) $(CPPFLAGS) $(TREE_SITTER_INC) $(CFLAGS) $(WARNINGS) -MMD -MP -c -o $@ $<
+
+-include $(CHECKER_OBJECTS:.o=.d)
 
 # Generated code: built as it is, without the warnings
 $(CHECKER_BUILD)/grammar.o: $(GRAMMAR) | $(CHECKER_BUILD)
 	$(require_grammar)
 	$(CC) $(CPPFLAGS) $(TREE_SITTER_INC) $(CFLAGS) -w -c -o $@ $<
 
-$(CHECKER): $(CHECKER_BUILD)/check_standards.o $(CHECKER_BUILD)/grammar.o \
-	$(TREE_SITTER_LIB)
+$(CHECKER): $(CHECKER_OBJECTS) $(CHECKER_BUILD)/grammar.o $(TREE_SITTER_LIB)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 # Every directory test/<case>/ is one test. Its .c, .h and .inc files are the
