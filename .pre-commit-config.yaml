@@ -50,3 +50,53 @@ repos:
         # `clang-format -i`, so the entry is replaced as well as the args.
         entry: clang-format
         args: [--dry-run, -Werror]
+        
+  # Report-only (manual stage). Prettier reads .editorconfig; .prettierignore
+  # skips the files tools write. require_serial gives one run per hook, so the
+  # findings end in a single summary line.
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx --no -- prettier --check
+        language: system
+        types_or: [json, yaml]
+        require_serial: true
+        stages: [manual]
+      # Markdown is checked separately so its findings can be gated on their own
+      - id: prettier-markdown
+        name: prettier-markdown
+        entry: npx --no -- prettier --check
+        language: system
+        types_or: [markdown]
+        require_serial: true
+        stages: [manual]
+        
+  # Report-only (manual stage). pre-commit builds actionlint with a Go toolchain
+  # it downloads itself when Go is not installed.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        name: actionlint
+        stages: [manual]
+        
+  # apt's shellcheck, pinned in setup.sh and lint.yaml. actionlint lints
+  # workflow run: blocks with the same binary.
+  - repo: local
+    hooks:
+      - id: shellcheck
+        name: shellcheck
+        entry: shellcheck
+        language: system
+        types: [shell]
+        stages: [manual]
+
+  # Style comes from .editorconfig. -d prints a diff instead of rewriting.
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.14.1-1
+    hooks:
+      - id: shfmt
+        name: shfmt
+        args: [-d]
+        stages: [manual]
