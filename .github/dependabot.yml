@@ -1,0 +1,10 @@
+# The prefix carries the scope because every package here is a devDependency,
+# and `include: scope` would produce "chore(deps-dev)", which commitlint rejects.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
