@@ -57,3 +57,32 @@ repos:
         types_or: [markdown]
         require_serial: true
         stages: [manual]
+        
+  # Report-only (manual stage). pre-commit builds actionlint with a Go toolchain
+  # it downloads itself when Go is not installed.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        name: actionlint
+        stages: [manual]
+        
+  # apt's shellcheck, pinned in setup.sh and lint.yaml. actionlint lints
+  # workflow run: blocks with the same binary.
+  - repo: local
+    hooks:
+      - id: shellcheck
+        name: shellcheck
+        entry: shellcheck
+        language: system
+        types: [shell]
+        stages: [manual]
+
+  # Style comes from .editorconfig. -d prints a diff instead of rewriting.
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.14.1-1
+    hooks:
+      - id: shfmt
+        name: shfmt
+        args: [-d]
+        stages: [manual]

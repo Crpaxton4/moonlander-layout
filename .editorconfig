@@ -26,3 +26,7 @@ indent_style = tab
 # Keymap grid files keep one keyboard row per line, however long
 [*.inc]
 max_line_length = off
+
+# shfmt: a line continued with \ starts with its && || or | operator
+[*.sh]
+binary_next_line = true
