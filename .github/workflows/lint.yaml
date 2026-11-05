@@ -43,13 +43,82 @@ jobs:
           sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
           shellcheck --version
 
-      # The check-standards hook builds against these. The runner image doesn't
-      # ship them, so the package index is fetched first.
-      - name: "Install tree-sitter"
+      # The check-standards hook and the checker-test step build against
+      # tree-sitter. The runner image doesn't ship its packages, so their .deb
+      # files are cached. The key holds every pin and the runner image, so a
+      # cache never serves other versions. libtree-sitter-dev depends on
+      # exactly its own version of libtree-sitter0, so TREE_SITTER_VERSION
+      # pins both.
+      - name: "Compute tree-sitter cache key"
+        id: tree-sitter-key
+        run: |
+          key="tree-sitter-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
+          key="$key-$TREE_SITTER_VERSION-$TREE_SITTER_C_VERSION"
+          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+      - name: "Restore tree-sitter packages"
+        id: tree-sitter-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tree-sitter-debs
+          key: ${{ steps.tree-sitter-key.outputs.key }}
+
+      # On a cache miss, apt fetches the package index and downloads exactly
+      # the pinned versions or fails
+      - name: "Download tree-sitter packages"
+        if: ${{ steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
         run: |
           sudo apt-get update
-          sudo apt-get install -y "libtree-sitter-dev=$TREE_SITTER_VERSION" \
+          mkdir -p "$DEB_DIR"
+          cd "$DEB_DIR"
+          apt-get download "libtree-sitter0=$TREE_SITTER_VERSION" \
+            "libtree-sitter-dev=$TREE_SITTER_VERSION" \
             "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
+
+      # Reads each package's version from its .deb file. Every package is
+      # checked; the step fails if a file is missing or a version differs from
+      # its pin.
+      - name: "Verify tree-sitter versions"
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: |
+          status=0
+          verify() {
+            actual=$(dpkg-deb -f "$DEB_DIR/$1"_*.deb Version || true)
+            echo "$1 $actual"
+            if [ "$actual" != "$2" ]; then
+              echo "::error::$1 is '$actual', not the pinned $2"
+              status=1
+            fi
+          }
+          verify libtree-sitter0 "$TREE_SITTER_VERSION"
+          verify libtree-sitter-dev "$TREE_SITTER_VERSION"
+          verify tree-sitter-c-src "$TREE_SITTER_C_VERSION"
+          exit "$status"
+
+      # The packages are unpacked, not installed: dpkg -i reads the database of
+      # every installed file, which takes up to 20 s on the runner. The
+      # Makefile builds the checker against TREE_SITTER_ROOT, which later steps
+      # get through GITHUB_ENV.
+      - name: "Unpack tree-sitter"
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: |
+          root="$RUNNER_TEMP/tree-sitter-root"
+          for package in libtree-sitter0 libtree-sitter-dev tree-sitter-c-src; do
+            dpkg-deb -x "$DEB_DIR/$package"_*.deb "$root"
+          done
+          echo "TREE_SITTER_ROOT=$root" >> "$GITHUB_ENV"
+
+      # Saved only after the versions match their pins, and before the hooks
+      # run, so a hook failure doesn't discard it
+      - name: "Save tree-sitter packages"
+        if: ${{ steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tree-sitter-debs
+          key: ${{ steps.tree-sitter-key.outputs.key }}
 
       # One run of every hook except the report-only ones, so a failing hook
       # never hides another's findings. --verbose prints each hook's duration;
