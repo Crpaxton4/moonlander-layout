@@ -5,3 +5,10 @@ ORYX_ENABLE = yes
 RGB_MATRIX_CUSTOM_KB = yes
 TAP_DANCE_ENABLE = yes
 SPACE_CADET_ENABLE = no
+
+SRC += tap_dance/tap_dance.c
+SRC += macros/macros.c
+SRC += dual_function/dual_function.c
+SRC += modded_pointer_media/modded_pointer_media.c
+SRC += lighting/layer_colors.c
+SRC += lighting/lighting_keys.c
