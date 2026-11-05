@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.24](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.23...v1.0.24) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** plain initializers in the dance table ([#73](https://github.com/Crpaxton4/moonlander-layout/issues/73)) ([f718b2d](https://github.com/Crpaxton4/moonlander-layout/commit/f718b2d8a4e104fb32d1b4b3a99edf63c5b13e94))
+
+## [1.0.23](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.22...v1.0.23) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** flatten the modded key handler ([#71](https://github.com/Crpaxton4/moonlander-layout/issues/71)) ([f4db51f](https://github.com/Crpaxton4/moonlander-layout/commit/f4db51f177699dc5928c54385bd48b18a7f9936f))
+
+## [1.0.22](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.21...v1.0.22) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** flatten the lighting key handler ([#69](https://github.com/Crpaxton4/moonlander-layout/issues/69)) ([4b475ad](https://github.com/Crpaxton4/moonlander-layout/commit/4b475ada3bd325b841cafac2ca02e53c09ae8a72))
+
 ## [1.0.21](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.20...v1.0.21) (2026-11-05)
 
 
