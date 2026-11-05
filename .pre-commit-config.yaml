@@ -37,6 +37,20 @@ repos:
         files: \.md$
         exclude: ^CHANGELOG\.md$
 
+  # Report-only (manual stage). The rev's major must match .llvm-version.
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v22.1.8
+    hooks:
+      - id: clang-format
+        name: clang-format
+        stages: [manual]
+        # .c and .h, plus .inc keymap grid fragments, which are C
+        types_or: [c, inc]
+        # Reports violations without rewriting files. The upstream entry is
+        # `clang-format -i`, so the entry is replaced as well as the args.
+        entry: clang-format
+        args: [--dry-run, -Werror]
+        
   # Report-only (manual stage). Prettier reads .editorconfig; .prettierignore
   # skips the files tools write. require_serial gives one run per hook, so the
   # findings end in a single summary line.
