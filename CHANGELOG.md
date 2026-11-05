@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.11](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.10...v1.0.11) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** name the layers ([#44](https://github.com/Crpaxton4/moonlander-layout/issues/44)) ([ebecbdb](https://github.com/Crpaxton4/moonlander-layout/commit/ebecbdb7b6c20b5866e345b9f95f5a6635dea483))
+
 ## [1.0.10](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.9...v1.0.10) (2026-11-05)
 
 
