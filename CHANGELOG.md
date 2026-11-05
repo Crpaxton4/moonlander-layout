@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.22](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.21...v1.0.22) (2026-11-05)
+
+
+### Code Refactoring
+
+* **firmware:** flatten the lighting key handler ([#69](https://github.com/Crpaxton4/moonlander-layout/issues/69)) ([4b475ad](https://github.com/Crpaxton4/moonlander-layout/commit/4b475ada3bd325b841cafac2ca02e53c09ae8a72))
+
 ## [1.0.21](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.20...v1.0.21) (2026-11-05)
 
 
