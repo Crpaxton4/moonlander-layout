@@ -46,3 +46,7 @@ repos:
         stages: [manual]
         # .c and .h, plus .inc keymap grid fragments, which are C
         types_or: [c, inc]
+        # Reports violations without rewriting files. The upstream entry is
+        # `clang-format -i`, so the entry is replaced as well as the args.
+        entry: clang-format
+        args: [--dry-run, -Werror]
