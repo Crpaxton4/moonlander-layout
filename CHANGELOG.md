@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.4...v1.0.5) (2026-11-05)
+
+
+### Miscellaneous Chores
+
+* **tooling:** compile database and llvm version ([#23](https://github.com/Crpaxton4/moonlander-layout/issues/23)) ([54370fa](https://github.com/Crpaxton4/moonlander-layout/commit/54370fa46344859edd1898d0dd15ceecd9f7cfae))
+
 ## [1.0.4](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.3...v1.0.4) (2026-11-05)
 
 
