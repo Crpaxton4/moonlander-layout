@@ -29,7 +29,7 @@ concurrency:
 # A skipped job satisfies its required check, but a `paths:` filter keeps the
 # check pending
 env:
-  FIRMWARE_PATHS: '^src/qmk/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$'
+  FIRMWARE_PATHS: '^src/qmk/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
   # Keep equal to UV_VERSION in lint.yaml
   UV_VERSION: "0.13.7"
 
@@ -42,12 +42,16 @@ jobs:
     outputs:
       firmware: ${{ steps.diff.outputs.firmware }}
     steps:
+      # Job reads only the step scripts
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
       - id: diff
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          files=$(gh pr diff ${{ github.event.pull_request.number }} --repo "$GITHUB_REPOSITORY" --name-only)
-          echo "firmware=$(grep -qE "$FIRMWARE_PATHS" <<< "$files" && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: .github/scripts/build/detect-firmware-changes.sh
 
   firmware:
     name: "Build and analyze firmware"
@@ -82,11 +86,7 @@ jobs:
       # commit
       - name: "Compute ZSA firmware cache key"
         id: qmk
-        run: |
-          ref=$(cat src/qmk/.qmk-ref)
-          submodules_hash=$(sha256sum <<< "$QMK_SUBMODULES" | cut -c1-16)
-          echo "ref=$ref" >> "$GITHUB_OUTPUT"
-          echo "key=qmk-firmware-$RUNNER_OS-$ref-$submodules_hash" | tee -a "$GITHUB_OUTPUT"
+        run: .github/scripts/build/compute-zsa-firmware-cache-key.sh
       - name: "Restore ZSA firmware"
         id: qmk-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -108,35 +108,13 @@ jobs:
       - name: "Check out ZSA firmware submodules"
         if: ${{ steps.qmk-cache.outputs.cache-hit != 'true' }}
         working-directory: qmk_firmware
-        run: |
-          read -ra submodules <<< "$QMK_SUBMODULES"
-          git submodule update --init --depth 1 --jobs "${#submodules[@]}" -- "${submodules[@]}"
+        run: '"$GITHUB_WORKSPACE/.github/scripts/build/check-out-zsa-firmware-submodules.sh"'
 
-      # `git submodule status` starts the line of a submodule at its recorded commit
-      # with a space
       - name: "Verify ZSA firmware checkout"
         working-directory: qmk_firmware
         env:
           QMK_REF: ${{ steps.qmk.outputs.ref }}
-        run: |
-          set -o pipefail
-          read -ra submodules <<< "$QMK_SUBMODULES"
-          head=$(git rev-parse HEAD)
-          echo "HEAD $head"
-          if [ "$head" != "$QMK_REF" ]; then
-            echo "::error::qmk_firmware is at $head, not at the pin $QMK_REF"
-            exit 1
-          fi
-          git submodule status -- "${submodules[@]}" | tee "$RUNNER_TEMP/submodules.txt"
-          status=0
-          for path in "${submodules[@]}"; do
-            recorded=$(git rev-parse "HEAD:$path")
-            if ! grep -qE "^ $recorded $path( |$)" "$RUNNER_TEMP/submodules.txt"; then
-              echo "::error::$path is not at $recorded"
-              status=1
-            fi
-          done
-          exit "$status"
+        run: '"$GITHUB_WORKSPACE/.github/scripts/build/verify-zsa-firmware-checkout.sh"'
 
       # Save before the build, so no build output goes into the cache
       - name: "Save ZSA firmware"
@@ -147,16 +125,10 @@ jobs:
           key: ${{ steps.qmk.outputs.key }}
 
       # Each run compares each asset with its sha256 pin, so a cache never gives a
-      # different release. ccache hashes the compiler and all inputs, so its prefix
-      # has no image version
+      # different release
       - name: "Compute QMK toolchain and ccache cache keys"
         id: toolchain-key
-        run: |
-          key="qmk-toolchain-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
-          key="$key-$QMK_TOOLCHAINS_RELEASE-$QMK_FLASHUTILS_RELEASE"
-          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
-          prefix="ccache-$RUNNER_OS-$ImageOS-$QMK_TOOLCHAINS_RELEASE-$CCACHE_VERSION-"
-          echo "ccache-prefix=$prefix" | tee -a "$GITHUB_OUTPUT"
+        run: .github/scripts/build/compute-toolchain-cache-keys.sh
       - name: "Restore QMK toolchain"
         id: toolchain-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -164,39 +136,14 @@ jobs:
           path: ${{ runner.temp }}/qmk-assets
           key: ${{ steps.toolchain-key.outputs.key }}
 
-      # Asset names contain the GCC version: the tag without its `v` and its build
-      # number
       - name: "Download QMK toolchain"
         if: ${{ steps.toolchain-cache.outputs.cache-hit != 'true' }}
         working-directory: ${{ runner.temp }}
-        run: |
-          gcc_version="${QMK_TOOLCHAINS_RELEASE#v}"
-          gcc_version="${gcc_version%-*}"
-          base="https://github.com/qmk"
-          mkdir -p qmk-assets
-          curl -fsSL -o qmk-assets/toolchains.tar.zst \
-            "$base/qmk_toolchains/releases/download/$QMK_TOOLCHAINS_RELEASE/qmk_toolchains-gcc$gcc_version-host_linuxX64.tar.zst"
-          curl -fsSL -o qmk-assets/flashutils.tar.zst \
-            "$base/qmk_flashutils/releases/download/$QMK_FLASHUTILS_RELEASE/qmk_flashutils-$QMK_FLASHUTILS_RELEASE-linuxX64.tar.zst"
+        run: '"$GITHUB_WORKSPACE/.github/scripts/build/download-qmk-toolchain.sh"'
 
-      # QMK CLI finds the toolchain in QMK_DISTRIB_DIR/bin
       - name: "Install QMK toolchain"
         working-directory: ${{ runner.temp }}
-        run: |
-          sha256sum -c - <<EOF
-          $QMK_TOOLCHAINS_SHA256  qmk-assets/toolchains.tar.zst
-          $QMK_FLASHUTILS_SHA256  qmk-assets/flashutils.tar.zst
-          EOF
-          dir="$RUNNER_TEMP/qmk-distrib"
-          mkdir -p "$dir"
-          tar --zstd -xf qmk-assets/toolchains.tar.zst -C "$dir" \
-            --strip-components=1 --exclude=avr --exclude='avr-*' \
-            --exclude='riscv32-unknown-elf*'
-          tar --zstd -xf qmk-assets/flashutils.tar.zst -C "$dir/bin" ./dfu-suffix
-          echo "QMK_DISTRIB_DIR=$dir" >> "$GITHUB_ENV"
-          echo "$dir/bin" >> "$GITHUB_PATH"
-          "$dir/bin/arm-none-eabi-gcc" --version
-          "$dir/bin/dfu-suffix" --version
+        run: '"$GITHUB_WORKSPACE/.github/scripts/build/install-qmk-toolchain.sh"'
 
       # Save before the build, so a failed build does not discard the assets
       - name: "Save QMK toolchain"
@@ -212,26 +159,11 @@ jobs:
           version: ${{ env.UV_VERSION }}
           enable-cache: false
       - name: "Check uv"
-        run: |
-          actual=$(uv --version || true)
-          echo "$actual"
-          read -r _ version _ <<< "$actual"
-          if [ "$version" != "$UV_VERSION" ]; then
-            echo "::error::uv is '$version', not the pinned $UV_VERSION"
-            exit 1
-          fi
+        run: .github/scripts/shared/check-uv-version.sh
 
-      # Python code of qmk_firmware runs in the QMK CLI environment
       - name: "Install QMK CLI"
-        run: |
-          uv tool install --exclude-newer "$QMK_PYTHON_DEPS_DATE" \
-            --with-requirements qmk_firmware/requirements.txt \
-            "qmk==$QMK_CLI_VERSION"
-          qmk --version
-          "$(uv tool dir)/qmk/bin/python" --version
-      - run: >-
-          qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
-          user.overlay_dir="$GITHUB_WORKSPACE/src/qmk"
+        run: .github/scripts/build/install-qmk-cli.sh
+      - run: .github/scripts/build/configure-qmk-cli.sh
 
       # A PR run uses ccache only if it restored an entry, so a missing cache costs
       # only the lookup. The release build never uses ccache
@@ -244,70 +176,24 @@ jobs:
           key: ${{ steps.toolchain-key.outputs.ccache-prefix }}${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: ${{ steps.toolchain-key.outputs.ccache-prefix }}
 
-      # Compile database must record the ccache link as the compiler for clang-tidy.
-      # USE_CCACHE of QMK records `ccache` instead
       - name: "Install ccache"
         id: ccache
         if: ${{ !inputs.skip-analysis && (github.event_name == 'push' || steps.ccache-cache.outputs.cache-matched-key != '') }}
-        run: |
-          dir="$RUNNER_TEMP/ccache"
-          name="ccache-$CCACHE_VERSION-linux-x86_64-musl-static"
-          mkdir -p "$dir"
-          if [ ! -f "$dir/$name.tar.xz" ]; then
-            curl -fsSL -o "$dir/$name.tar.xz" \
-              "https://github.com/ccache/ccache/releases/download/v$CCACHE_VERSION/$name.tar.xz"
-          fi
-          echo "$CCACHE_SHA256  $dir/$name.tar.xz" | sha256sum -c -
-          bin="$RUNNER_TEMP/ccache-bin"
-          mkdir -p "$bin"
-          tar -xJf "$dir/$name.tar.xz" -C "$bin" --strip-components=1 "$name/ccache"
-          ln -s ccache "$bin/arm-none-eabi-gcc"
-          version=$("$bin/ccache" --print-version)
-          echo "ccache $version"
-          if [ "$version" != "$CCACHE_VERSION" ]; then
-            echo "::error::ccache is '$version', not the pinned $CCACHE_VERSION"
-            exit 1
-          fi
-          {
-            echo "QMK_PATH_PREFIX=$bin"
-            echo "CCACHE_PATH=$QMK_DISTRIB_DIR/bin"
-            echo "CCACHE_DIR=$dir/objects"
-            echo "CCACHE_COMPILERCHECK=content"
-            echo "CCACHE_DEPEND=true"
-            # Objects of one build use approximately 2 MB
-            echo "CCACHE_MAXSIZE=50M"
-          } >> "$GITHUB_ENV"
-          CCACHE_DIR="$dir/objects" "$bin/ccache" --zero-stats
-          touch "$RUNNER_TEMP/ccache-build-start"
+        run: .github/scripts/build/install-ccache.sh
 
-      # A PR checkout is a merge commit, so a PR build uses the PR head commit in
-      # the firmware name
       - name: "Build firmware and compile database"
+        # PR values are empty outside a PR, and the tag is empty outside a release
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          RELEASE_TAG: ${{ inputs.release-tag }}
-        run: |
-          if [ -n "$RELEASE_TAG" ]; then
-            export FIRMWARE_SUFFIX="-$RELEASE_TAG"
-          elif [ -n "$PR_NUMBER" ]; then
-            export FIRMWARE_SUFFIX="-pr$PR_NUMBER-${PR_HEAD_SHA:0:7}"
-          fi
-          make compiledb
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+          RELEASE_TAG: ${{ inputs.release-tag || '' }}
+        run: .github/scripts/build/build-firmware.sh
 
-      # Eviction keeps only the objects of this build. A PR run never saves, because
-      # its next push changes the same files again
       - name: "Prune ccache"
         id: ccache-prune
         if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
-        run: |
-          ccache="$QMK_PATH_PREFIX/ccache"
-          "$ccache" --show-stats --verbose
-          writes=$("$ccache" --print-stats | awk '$1 == "local_storage_write" { print $2 }')
-          start=$(stat -c %Y "$RUNNER_TEMP/ccache-build-start")
-          "$ccache" --evict-older-than "$(( $(date +%s) - start + 1 ))s"
-          du -sh "$RUNNER_TEMP/ccache"
-          echo "save=$([ "${writes:-0}" -gt 0 ] && echo true || echo false)" | tee -a "$GITHUB_OUTPUT"
+        run: .github/scripts/build/prune-ccache.sh
+      # A PR run never saves, because its next push changes the same files again
       - name: "Save ccache"
         if: ${{ !cancelled() && github.event_name == 'push' && steps.ccache-prune.outputs.save == 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -319,53 +205,23 @@ jobs:
       # the analysis
       - name: "Install clang-tidy"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
-        run: |
-          uv tool install "clang-tidy==$(cat .llvm-version)"
-          clang-tidy --version
+        run: .github/scripts/build/install-clang-tidy.sh
 
-      # Release binary goes first on PATH, so no other doxygen hides it
       - name: "Install Doxygen"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         env:
           # Keep equal to DOXYGEN_VERSION and DOXYGEN_SHA256 in setup.sh
           DOXYGEN_VERSION: "1.18.0"
           DOXYGEN_SHA256: "14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
-        run: |
-          tag="Release_$(echo "$DOXYGEN_VERSION" | tr . _)"
-          curl -fsSL -o "$RUNNER_TEMP/doxygen.tar.gz" \
-            "https://github.com/doxygen/doxygen/releases/download/$tag/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz"
-          echo "$DOXYGEN_SHA256  $RUNNER_TEMP/doxygen.tar.gz" | sha256sum -c -
-          mkdir -p "$HOME/.local/bin"
-          tar -xzf "$RUNNER_TEMP/doxygen.tar.gz" -C "$HOME/.local/bin" \
-            --strip-components=2 "doxygen-$DOXYGEN_VERSION/bin/doxygen"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.local/bin:$PATH"
-          which -a doxygen
-          doxygen --version
+        run: .github/scripts/build/install-doxygen.sh
 
-      # One run of all checks, so a failed check does not hide other findings. The build
-      # step made the compile database, so make does not build it again
       - name: "Run static analysis"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
-        run: |
-          set -o pipefail
-          make --assume-old=compiledb analyze 2>&1 | tee "$RUNNER_TEMP/analyze.log"
+        run: .github/scripts/build/run-static-analysis.sh
 
       - name: "Summarize timings"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
-        run: |
-          [ -f "$RUNNER_TEMP/analyze.log" ] || exit 0
-          {
-            echo "| Check | Duration |"
-            echo "| --- | --- |"
-            awk '
-              $1 == "timing" && $2 == "analyze-total" {
-                print "| **Total** | " $3 " |"
-                next
-              }
-              $1 == "timing" { print "| " $2 " | " $3 " |" }
-            ' "$RUNNER_TEMP/analyze.log"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: .github/scripts/build/summarize-analysis-timings.sh
 
       # upload-artifact skips the dot directory .build/ without include-hidden-files
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

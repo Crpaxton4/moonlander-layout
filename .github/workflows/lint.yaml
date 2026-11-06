@@ -39,17 +39,16 @@ jobs:
     outputs:
       release-only: ${{ steps.diff.outputs.release-only }}
     steps:
+      # Job reads only the step scripts
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
       - id: diff
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          files=$(gh pr diff ${{ github.event.pull_request.number }} --repo "$GITHUB_REPOSITORY" --name-only)
-          echo "$files"
-          if [ -n "$files" ] && ! grep -qvE "$RELEASE_ONLY_PATHS" <<< "$files"; then
-            echo "release-only=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "release-only=false" >> "$GITHUB_OUTPUT"
-          fi
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: .github/scripts/lint/detect-release-only-changes.sh
 
   lint:
     name: "Lint"
@@ -69,17 +68,7 @@ jobs:
       # caches that release for setup-node
       - name: "Compute node cache key"
         id: node-key
-        run: |
-          version=$(cat .node-version)
-          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::.node-version is '$version', not an exact release"
-            exit 1
-          fi
-          key="node-$RUNNER_OS-$RUNNER_ARCH-${ImageOS:?}-${ImageVersion:?}"
-          key="$key-$version"
-          echo "version=$version" | tee -a "$GITHUB_OUTPUT"
-          echo "path=$RUNNER_TOOL_CACHE/node/$version" | tee -a "$GITHUB_OUTPUT"
-          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+        run: .github/scripts/lint/compute-node-cache-key.sh
       - name: "Restore node runtime"
         id: node-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -90,27 +79,13 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
-      - run: npm ci
+      - run: .github/scripts/shared/install-npm-packages.sh
 
-      # npm comes with the node release, so the step checks only node
       - name: "Check node"
         env:
           NODE_VERSION: ${{ steps.node-key.outputs.version }}
           NODE_DIR: ${{ steps.node-key.outputs.path }}
-        run: |
-          actual=$(node --version || true)
-          path=$(command -v node || true)
-          echo "node $actual at $path"
-          if [ "$actual" != "v$NODE_VERSION" ]; then
-            echo "::error::node is '$actual', not the pinned v$NODE_VERSION"
-            exit 1
-          fi
-          if [[ "$path" != "$NODE_DIR"/* ]]; then
-            echo "::error::node on PATH is '$path', not in $NODE_DIR"
-            exit 1
-          fi
-          echo "npm $(npm --version)"
-          npm ls
+        run: .github/scripts/lint/check-node.sh
 
       # Save before the hooks, so a failed hook does not discard it
       - name: "Save node runtime"
@@ -126,27 +101,15 @@ jobs:
           version: ${{ env.UV_VERSION }}
           enable-cache: false
       - name: "Check uv"
-        run: |
-          actual=$(uv --version || true)
-          echo "$actual"
-          read -r _ version _ <<< "$actual"
-          if [ "$version" != "$UV_VERSION" ]; then
-            echo "::error::uv is '$version', not the pinned $UV_VERSION"
-            exit 1
-          fi
+        run: .github/scripts/shared/check-uv-version.sh
       - name: "Install pre-commit"
-        run: uv tool install "pre-commit==$PRE_COMMIT_VERSION"
+        run: .github/scripts/lint/install-pre-commit.sh
 
-      # pre-commit builds the hook environments with the Python and Go of the runner
-      # image, so the key contains the image
       - name: "Compute pre-commit cache key"
         id: pre-commit-key
         env:
           CONFIG_HASH: ${{ hashFiles('.pre-commit-config.yaml') }}
-        run: |
-          key="pre-commit-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
-          key="$key-$PRE_COMMIT_VERSION-${CONFIG_HASH:?}"
-          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+        run: .github/scripts/lint/compute-pre-commit-cache-key.sh
       - name: "Restore pre-commit environments"
         id: pre-commit-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -155,7 +118,7 @@ jobs:
           key: ${{ steps.pre-commit-key.outputs.key }}
 
       - name: "Install hook environments"
-        run: pre-commit install-hooks
+        run: .github/scripts/lint/install-hook-environments.sh
 
       # Save before the hooks, so a failed hook does not discard it
       - name: "Save pre-commit environments"
@@ -168,10 +131,7 @@ jobs:
       # actionlint and the shellcheck hook run the shellcheck on PATH
       - name: "Compute shellcheck cache key"
         id: shellcheck-key
-        run: |
-          key="shellcheck-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
-          key="$key-$SHELLCHECK_VERSION"
-          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+        run: .github/scripts/lint/compute-shellcheck-cache-key.sh
       - name: "Restore shellcheck package"
         id: shellcheck-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -183,27 +143,12 @@ jobs:
         if: ${{ steps.shellcheck-cache.outputs.cache-hit != 'true' }}
         env:
           DEB_DIR: ${{ runner.temp }}/shellcheck-deb
-        run: |
-          sudo apt-get update
-          mkdir -p "$DEB_DIR"
-          cd "$DEB_DIR"
-          apt-get download "shellcheck=$SHELLCHECK_VERSION"
+        run: .github/scripts/lint/download-shellcheck-package.sh
 
-      # GITHUB_PATH puts the extracted shellcheck before the shellcheck of the runner
-      # image
       - name: "Unpack shellcheck"
         env:
           DEB_DIR: ${{ runner.temp }}/shellcheck-deb
-        run: |
-          actual=$(dpkg-deb -f "$DEB_DIR"/shellcheck_*.deb Version || true)
-          echo "shellcheck $actual"
-          if [ "$actual" != "$SHELLCHECK_VERSION" ]; then
-            echo "::error::shellcheck is '$actual', not the pinned $SHELLCHECK_VERSION"
-            exit 1
-          fi
-          root="$RUNNER_TEMP/shellcheck-root"
-          dpkg-deb -x "$DEB_DIR"/shellcheck_*.deb "$root"
-          echo "$root/usr/bin" >> "$GITHUB_PATH"
+        run: .github/scripts/lint/unpack-shellcheck.sh
 
       # Save before the hooks, so a failed hook does not discard it
       - name: "Save shellcheck package"
@@ -214,24 +159,12 @@ jobs:
           key: ${{ steps.shellcheck-key.outputs.key }}
 
       - name: "Check shellcheck"
-        run: |
-          expected="$RUNNER_TEMP/shellcheck-root/usr/bin/shellcheck"
-          actual=$(command -v shellcheck || true)
-          echo "shellcheck at $actual"
-          if [ "$actual" != "$expected" ]; then
-            echo "::error::shellcheck on PATH is '$actual', not $expected"
-            exit 1
-          fi
-          shellcheck --version
+        run: .github/scripts/lint/check-shellcheck.sh
 
-      # Runner image does not contain the tree-sitter packages. libtree-sitter-dev
-      # needs libtree-sitter0 at the same version, so TREE_SITTER_VERSION pins both
+      # Runner image does not contain the tree-sitter packages
       - name: "Compute tree-sitter cache key"
         id: tree-sitter-key
-        run: |
-          key="tree-sitter-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
-          key="$key-$TREE_SITTER_VERSION-$TREE_SITTER_C_VERSION"
-          echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+        run: .github/scripts/lint/compute-tree-sitter-cache-key.sh
       - name: "Restore tree-sitter packages"
         id: tree-sitter-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -243,44 +176,17 @@ jobs:
         if: ${{ steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
         env:
           DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
-        run: |
-          sudo apt-get update
-          mkdir -p "$DEB_DIR"
-          cd "$DEB_DIR"
-          apt-get download "libtree-sitter0=$TREE_SITTER_VERSION" \
-            "libtree-sitter-dev=$TREE_SITTER_VERSION" \
-            "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
+        run: .github/scripts/lint/download-tree-sitter-packages.sh
 
-      # Step checks all packages before it fails, so the log shows each wrong
-      # version
       - name: "Verify tree-sitter versions"
         env:
           DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
-        run: |
-          status=0
-          verify() {
-            actual=$(dpkg-deb -f "$DEB_DIR/$1"_*.deb Version || true)
-            echo "$1 $actual"
-            if [ "$actual" != "$2" ]; then
-              echo "::error::$1 is '$actual', not the pinned $2"
-              status=1
-            fi
-          }
-          verify libtree-sitter0 "$TREE_SITTER_VERSION"
-          verify libtree-sitter-dev "$TREE_SITTER_VERSION"
-          verify tree-sitter-c-src "$TREE_SITTER_C_VERSION"
-          exit "$status"
+        run: .github/scripts/lint/verify-tree-sitter-versions.sh
 
-      # dpkg -i takes up to 20 s on the runner, so the step only extracts the packages
       - name: "Unpack tree-sitter"
         env:
           DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
-        run: |
-          root="$RUNNER_TEMP/tree-sitter-root"
-          for package in libtree-sitter0 libtree-sitter-dev tree-sitter-c-src; do
-            dpkg-deb -x "$DEB_DIR/$package"_*.deb "$root"
-          done
-          echo "TREE_SITTER_ROOT=$root" >> "$GITHUB_ENV"
+        run: .github/scripts/lint/unpack-tree-sitter.sh
 
       # Save before the hooks, so a failed hook does not discard them
       - name: "Save tree-sitter packages"
@@ -290,37 +196,14 @@ jobs:
           path: ${{ runner.temp }}/tree-sitter-debs
           key: ${{ steps.tree-sitter-key.outputs.key }}
 
-      # One run of all hooks, so a failed hook does not hide other findings
       - name: "Run pre-commit"
-        run: |
-          set -o pipefail
-          TIMEFORMAT='real %Rs'
-          { time pre-commit run --all-files --hook-stage manual \
-              --show-diff-on-failure --verbose; } 2>&1 \
-            | tee "$RUNNER_TEMP/pre-commit.log"
+        run: .github/scripts/lint/run-pre-commit.sh
 
       # Runs also after a failed hook
       - name: "Test check-standards"
         if: ${{ !cancelled() }}
-        run: time make checker-test
+        run: .github/scripts/lint/test-check-standards.sh
 
       - name: "Summarize timings"
         if: ${{ !cancelled() }}
-        run: |
-          log="$RUNNER_TEMP/pre-commit.log"
-          [ -f "$log" ] || exit 0
-          {
-            echo "### Hooks"
-            echo
-            echo "| Hook | Duration |"
-            echo "| --- | --- |"
-            awk '
-              /\.\.\.(Passed|Failed)$/ {
-                name = $0
-                sub(/\.+(Passed|Failed)$/, "", name)
-              }
-              /^- duration: / { print "| " name " | " $3 " |" }
-              /^real / { print "| **Total** | " $2 " |" }
-            ' "$log"
-            echo
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: .github/scripts/lint/summarize-hook-timings.sh
