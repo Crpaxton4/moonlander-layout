@@ -1,5 +1,5 @@
 /** @file
- * The interface of rules.c.
+ * Interface of rules.c
  */
 
 #pragma once

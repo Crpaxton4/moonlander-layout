@@ -1,5 +1,5 @@
 /** @file
- * The rules of the checker and the walk that gives each node to each rule.
+ * Checker rules and the walk that gives each node to each rule
  */
 
 #include <ctype.h>
@@ -14,7 +14,7 @@
 
 #define DOC_COMMENT_OPEN "/**"
 
-/* tree-sitter reads the string above as a comment start. This comment ends it. */
+/* tree-sitter reads the string above as a comment start. This comment ends it */
 #define COMMENT_CLOSE "*/"
 
 #define FILE_COMMAND "@file"
@@ -47,7 +47,7 @@ typedef enum {
 typedef struct {
     const char *node_type;
     const char *label;
-    /** Under this parent type, the construct continues its chain, as `else if` does. */
+    /** Under this parent type, the construct continues its chain, as `else if` does */
     const char *continues_under;
     unsigned    may_contain;
     int         levels;
@@ -66,7 +66,7 @@ static const construct_t constructs[KIND_COUNT] = {
 };
 
 typedef struct {
-    /** It is NULL outside function bodies. */
+    /** NULL outside function bodies */
     const construct_t *construct;
     int                depth;
 } scope_t;
@@ -124,7 +124,7 @@ static bool has_alphanumeric(const char *start, const char *end) {
 static docstring_t find_docstring(const char *text, size_t length) {
     docstring_t docstring   = {.body = NULL, .body_end = NULL, .command = NULL};
     size_t      open_length = strlen(DOC_COMMENT_OPEN);
-    /* A slash right after DOC_COMMENT_OPEN makes an empty comment. */
+    /* A slash right after DOC_COMMENT_OPEN makes an empty comment */
     if (length < open_length || memcmp(text, DOC_COMMENT_OPEN, open_length) != 0 ||
         text[open_length] == '/') {
         return docstring;
@@ -149,7 +149,7 @@ static bool has_file_command(const docstring_t *docstring) {
     return docstring->command != NULL;
 }
 
-/** The file name after FILE_COMMAND is not part of the description. */
+/** File name after FILE_COMMAND is not part of the description */
 static bool has_description(const docstring_t *docstring) {
     const char *name = docstring->command + strlen(FILE_COMMAND);
     name += strspn(name, BLANKS);
@@ -159,7 +159,7 @@ static bool has_description(const docstring_t *docstring) {
     return has_alphanumeric(name + strcspn(name, WHITESPACE), docstring->body_end);
 }
 
-/** Each check needs the checks before it, so keep this order. */
+/** Each check needs the checks before it, so keep this order */
 static const docstring_check_t docstring_checks[] = {
     {opens_doc_comment, "file does not begin with a /** comment"},
     {is_closed, "the opening /** comment is not closed"},
@@ -266,7 +266,7 @@ static scope_t enter(scope_t scope, const construct_t *construct) {
     return (scope_t){.construct = construct, .depth = scope.depth + construct->levels};
 }
 
-/** On return, the cursor is on the node again. */
+/** On return, the cursor is on the node again */
 static void walk(TSTreeCursor *cursor, const parent_t *parent) {
     TSNode             node  = ts_tree_cursor_current_node(cursor);
     const construct_t *opens = opened_construct(node, parent);

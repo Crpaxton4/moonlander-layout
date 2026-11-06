@@ -1,5 +1,5 @@
 /** @file
- * Reads a file into the text that tree-sitter parses.
+ * Reads a file into the text that tree-sitter parses
  */
 
 #include <ctype.h>
@@ -13,14 +13,14 @@
 
 #define DIRECTIVE_LEAD "# \t"
 
-/** A wrapper that makes a file of one kind into a translation unit. */
+/** Wrapper that makes a file of one kind into a translation unit */
 typedef struct {
     const char *suffix;
     const char *before;
     const char *after;
 } file_kind_t;
 
-/** An .inc file contains only the elements of a brace initializer. */
+/** An .inc file contains only the elements of a brace initializer */
 static const file_kind_t file_kinds[] = {
     {".inc", "static const int inc[] = {\n", "\n};\n"},
 };
@@ -29,16 +29,16 @@ static const file_kind_t translation_unit = {"", "", ""};
 
 /**
  * Spaces replace these words before the parse, also in comments and strings, so
- * all positions stay the same.
+ * all positions stay the same
  */
 static const char *const blanked_words[] = {
-    /* tree-sitter reads this AVR attribute macro as a name. */
+    /* tree-sitter reads this AVR attribute macro as a name */
     "PROGMEM",
 };
 
 static const char *const blanked_directives[] = {
     /* tree-sitter cannot parse an include in an initializer, where the keymap
-     * tables include their rows. */
+     * tables include their rows */
     "include",
 };
 
@@ -117,7 +117,7 @@ static void blank_unparsable(buffer_t *buffer) {
     }
 }
 
-/** Returns 0, or the errno value of the error that stopped the read. */
+/** Returns 0, or the errno value of the error that stopped the read */
 int load_source(source_t *source) {
     const file_kind_t *kind   = find_file_kind(source->path);
     FILE              *stream = fopen(source->path, "rb");
@@ -135,13 +135,13 @@ int load_source(source_t *source) {
     return error;
 }
 
-/** A row of the wrapper gives the first line of the file. */
+/** A row of the wrapper gives the first line of the file */
 static unsigned long file_line(const source_t *source, uint32_t row) {
     uint32_t file_row = row < source->wrapper_rows ? 0 : row - source->wrapper_rows;
     return (unsigned long)file_row + FIRST_POSITION;
 }
 
-/** The caller writes the message of the finding with describe(). */
+/** Caller writes the message of the finding with describe() */
 finding_t *add_finding(source_t *source, const char *rule, TSPoint point) {
     findings_t *list = source->findings;
     list->items = reserve(list->items, sizeof(finding_t), &list->capacity, list->count);

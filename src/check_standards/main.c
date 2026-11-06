@@ -1,5 +1,5 @@
 /** @file
- * The standards checker checks the C rules that no established tool checks.
+ * Standards checker entry point for the C rules that no established tool checks
  */
 
 #include <stdio.h>
@@ -10,7 +10,7 @@
 
 #define FIRST_FILE_ARGUMENT 1
 
-/* The tree-sitter-c package installs no header that declares this function. */
+/* tree-sitter-c installs no header that declares this function */
 const TSLanguage *tree_sitter_c(void);
 
 static void check_path(TSParser *parser, findings_t *findings, const char *path) {

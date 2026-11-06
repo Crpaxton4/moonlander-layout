@@ -1,4 +1,4 @@
-# `make analyze` runs Doxygen from the repository root, so the paths start there.
+# `make analyze` runs Doxygen from the repository root, so the paths start there
 INPUT = src/qmk/keyboards
 RECURSIVE = YES
 FILE_PATTERNS = *.c *.h *.inc
@@ -9,7 +9,7 @@ EXTRACT_ALL = NO
 EXTRACT_STATIC = YES
 JAVADOC_AUTOBRIEF = YES
 
-# Doxygen checks only the members of files that have a @file comment.
+# Doxygen checks only the members of files that have a @file comment
 WARN_IF_UNDOCUMENTED = YES
 WARN_NO_PARAMDOC = YES
 WARN_IF_INCOMPLETE_DOC = YES
@@ -18,7 +18,7 @@ QUIET = YES
 WARN_FORMAT = "$file:$line: $text"
 WARN_AS_ERROR = FAIL_ON_WARNINGS
 
-# Doxygen gives a warning without an output format, so it writes only XML.
+# Doxygen gives a warning without an output format, so it writes only XML
 OUTPUT_DIRECTORY = doxygen
 GENERATE_HTML = NO
 GENERATE_LATEX = NO

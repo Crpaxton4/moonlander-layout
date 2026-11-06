@@ -1,6 +1,6 @@
 ---
-# The clang-diagnostic-* entries let the ExtraArgsBefore warnings pass the -*
-# filter. bugprone-signed-bitwise reports each use of the QMK keycode macros.
+# clang-diagnostic-* entries let the ExtraArgsBefore warnings pass the -*
+# filter. bugprone-signed-bitwise reports each use of the QMK keycode macros
 Checks: >-
     -*,
     bugprone-*,
@@ -18,7 +18,7 @@ WarningsAsErrors: "*"
 HeaderFilterRegex: "/src/qmk/keyboards/"
 
 # clang does not know the first two gcc flags. -Werror bypasses Checks, and the
-# macro causes a finding that HeaderFilterRegex cannot exclude.
+# macro causes a finding that HeaderFilterRegex cannot exclude
 RemovedArgs:
     - -mno-thumb-interwork
     - -fsingle-precision-constant
@@ -26,7 +26,7 @@ RemovedArgs:
     - -DQMK_MCU_ARCH=cortex-m4
 
 # clang-tidy puts ExtraArgs after the `--` of the inferred keymap.c command, where
-# the compiler reads them as file names.
+# the compiler reads them as file names
 ExtraArgsBefore:
     - -Wdocumentation
     - -Wdocumentation-unknown-command
@@ -34,10 +34,10 @@ ExtraArgsBefore:
 CheckOptions:
     readability-function-size.LineThreshold: 25
     readability-function-cognitive-complexity.Threshold: 8
-    # QMK macros such as wait_ms() hide control flow that counts against each caller.
+    # QMK macros such as wait_ms() hide control flow that counts against each caller
     readability-function-cognitive-complexity.IgnoreMacros: true
 
-    # The check never reports literals in #define, enum and const initializers.
+    # Literals in #define, enum and const initializers never cause a finding
     readability-magic-numbers.IgnoredIntegerValues: ""
     readability-magic-numbers.IgnorePowersOf2IntegerValues: false
     readability-magic-numbers.IgnoredFloatingPointValues: ""

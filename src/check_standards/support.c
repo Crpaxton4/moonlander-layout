@@ -1,5 +1,5 @@
 /** @file
- * The buffers, the findings and the output of the checker.
+ * Buffers, findings and output of the checker
  */
 
 #include <errno.h>
@@ -16,7 +16,7 @@
 
 #define MIN_CAPACITY 16
 
-/** The array can move, so use the return value. Without memory, the program stops. */
+/** Array can move, so use the return value. Without memory, the program stops */
 void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     if (count < *capacity) {
         return items;
@@ -30,7 +30,7 @@ void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     return grown;
 }
 
-/** Makes space for extra bytes and also for the terminator. */
+/** Makes space for extra bytes and also for the terminator */
 static void reserve_bytes(buffer_t *buffer, size_t extra) {
     buffer->data =
         reserve(buffer->data, sizeof(char), &buffer->capacity, buffer->length + extra);
@@ -44,7 +44,7 @@ void append(buffer_t *buffer, const char *text) {
     buffer->data[buffer->length] = '\0';
 }
 
-/** Returns 0, or the errno value of a read error. It adds no terminator. */
+/** Returns 0, or the errno value of a read error. It adds no terminator */
 int append_stream(buffer_t *buffer, FILE *stream) {
     size_t read_size = 0;
     do {
@@ -66,7 +66,7 @@ void describe(finding_t *finding, const char *format, ...) {
     va_end(arguments);
 }
 
-/** A subtraction of size_t values can wrap, but this form cannot. */
+/** A subtraction of size_t values can wrap, but this form cannot */
 static int compare_numbers(size_t left, size_t right) {
     return (left > right) - (left < right);
 }

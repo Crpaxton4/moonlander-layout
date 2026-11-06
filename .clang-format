@@ -1,4 +1,4 @@
-# The style of QMK upstream, with an 88-column limit.
+# QMK upstream style with an 88-column limit
 ---
 BasedOnStyle: Google
 AlignAfterOpenBracket: Align

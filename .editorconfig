@@ -1,4 +1,4 @@
-# The model is the .editorconfig of QMK upstream.
+# Based on the .editorconfig of QMK upstream
 root = true
 
 [*]
@@ -10,34 +10,34 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 max_line_length = 88
 
-# This agrees with the YAML format of GitHub Actions.
+# Same YAML indent as GitHub Actions
 [*.{yaml,yml}]
 indent_size = 2
 
-# Pinned action SHAs and image digests cannot wrap.
+# Pinned action SHAs and image digests cannot wrap
 [.github/workflows/*.{yaml,yml}]
 max_line_length = off
 
-# Schema URLs and other JSON values cannot wrap.
+# Schema URLs and other JSON values cannot wrap
 [*.json]
 max_line_length = off
 
-# Two trailing spaces are a Markdown line break.
+# Two trailing spaces are a Markdown line break
 [*.md]
 trim_trailing_whitespace = false
 
-# make requires tabs in recipes.
+# make requires tabs in recipes
 [{Makefile,*.mk}]
 indent_style = tab
 
-# A keymap grid file keeps each keyboard row on one line.
+# A keymap grid file keeps each keyboard row on one line
 [*.inc]
 max_line_length = off
 
-# A golden keeps each finding on one line.
+# A golden keeps each finding on one line
 [*.expected]
 max_line_length = off
 
-# shfmt: a continued line starts with its &&, || or | operator.
+# shfmt: a continued line starts with its &&, || or | operator
 [*.sh]
 binary_next_line = true

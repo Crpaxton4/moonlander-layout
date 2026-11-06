@@ -1,5 +1,5 @@
 /** @file
- * The interface of source.c.
+ * Interface of source.c
  */
 
 #pragma once
@@ -12,7 +12,7 @@
 
 typedef struct {
     const char *path;
-    /** The file text in the wrapper of its file kind, as tree-sitter parses it. */
+    /** File text in the wrapper of its file kind, as tree-sitter parses it */
     buffer_t    parsed;
     size_t      text_start;
     size_t      text_length;
