@@ -72,58 +72,6 @@ const dance_t dances[DANCE_COUNT] = {
             .registers_double_tap_twice = true,
             .repeats_on_triple_tap      = true,
         },
-    /** Tap: Ctrl+D; double tap: Ctrl+Shift+D. */
-    [DANCE_7] =
-        {
-            .tap                   = LCTL(KC_D),
-            .double_tap            = LCTL(LSFT(KC_D)),
-            .repeats_on_triple_tap = true,
-        },
-    /** Tap: Ctrl+Shift+J; double tap: Ctrl+Shift+I. */
-    [DANCE_8] =
-        {
-            .tap                   = LCTL(LSFT(KC_J)),
-            .double_tap            = LCTL(LSFT(KC_I)),
-            .repeats_on_triple_tap = true,
-        },
-    /** Tap: Ctrl+]; double tap: Ctrl+[. */
-    [DANCE_9] =
-        {
-            .tap                   = LCTL(KC_RBRC),
-            .double_tap            = LCTL(KC_LBRC),
-            .repeats_on_triple_tap = true,
-        },
-    /** Tap: Ctrl+R; double tap: Ctrl+Shift+R. */
-    [DANCE_10] =
-        {
-            .tap                   = LCTL(KC_R),
-            .double_tap            = LCTL(LSFT(KC_R)),
-            .repeats_on_triple_tap = true,
-        },
-    /** Tap: Ctrl+Shift+Tab; double tap: Ctrl+1; double hold: Ctrl+Shift+Page Up. */
-    [DANCE_11] =
-        {
-            .tap                   = LCTL(LSFT(KC_TAB)),
-            .double_tap            = LCTL(KC_1),
-            .double_hold           = LCTL(LSFT(KC_PAGE_UP)),
-            .repeats_on_triple_tap = true,
-        },
-    /** Tap: Ctrl+T; double tap: Ctrl+N; double hold: Ctrl+Shift+N. */
-    [DANCE_12] =
-        {
-            .tap                   = LCTL(KC_T),
-            .double_tap            = LCTL(KC_N),
-            .double_hold           = LCTL(LSFT(KC_N)),
-            .repeats_on_triple_tap = true,
-        },
-    /** Tap: Ctrl+Tab; double tap: Ctrl+9; double hold: Ctrl+Shift+Page Down. */
-    [DANCE_13] =
-        {
-            .tap                   = LCTL(KC_TAB),
-            .double_tap            = LCTL(KC_9),
-            .double_hold           = LCTL(LSFT(KC_PGDN)),
-            .repeats_on_triple_tap = true,
-        },
     /** Double hold: base layer, the way out of the lock layer. */
     [DANCE_15] =
         {
