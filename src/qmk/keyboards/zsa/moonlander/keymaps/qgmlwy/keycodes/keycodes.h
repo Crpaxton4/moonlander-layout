@@ -1,30 +1,13 @@
 /** @file
- * Custom keycodes of the qgmlwy keymap.
+ * Copy and paste keycodes of the qgmlwy keymap.
  *
- * The keymap's layers and the lighting keys name these keycodes, so every file
- * that uses them sees the same values.
+ * Base layer and process_dual_function() both use these keycodes, so one header
+ * holds their values.
  */
 
 #pragma once
 
 #include QMK_KEYBOARD_H
-
-#ifndef ZSA_SAFE_RANGE
-/**
- * First keycode free for this keymap's custom keycodes.
- *
- * ZSA's defaults module declares `ZSA_SAFE_RANGE` as an enumerator, not a macro,
- * which `#ifndef` can't see, so this definition always applies and the custom
- * keycodes start at QMK's `SAFE_RANGE`.
- */
-#    define ZSA_SAFE_RANGE SAFE_RANGE
-#endif
-
-/** Keycodes this keymap handles itself, in process_lighting_keys(). */
-enum custom_keycodes {
-    /** Switches the RGB matrix to a solid colour. */
-    RGB_SLD = ZSA_SAFE_RANGE,
-};
 
 /**
  * Copy key: Ctrl+C on a tap, Ctrl+Shift+C on a hold.

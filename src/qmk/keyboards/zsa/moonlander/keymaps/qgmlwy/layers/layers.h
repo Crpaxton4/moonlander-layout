@@ -8,14 +8,10 @@
 
 #pragma once
 
-/**
- * Keymap layers, in the order of their index in `keymaps` and `ledmap`.
- */
+/** Keymap layers, in the order of their index in `keymaps` */
 enum layer {
     /** QGMLWY alphas with mouse keys bottom right. */
     LAYER_BASE = 0,
     /** Base layer with arrows in place of mouse movement. */
     LAYER_ARROWS = 1,
-    /** Number of layers. */
-    LAYER_COUNT,
 };

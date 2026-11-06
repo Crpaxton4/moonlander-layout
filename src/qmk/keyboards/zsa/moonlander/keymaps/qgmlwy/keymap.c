@@ -12,7 +12,6 @@
 #include "dual_function/dual_function.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
-#include "lighting/lighting_keys.h"
 #include "modded_pointer_media/modded_pointer_media.h"
 #include "tap_dance/tap_dance.h"
 
@@ -46,8 +45,5 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!process_modded_pointer_media(keycode, record)) {
         return false;
     }
-    if (!process_dual_function(keycode, record)) {
-        return false;
-    }
-    return process_lighting_keys(keycode, record);
+    return process_dual_function(keycode, record);
 }

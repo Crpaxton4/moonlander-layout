@@ -1,6 +1,6 @@
 /** @file
- * Build-time settings for the qgmlwy keymap: USB wakeup, mouse keys, Oryx
- * identification and lighting.
+ * Build-time settings for the qgmlwy keymap: USB wakeup, mouse keys and Oryx
+ * identification.
  *
  * Each `#undef` clears a default that the keyboard or QMK may already have set (the
  * keyboard sets several mouse key values), so the value here wins without a
@@ -43,10 +43,3 @@
  * It is also the USB serial number string.
  */
 #define SERIAL_NUMBER "LzzVe/pjxZ7X"
-
-/**
- * Startup speed of the RGB matrix effects, from 0 to 255.
- * The QMK version this keymap builds against reads `RGB_MATRIX_DEFAULT_SPD` instead,
- * so this value has no effect.
- */
-#define RGB_MATRIX_STARTUP_SPD 60
