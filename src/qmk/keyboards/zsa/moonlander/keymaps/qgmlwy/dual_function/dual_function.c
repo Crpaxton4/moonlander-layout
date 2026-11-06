@@ -21,8 +21,6 @@ typedef struct {
 static const dual_function_t dual_functions[] = {
     {DUAL_FUNC_0, LCTL(KC_C), LCTL(LSFT(KC_C))},
     {DUAL_FUNC_1, LCTL(KC_V), LCTL(LSFT(KC_V))},
-    {DUAL_FUNC_2, KC_MEDIA_PREV_TRACK, KC_MEDIA_REWIND},
-    {DUAL_FUNC_3, KC_MEDIA_NEXT_TRACK, KC_MEDIA_FAST_FORWARD},
 };
 
 bool process_dual_function(uint16_t keycode, keyrecord_t *record) {

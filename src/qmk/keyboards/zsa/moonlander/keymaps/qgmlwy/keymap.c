@@ -20,7 +20,6 @@
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #include "layers/base.inc"
 #include "layers/arrows.inc"
-#include "layers/function_media.inc"
 #include "layers/shortcuts.inc"
 #include "layers/navigation_gate.inc"
 #include "layers/text_navigation.inc"
@@ -36,7 +35,6 @@ tap_dance_action_t tap_dance_actions[] = {
     [DANCE_3]  = ACTION_TAP_DANCE_TABLE(DANCE_3),
     [DANCE_4]  = ACTION_TAP_DANCE_TABLE(DANCE_4),
     [DANCE_5]  = ACTION_TAP_DANCE_TABLE(DANCE_5),
-    [DANCE_6]  = ACTION_TAP_DANCE_TABLE(DANCE_6),
     [DANCE_7]  = ACTION_TAP_DANCE_TABLE(DANCE_7),
     [DANCE_8]  = ACTION_TAP_DANCE_TABLE(DANCE_8),
     [DANCE_9]  = ACTION_TAP_DANCE_TABLE(DANCE_9),

@@ -23,7 +23,6 @@ enum tap_dance_codes {
     DANCE_3,
     DANCE_4,
     DANCE_5,
-    DANCE_6,
     DANCE_7,
     DANCE_8,
     DANCE_9,

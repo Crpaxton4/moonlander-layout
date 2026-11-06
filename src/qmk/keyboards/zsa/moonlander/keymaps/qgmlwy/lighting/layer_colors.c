@@ -27,7 +27,6 @@ extern rgb_config_t rgb_matrix_config;
 const uint8_t PROGMEM ledmap[][RGB_MATRIX_LED_COUNT][3] = {
 #include "lighting/base.inc"
 #include "lighting/arrows.inc"
-#include "lighting/function_media.inc"
 #include "lighting/shortcuts.inc"
 #include "lighting/navigation_gate.inc"
 #include "lighting/text_navigation.inc"

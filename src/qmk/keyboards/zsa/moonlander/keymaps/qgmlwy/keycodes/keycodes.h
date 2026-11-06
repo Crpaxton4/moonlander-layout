@@ -31,12 +31,8 @@ enum custom_keycodes {
  *
  * Each `DUAL_FUNC_*` is a layer-tap keycode, so QMK tells a tap from a hold, but
  * process_dual_function() handles every event and the layer never activates; the
- * layer numbers only make the four values unique, and some name no existing layer.
+ * layer numbers only make the two values unique, and one names no existing layer.
  */
 #define DUAL_FUNC_0 LT(6, KC_H)
 /** Paste key: Ctrl+V on a tap, Ctrl+Shift+V on a hold. */
 #define DUAL_FUNC_1 LT(12, KC_T)
-/** Previous track on a tap, rewind on a hold. */
-#define DUAL_FUNC_2 LT(5, KC_F3)
-/** Next track on a tap, fast forward on a hold. */
-#define DUAL_FUNC_3 LT(14, KC_F15)

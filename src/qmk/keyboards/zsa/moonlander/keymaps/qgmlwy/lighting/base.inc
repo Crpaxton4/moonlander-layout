@@ -1,7 +1,7 @@
 /** @file
- * Base layer lighting: each one-shot layer key in its layer's colour (function
- * green, shortcuts scarlet), mouse movement and the right thumb keys blue, and the
- * right large thumb key, which switches to the arrows layer, orange.
+ * Base layer lighting: the shortcuts one-shot key scarlet, mouse movement and the
+ * right thumb keys blue, and the right large thumb key, which switches to the
+ * arrows layer, orange.
  */
 
 // clang-format off
@@ -9,7 +9,7 @@
     // left half, outer column first
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_OFF,
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_OFF,
-    COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_GREEN_92,
+    COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_OFF,
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_OFF,
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_OFF,
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,

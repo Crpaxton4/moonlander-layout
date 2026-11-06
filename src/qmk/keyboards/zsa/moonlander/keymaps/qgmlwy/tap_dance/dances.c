@@ -72,16 +72,6 @@ const dance_t dances[DANCE_COUNT] = {
             .registers_double_tap_twice = true,
             .repeats_on_triple_tap      = true,
         },
-    /**
-     * Tap: nothing; hold: Ctrl+Alt+Delete; double tap: Ctrl+Alt+Shift+Delete;
-     * double hold: System Power.
-     */
-    [DANCE_6] =
-        {
-            .hold        = LALT(LCTL(KC_DELETE)),
-            .double_tap  = LALT(LCTL(LSFT(KC_DELETE))),
-            .double_hold = KC_SYSTEM_POWER,
-        },
     /** Tap: Ctrl+D; double tap: Ctrl+Shift+D. */
     [DANCE_7] =
         {

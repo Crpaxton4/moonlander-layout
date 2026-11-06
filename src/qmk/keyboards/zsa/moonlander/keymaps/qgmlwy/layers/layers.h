@@ -16,18 +16,16 @@ enum layer {
     LAYER_BASE = 0,
     /** Base layer with arrows in place of mouse movement. */
     LAYER_ARROWS = 1,
-    /** F1 to F20, media and volume keys. */
-    LAYER_FUNCTION_MEDIA = 2,
     /** Ctrl+number and tab, browser and editor shortcuts. */
-    LAYER_SHORTCUTS = 3,
+    LAYER_SHORTCUTS = 2,
     /** Mostly transparent gate to the text navigation layer. */
-    LAYER_NAVIGATION_GATE = 4,
+    LAYER_NAVIGATION_GATE = 3,
     /** Ctrl/Shift+arrows and word selection. */
-    LAYER_TEXT_NAVIGATION = 5,
+    LAYER_TEXT_NAVIGATION = 4,
     /** Bootloader, NKRO, EEPROM clear, RGB and music keys. */
-    LAYER_SYSTEM = 6,
+    LAYER_SYSTEM = 5,
     /** Every key disabled; double-hold either thumb dance to leave. */
-    LAYER_LOCK = 7,
+    LAYER_LOCK = 6,
     /** Number of layers. */
     LAYER_COUNT,
 };
