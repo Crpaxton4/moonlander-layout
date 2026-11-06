@@ -1,6 +1,6 @@
 name: "Lint"
 
-# A run on main fills the caches that all PRs can restore.
+# A run on main fills the caches that all PRs can restore
 on:
   pull_request:
   push:
@@ -13,24 +13,24 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # It must be the same as PRE_COMMIT_VERSION in setup.sh.
+  # Keep equal to PRE_COMMIT_VERSION in setup.sh
   PRE_COMMIT_VERSION: "4.7.0"
-  # It must be the same as UV_VERSION in build.yaml.
+  # Keep equal to UV_VERSION in build.yaml
   UV_VERSION: "0.13.7"
-  # It must be the same as SHELLCHECK_VERSION in setup.sh.
+  # Keep equal to SHELLCHECK_VERSION in setup.sh
   SHELLCHECK_VERSION: "0.9.0-1"
-  # These must be the same as TREE_SITTER_VERSION and TREE_SITTER_C_VERSION in
-  # setup.sh.
+  # Keep equal to TREE_SITTER_VERSION and TREE_SITTER_C_VERSION in
+  # setup.sh
   TREE_SITTER_VERSION: "0.20.8-2"
   TREE_SITTER_C_VERSION: "0.20.5-2"
   # All hooks exclude these release-please files, so a PR that changes only them
-  # skips the job. A `paths:` filter keeps the required check pending.
+  # skips the job. A `paths:` filter keeps the required check pending
   RELEASE_ONLY_PATHS: '^(CHANGELOG\.md|\.release-please-manifest\.json)$'
 
 jobs:
   changes:
     if: github.event_name == 'pull_request'
-    # This is the Ubuntu release of the development machine.
+    # Same Ubuntu release as the development machine
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions:
@@ -54,19 +54,19 @@ jobs:
   lint:
     name: "Lint"
     needs: changes
-    # A failed gate gives no output, so the job runs.
+    # A failed gate gives no output, so the job runs
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.release-only != 'true') }}
-    # The apt pins need the Ubuntu release of the development machine.
+    # Apt pins need the Ubuntu release of the development machine
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
-    # Dependabot updates each SHA pin and its release comment on the same line.
+    # Dependabot updates each SHA pin and its release comment on the same line
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # The runner tool cache does not contain the .node-version release, so the job
-      # caches that release for setup-node.
+      # Runner tool cache does not contain the .node-version release, so the job
+      # caches that release for setup-node
       - name: "Compute node cache key"
         id: node-key
         run: |
@@ -92,7 +92,7 @@ jobs:
           node-version-file: .node-version
       - run: npm ci
 
-      # npm comes with the node release, so the step checks only node.
+      # npm comes with the node release, so the step checks only node
       - name: "Check node"
         env:
           NODE_VERSION: ${{ steps.node-key.outputs.version }}
@@ -112,7 +112,7 @@ jobs:
           echo "npm $(npm --version)"
           npm ls
 
-      # The save comes before the hooks, so a failed hook does not discard it.
+      # Save before the hooks, so a failed hook does not discard it
       - name: "Save node runtime"
         if: ${{ steps.node-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -120,7 +120,7 @@ jobs:
           path: ${{ steps.node-key.outputs.path }}
           key: ${{ steps.node-key.outputs.key }}
 
-      # uv downloads from PyPI faster than the Actions cache restores.
+      # uv downloads from PyPI faster than the Actions cache restores
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: ${{ env.UV_VERSION }}
@@ -138,7 +138,7 @@ jobs:
         run: uv tool install "pre-commit==$PRE_COMMIT_VERSION"
 
       # pre-commit builds the hook environments with the Python and Go of the runner
-      # image, so the key contains the image.
+      # image, so the key contains the image
       - name: "Compute pre-commit cache key"
         id: pre-commit-key
         env:
@@ -157,7 +157,7 @@ jobs:
       - name: "Install hook environments"
         run: pre-commit install-hooks
 
-      # The save comes before the hooks, so a failed hook does not discard it.
+      # Save before the hooks, so a failed hook does not discard it
       - name: "Save pre-commit environments"
         if: ${{ steps.pre-commit-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -165,7 +165,7 @@ jobs:
           path: ~/.cache/pre-commit
           key: ${{ steps.pre-commit-key.outputs.key }}
 
-      # The shellcheck hook and actionlint run the shellcheck on PATH.
+      # actionlint and the shellcheck hook run the shellcheck on PATH
       - name: "Compute shellcheck cache key"
         id: shellcheck-key
         run: |
@@ -190,7 +190,7 @@ jobs:
           apt-get download "shellcheck=$SHELLCHECK_VERSION"
 
       # GITHUB_PATH puts the extracted shellcheck before the shellcheck of the runner
-      # image.
+      # image
       - name: "Unpack shellcheck"
         env:
           DEB_DIR: ${{ runner.temp }}/shellcheck-deb
@@ -205,7 +205,7 @@ jobs:
           dpkg-deb -x "$DEB_DIR"/shellcheck_*.deb "$root"
           echo "$root/usr/bin" >> "$GITHUB_PATH"
 
-      # The save comes before the hooks, so a failed hook does not discard it.
+      # Save before the hooks, so a failed hook does not discard it
       - name: "Save shellcheck package"
         if: ${{ steps.shellcheck-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -224,8 +224,8 @@ jobs:
           fi
           shellcheck --version
 
-      # The runner image does not contain the tree-sitter packages. libtree-sitter-dev
-      # needs libtree-sitter0 at the same version, so TREE_SITTER_VERSION pins both.
+      # Runner image does not contain the tree-sitter packages. libtree-sitter-dev
+      # needs libtree-sitter0 at the same version, so TREE_SITTER_VERSION pins both
       - name: "Compute tree-sitter cache key"
         id: tree-sitter-key
         run: |
@@ -251,8 +251,8 @@ jobs:
             "libtree-sitter-dev=$TREE_SITTER_VERSION" \
             "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
 
-      # The step checks all packages before it fails, so the log shows each wrong
-      # version.
+      # Step checks all packages before it fails, so the log shows each wrong
+      # version
       - name: "Verify tree-sitter versions"
         env:
           DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
@@ -271,7 +271,7 @@ jobs:
           verify tree-sitter-c-src "$TREE_SITTER_C_VERSION"
           exit "$status"
 
-      # dpkg -i takes up to 20 s on the runner, so the step only extracts the packages.
+      # dpkg -i takes up to 20 s on the runner, so the step only extracts the packages
       - name: "Unpack tree-sitter"
         env:
           DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
@@ -282,7 +282,7 @@ jobs:
           done
           echo "TREE_SITTER_ROOT=$root" >> "$GITHUB_ENV"
 
-      # The save comes before the hooks, so a failed hook does not discard them.
+      # Save before the hooks, so a failed hook does not discard them
       - name: "Save tree-sitter packages"
         if: ${{ steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -290,7 +290,7 @@ jobs:
           path: ${{ runner.temp }}/tree-sitter-debs
           key: ${{ steps.tree-sitter-key.outputs.key }}
 
-      # One run of all hooks, so a failed hook does not hide other findings.
+      # One run of all hooks, so a failed hook does not hide other findings
       - name: "Run pre-commit"
         run: |
           set -o pipefail
@@ -299,7 +299,7 @@ jobs:
               --show-diff-on-failure --verbose; } 2>&1 \
             | tee "$RUNNER_TEMP/pre-commit.log"
 
-      # This step runs also after a failed hook.
+      # Runs also after a failed hook
       - name: "Test check-standards"
         if: ${{ !cancelled() }}
         run: time make checker-test

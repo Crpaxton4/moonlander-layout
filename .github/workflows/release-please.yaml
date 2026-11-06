@@ -1,7 +1,7 @@
 name: "Release Please"
 
 # Events from GITHUB_TOKEN start no workflows, so the job uses a GitHub App token
-# for the release PR.
+# for the release PR
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   release-please:
-    # This is the Ubuntu release of the development machine.
+    # Same Ubuntu release as the development machine
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:

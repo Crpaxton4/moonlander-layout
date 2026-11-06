@@ -1,7 +1,7 @@
 name: "Lint PR Title"
 
 # A squash merge makes the PR title into the commit message that release-please
-# reads.
+# reads
 on:
   pull_request:
     types:
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   lint-pr-title:
     name: "Validate PR title"
-    # This is the Ubuntu release of the development machine.
+    # Same Ubuntu release as the development machine
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
