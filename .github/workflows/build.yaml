@@ -83,6 +83,10 @@ jobs:
       # platforms and for QMK's tests. `qmk compile` never fetches missing
       # submodules; a missing one that the build needs fails the build.
       QMK_SUBMODULES: "lib/chibios lib/chibios-contrib lib/lufa lib/printf modules/zsa"
+      # ccache's static Linux x64 release (ccache/ccache), pinned by release
+      # and the sha256 of its asset. Bump both together, by hand.
+      CCACHE_VERSION: "4.14.2"
+      CCACHE_SHA256: "b20ff6415151226ac5a10dfd6839700c694bd67d1871c8fddb266d366ff25bfb"
     # Actions are pinned to commit SHAs; the trailing comment names the release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -162,13 +166,19 @@ jobs:
 
       # The release assets are cached. The key holds both release pins and the
       # runner image; every run checks each asset against its sha256 pin, so a
-      # cache never serves another release.
-      - name: "Compute QMK toolchain cache key"
+      # cache never serves another release. The same step gives the prefix of
+      # the ccache cache keys, which holds the runner OS, the toolchain release
+      # and the ccache release, but not the image version: no file of the image
+      # goes into a compiled object, and ccache hashes the compiler binary and
+      # every input file itself.
+      - name: "Compute QMK toolchain and ccache cache keys"
         id: toolchain-key
         run: |
           key="qmk-toolchain-$RUNNER_OS-${ImageOS:?}-${ImageVersion:?}"
           key="$key-$QMK_TOOLCHAINS_RELEASE-$QMK_FLASHUTILS_RELEASE"
           echo "key=$key" | tee -a "$GITHUB_OUTPUT"
+          prefix="ccache-$RUNNER_OS-$ImageOS-$QMK_TOOLCHAINS_RELEASE-$CCACHE_VERSION-"
+          echo "ccache-prefix=$prefix" | tee -a "$GITHUB_OUTPUT"
       - name: "Restore QMK toolchain"
         id: toolchain-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -250,9 +260,98 @@ jobs:
           qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
           user.overlay_dir="$GITHUB_WORKSPACE/src/qmk"
 
+      # ccache keeps the compiled objects between runs, so a build compiles
+      # only the files whose inputs changed. A cache entry holds the pinned
+      # ccache release asset and one build's objects, and a run restores the
+      # newest entry under the prefix. Runs on main always compile through
+      # ccache and save the entries, which every PR can restore. A PR run only
+      # reads them: it compiles through ccache only when it restored an entry;
+      # without one it compiles with the plain compiler, so a missing cache
+      # costs it only the lookup. The release build never uses ccache, so its
+      # firmware never comes from a cache entry. ccache hashes the compiler
+      # binary and every source and header, so an entry never serves an object
+      # built from other inputs. The paths are the same on every run, so no
+      # base directory is set.
+      - name: "Restore ccache"
+        id: ccache-cache
+        if: ${{ !inputs.skip-analysis }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ${{ steps.toolchain-key.outputs.ccache-prefix }}${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ${{ steps.toolchain-key.outputs.ccache-prefix }}
+
+      # ccache runs as the compiler: QMK finds arm-none-eabi-gcc on PATH, and
+      # QMK_PATH_PREFIX puts a link of that name to ccache first. The compile
+      # database records the link, which clang-tidy reads as the compiler.
+      # QMK's USE_CCACHE would record `ccache` as the compiler instead. ccache
+      # runs the real compiler from CCACHE_PATH. Depend mode takes the headers
+      # from the compiler's dependency file (QMK compiles with -MMD), so a
+      # cache miss runs no extra preprocessor pass. The asset comes from the
+      # restored entry, else from the release. The stamp marks the start of
+      # the build.
+      - name: "Install ccache"
+        id: ccache
+        if: ${{ !inputs.skip-analysis && (github.event_name == 'push' || steps.ccache-cache.outputs.cache-matched-key != '') }}
+        run: |
+          dir="$RUNNER_TEMP/ccache"
+          name="ccache-$CCACHE_VERSION-linux-x86_64-musl-static"
+          mkdir -p "$dir"
+          if [ ! -f "$dir/$name.tar.xz" ]; then
+            curl -fsSL -o "$dir/$name.tar.xz" \
+              "https://github.com/ccache/ccache/releases/download/v$CCACHE_VERSION/$name.tar.xz"
+          fi
+          echo "$CCACHE_SHA256  $dir/$name.tar.xz" | sha256sum -c -
+          bin="$RUNNER_TEMP/ccache-bin"
+          mkdir -p "$bin"
+          tar -xJf "$dir/$name.tar.xz" -C "$bin" --strip-components=1 "$name/ccache"
+          ln -s ccache "$bin/arm-none-eabi-gcc"
+          version=$("$bin/ccache" --print-version)
+          echo "ccache $version"
+          if [ "$version" != "$CCACHE_VERSION" ]; then
+            echo "::error::ccache is '$version', not the pinned $CCACHE_VERSION"
+            exit 1
+          fi
+          {
+            echo "QMK_PATH_PREFIX=$bin"
+            echo "CCACHE_PATH=$QMK_DISTRIB_DIR/bin"
+            echo "CCACHE_DIR=$dir/objects"
+            # Hashes the compiler binary, not its mtime
+            echo "CCACHE_COMPILERCHECK=content"
+            echo "CCACHE_DEPEND=true"
+            # One build's objects take about 2 MB
+            echo "CCACHE_MAXSIZE=50M"
+          } >> "$GITHUB_ENV"
+          CCACHE_DIR="$dir/objects" "$bin/ccache" --zero-stats
+          touch "$RUNNER_TEMP/ccache-build-start"
+
       # One QMK build gives both the firmware in .build/ and the compile database
       - name: "Build firmware and compile database"
         run: make compiledb
+
+      # Prints the build's hits and misses, then removes every cache file that
+      # the build didn't use, so an entry holds one build's objects. Only a run
+      # on main that stored new objects saves the cache: else the restored
+      # entry already holds the same files. A PR run never saves: its new
+      # objects are mostly the files it changed, which its next push changes
+      # again, and a save costs more time than recompiling them.
+      - name: "Prune ccache"
+        id: ccache-prune
+        if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
+        run: |
+          ccache="$QMK_PATH_PREFIX/ccache"
+          "$ccache" --show-stats --verbose
+          writes=$("$ccache" --print-stats | awk '$1 == "local_storage_write" { print $2 }')
+          start=$(stat -c %Y "$RUNNER_TEMP/ccache-build-start")
+          "$ccache" --evict-older-than "$(( $(date +%s) - start + 1 ))s"
+          du -sh "$RUNNER_TEMP/ccache"
+          echo "save=$([ "${writes:-0}" -gt 0 ] && echo true || echo false)" | tee -a "$GITHUB_OUTPUT"
+      - name: "Save ccache"
+        if: ${{ !cancelled() && github.event_name == 'push' && steps.ccache-prune.outputs.save == 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ${{ steps.toolchain-key.outputs.ccache-prefix }}${{ github.run_id }}-${{ github.run_attempt }}
 
       # The steps from here on run even when an earlier one failed, so a
       # failing build still runs the analysis and a failing check still
