@@ -39,6 +39,7 @@ jobs:
     uses: ./.github/workflows/build.yaml
     with:
       skip-analysis: true
+      release-tag: ${{ needs.release-please.outputs.tag_name }}
 
   publish:
     needs: [release-please, build]
@@ -51,6 +52,16 @@ jobs:
         with:
           name: firmware
 
+      # Stops the release when the artifact does not hold exactly one firmware
+      # file with the tag in its name
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload --repo "$GITHUB_REPOSITORY" "${{ needs.release-please.outputs.tag_name }}" ./*.bin
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          shopt -s nullglob
+          files=(./*.bin)
+          if [ "${#files[@]}" -ne 1 ] || [[ "${files[0]}" != *"-$TAG.bin" ]]; then
+            echo "::error::Expected one .bin that ends in -$TAG.bin, found: ${files[*]}"
+            exit 1
+          fi
+          gh release upload --repo "$GITHUB_REPOSITORY" "$TAG" "${files[0]}"

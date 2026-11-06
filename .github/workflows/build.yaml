@@ -15,6 +15,10 @@ on:
         description: "Build the firmware only, without the static analysis"
         type: boolean
         default: false
+      release-tag:
+        description: "Release tag that the firmware file name ends in"
+        type: string
+        default: ""
 
 # A called workflow that shares the group of its caller deadlocks, so the
 # group starts with a fixed name
@@ -276,8 +280,20 @@ jobs:
           CCACHE_DIR="$dir/objects" "$bin/ccache" --zero-stats
           touch "$RUNNER_TEMP/ccache-build-start"
 
+      # A PR checkout is a merge commit, so a PR build uses the PR head commit in
+      # the firmware name
       - name: "Build firmware and compile database"
-        run: make compiledb
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            export FIRMWARE_SUFFIX="-$RELEASE_TAG"
+          elif [ -n "$PR_NUMBER" ]; then
+            export FIRMWARE_SUFFIX="-pr$PR_NUMBER-${PR_HEAD_SHA:0:7}"
+          fi
+          make compiledb
 
       # Eviction keeps only the objects of this build. A PR run never saves, because
       # its next push changes the same files again
