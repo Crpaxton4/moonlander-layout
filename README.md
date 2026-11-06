@@ -1,33 +1,106 @@
 # moonlander-layout
 
-QMK keymap `qgmlwy` for a ZSA Moonlander (rev A), built as an
-[external userspace](https://docs.qmk.fm/newbs_external_userspace) against
-[ZSA's QMK fork](https://github.com/zsa/qmk_firmware) at the branch in
-[`src/.qmk-ref`](src/.qmk-ref). Everything that feeds the firmware build
-lives in [`src/`](src/).
+This repository contains the QMK keymap `qgmlwy` for a ZSA Moonlander MK1 (rev A).
+QMK builds the keymap as an
+[external userspace](https://docs.qmk.fm/newbs_external_userspace) with
+[ZSA's QMK fork](https://github.com/zsa/qmk_firmware). The file
+[`src/qmk/.qmk-ref`](src/qmk/.qmk-ref) contains the commit of the fork that the
+build uses.
 
-## Usage
+## Layout
+
+| Directory               | Contents                                       |
+| ----------------------- | ---------------------------------------------- |
+| `src/qmk/`              | The QMK userspace and the keymap               |
+| `src/check_standards/`  | The standards checker                          |
+| `test/check_standards/` | The checker tests, one directory for each case |
+| `test/qmk/`             | The keymap tests: only a placeholder file      |
+| `.build/`               | The build output, which git ignores            |
+
+## Installation
+
+The setup script is for Ubuntu, and for Ubuntu on WSL. The script uses
+`sudo apt-get`.
+
+To install the tools, run this command in the root directory of the repository:
 
 ```bash
-./setup.sh   # install QMK, ZSA's qmk_firmware, Node; test build
-make -C src  # firmware lands in out/; flash it with Keymapp
+./setup.sh
 ```
 
-## Workflow
+The script installs these items:
 
-All changes go to `main` through squash-merged PRs with
-[Conventional Commits](https://www.conventionalcommits.org/) titles. Every
-merge that changes `src/` is released by release-please, with the firmware
-attached.
+- The QMK CLI and the QMK toolchain
+- ZSA's `qmk_firmware` in `~/qmk_firmware`, with `src/qmk/` as the QMK userspace
+- Node at the version in [`.node-version`](.node-version), and the npm devDependencies
+- pre-commit and its git hooks
+- The check tools: shellcheck, tree-sitter, clang-tidy and Doxygen
 
-A scope is required, from this list:
+Then the script builds the firmware one time.
 
-| Scope      | Covers                                                      |
-| ---------- | ----------------------------------------------------------- |
-| `firmware` | the keymap source                                           |
-| `build`    | build config in `src/` (`qmk.json`, `.qmk-ref`, `Makefile`) |
-| `ci`       | `.github/`                                                  |
-| `setup`    | `setup.sh`                                                  |
-| `repo`     | README, LICENSE, `.gitignore`, commit-lint config           |
-| `deps`     | npm devDependencies                                         |
-| `main`     | release-please's own release PRs                            |
+## Build and flash
+
+To build and flash the firmware, do these steps:
+
+1. Run `make`.
+2. Flash `.build/zsa_moonlander_reva_qgmlwy.bin` with [Keymapp][keymapp].
+
+The `Makefile` in the root directory has more targets. To see all the targets and
+their descriptions, run this command:
+
+```bash
+make help
+```
+
+`make compiledb` also writes the compile database to `.build/compile_commands.json`.
+
+## Checks
+
+To run the checks, use these commands:
+
+| Command                      | Result                       |
+| ---------------------------- | ---------------------------- |
+| `pre-commit run --all-files` | Runs the hooks.              |
+| `make analyze`               | Runs clang-tidy and Doxygen. |
+| `make checker-test`          | Tests the standards checker. |
+
+The hooks are editorconfig-checker, clang-format, Prettier, shellcheck, shfmt,
+actionlint and the standards checker. Git runs these hooks at each commit.
+
+The standards checker has two rules for the `.c`, `.h` and `.inc` files:
+
+- `file-docstring`
+    - Each file starts with a Doxygen `/** @file` block.
+    - The block has a description.
+- `nesting`
+    - Control flow in a function has a maximum of two levels.
+    - An `if` or a `case` contains no control flow.
+
+CI runs all the checks on each PR and on each push to `main`. A PR can merge only if
+these CI checks pass: Validate PR title, Lint, and Build and analyze firmware.
+
+## Commits and PRs
+
+All changes go into `main` through PRs. GitHub squash-merges each PR. The PR title
+becomes the commit message on `main`. Thus, the PR title must be a
+[Conventional Commit](https://www.conventionalcommits.org/) with a scope from this
+table. A commit-msg hook does the same check on local commits.
+
+| Scope      | Use for                                                              |
+| ---------- | -------------------------------------------------------------------- |
+| `firmware` | the keymap in `src/qmk/keyboards/`                                   |
+| `build`    | `Makefile`, `src/qmk/qmk.json` and `src/qmk/.qmk-ref`                |
+| `ci`       | the files in `.github/`                                              |
+| `setup`    | `setup.sh` and `.node-version`                                       |
+| `tooling`  | the checks: their configuration, the hooks and the standards checker |
+| `repo`     | README, LICENSE, `.gitignore` and the release-please files           |
+| `deps`     | the Dependabot updates of the npm, pre-commit and Actions versions   |
+| `main`     | the release PRs that release-please makes                            |
+
+## Releases
+
+When a merge changes `src/qmk/`, release-please makes a release PR. The release PR
+merges automatically. CI then attaches the firmware `.bin` file to the GitHub release.
+release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
+
+[keymapp]: https://www.zsa.io/keymapp
