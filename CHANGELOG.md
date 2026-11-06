@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.28](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.27...v1.0.28) (2026-11-06)
+
+
+### Code Refactoring
+
+* **firmware:** merge helpers under complexity 8 ([#111](https://github.com/Crpaxton4/moonlander-layout/issues/111)) ([fde7507](https://github.com/Crpaxton4/moonlander-layout/commit/fde75073edac6425b226b2049a2308a26e39a4f5))
+
 ## [1.0.27](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.26...v1.0.27) (2026-11-05)
 
 
