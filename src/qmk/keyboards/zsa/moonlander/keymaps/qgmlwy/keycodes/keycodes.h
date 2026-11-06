@@ -1,8 +1,8 @@
 /** @file
  * Custom keycodes of the qgmlwy keymap.
  *
- * The keymap's layers, the lighting keys and the macros all name these keycodes,
- * so every file that uses them sees the same values.
+ * The keymap's layers and the lighting keys name these keycodes, so every file
+ * that uses them sees the same values.
  */
 
 #pragma once
@@ -20,19 +20,10 @@
 #    define ZSA_SAFE_RANGE SAFE_RANGE
 #endif
 
-/**
- * Keycodes this keymap handles itself, in the feature modules that
- * process_record_user() dispatches to: process_macros() and
- * process_lighting_keys().
- */
+/** Keycodes this keymap handles itself, in process_lighting_keys(). */
 enum custom_keycodes {
     /** Switches the RGB matrix to a solid colour. */
     RGB_SLD = ZSA_SAFE_RANGE,
-    /** First of the window macros that process_macros() sends. */
-    ST_MACRO_38,
-    ST_MACRO_39,
-    ST_MACRO_40,
-    ST_MACRO_41,
 };
 
 /**

@@ -49,11 +49,5 @@
 #define COLOR_BLUE_180 {180, 255, 255}
 /** Purple, hue 186. */
 #define COLOR_PURPLE_186 {186, 197, 255}
-/** Purple, hue 187, a little dimmer. */
-#define COLOR_PURPLE_187 {187, 195, 250}
-/** Lavender, a pale purple. */
-#define COLOR_LAVENDER {187, 129, 237}
-/** Violet, a deep blue purple. */
-#define COLOR_VIOLET {187, 252, 255}
 /** Pink. */
 #define COLOR_PINK {237, 255, 255}

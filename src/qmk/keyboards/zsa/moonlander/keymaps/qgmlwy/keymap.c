@@ -13,7 +13,6 @@
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
 #include "lighting/lighting_keys.h"
-#include "macros/macros.h"
 #include "modded_pointer_media/modded_pointer_media.h"
 #include "tap_dance/tap_dance.h"
 
@@ -23,7 +22,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #include "layers/arrows.inc"
 #include "layers/function_media.inc"
 #include "layers/shortcuts.inc"
-#include "layers/window_manager.inc"
 #include "layers/navigation_gate.inc"
 #include "layers/text_navigation.inc"
 #include "layers/system.inc"
@@ -46,7 +44,6 @@ tap_dance_action_t tap_dance_actions[] = {
     [DANCE_11] = ACTION_TAP_DANCE_TABLE(DANCE_11),
     [DANCE_12] = ACTION_TAP_DANCE_TABLE(DANCE_12),
     [DANCE_13] = ACTION_TAP_DANCE_TABLE(DANCE_13),
-    [DANCE_14] = ACTION_TAP_DANCE_TABLE(DANCE_14),
     [DANCE_15] = ACTION_TAP_DANCE_TABLE(DANCE_15),
     [DANCE_16] = ACTION_TAP_DANCE_TABLE(DANCE_16),
 };
@@ -64,9 +61,6 @@ tap_dance_action_t tap_dance_actions[] = {
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!process_modded_pointer_media(keycode, record)) {
-        return false;
-    }
-    if (!process_macros(keycode, record)) {
         return false;
     }
     if (!process_dual_function(keycode, record)) {

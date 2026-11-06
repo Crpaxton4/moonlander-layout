@@ -134,13 +134,6 @@ const dance_t dances[DANCE_COUNT] = {
             .double_hold           = LCTL(LSFT(KC_PGDN)),
             .repeats_on_triple_tap = true,
         },
-    /** Tap: GUI+F5; double tap: GUI+Shift+F5. */
-    [DANCE_14] =
-        {
-            .tap                   = LGUI(KC_F5),
-            .double_tap            = LGUI(LSFT(KC_F5)),
-            .repeats_on_triple_tap = true,
-        },
     /** Double hold: base layer, the way out of the lock layer. */
     [DANCE_15] =
         {

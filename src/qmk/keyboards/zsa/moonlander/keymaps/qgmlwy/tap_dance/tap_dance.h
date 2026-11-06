@@ -31,7 +31,6 @@ enum tap_dance_codes {
     DANCE_11,
     DANCE_12,
     DANCE_13,
-    DANCE_14,
     DANCE_15,
     DANCE_16,
     /** Number of tap dance slots; sizes `dances`. */

@@ -20,16 +20,14 @@ enum layer {
     LAYER_FUNCTION_MEDIA = 2,
     /** Ctrl+number and tab, browser and editor shortcuts. */
     LAYER_SHORTCUTS = 3,
-    /** Ctrl/Alt/Shift+F13 to F18 bindings and window keys. */
-    LAYER_WINDOW_MANAGER = 4,
     /** Mostly transparent gate to the text navigation layer. */
-    LAYER_NAVIGATION_GATE = 5,
+    LAYER_NAVIGATION_GATE = 4,
     /** Ctrl/Shift+arrows and word selection. */
-    LAYER_TEXT_NAVIGATION = 6,
+    LAYER_TEXT_NAVIGATION = 5,
     /** Bootloader, NKRO, EEPROM clear, RGB and music keys. */
-    LAYER_SYSTEM = 7,
+    LAYER_SYSTEM = 6,
     /** Every key disabled; double-hold either thumb dance to leave. */
-    LAYER_LOCK = 8,
+    LAYER_LOCK = 7,
     /** Number of layers. */
     LAYER_COUNT,
 };
