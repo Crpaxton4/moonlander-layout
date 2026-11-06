@@ -1,9 +1,5 @@
-# The prefix contains the scope, because all packages here are devDependencies.
-# With `include: scope`, the prefix is "chore(deps-dev)", which commitlint rejects.
-# Each ecosystem has one group for all dependencies. Thus each weekly run opens a
-# maximum of one version-update PR for each ecosystem.
-# Rebases are off, because each force-push runs CI again. The owner updates the
-# branch one time before the merge.
+# commitlint rejects the "chore(deps-dev)" prefix of `include: scope`. Rebases are
+# off, because each force-push runs CI again.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -28,8 +24,6 @@ updates:
       pre-commit:
         patterns:
           - "*"
-  # Each action has a pin to a commit SHA. Dependabot updates the SHA and its
-  # version comment.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

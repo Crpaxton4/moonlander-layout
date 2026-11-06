@@ -1,8 +1,7 @@
 name: "Lint PR Title"
 
-# A squash merge makes the PR title into the commit message on main, and
-# release-please reads that message. commitlint checks the title with the same
-# configuration as local commits.
+# A squash merge makes the PR title into the commit message that release-please
+# reads.
 on:
   pull_request:
     types:
@@ -10,7 +9,6 @@ on:
       - edited
       - synchronize
 
-# A new push or edit cancels the older run of the PR.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -18,8 +16,7 @@ concurrency:
 jobs:
   lint-pr-title:
     name: "Validate PR title"
-    # The Ubuntu release of the development machine, so that the CI tools are the
-    # same as the local tools.
+    # This is the Ubuntu release of the development machine.
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
