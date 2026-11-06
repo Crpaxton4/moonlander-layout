@@ -1,9 +1,8 @@
 /** @file
  * QMK callbacks that play every tap dance from its definition in `dances`.
  *
- * The finished callback looks the taps up in `outcomes`, holds that outcome's key
- * or moves to its layer, and records the held key so the reset callback releases
- * exactly that key.
+ * The finished callback looks the taps up in `outcomes`, holds that outcome's key,
+ * and records the held key so the reset callback releases exactly that key.
  */
 
 #include QMK_KEYBOARD_H
@@ -80,11 +79,8 @@ void dance_finished(tap_dance_state_t *state, void *user_data) {
             ? outcomes[state->count][(int)state->interrupted][(int)state->pressed]
             : NO_OUTCOME;
     uint16_t keycode              = keys[outcome];
-    held_keycodes[dance - dances] = IS_QK_TO(keycode) ? KC_NO : keycode;
-    if (IS_QK_TO(keycode)) {
-        layer_move(QK_TO_GET_LAYER(keycode));
-    }
-    if (held_keycodes[dance - dances] == KC_NO) {
+    held_keycodes[dance - dances] = keycode;
+    if (keycode == KC_NO) {
         return;
     }
     if (state->count == DOUBLE_TAP_COUNT && state->interrupted) {

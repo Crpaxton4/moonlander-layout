@@ -3,15 +3,12 @@
  *
  * Each row names the key of each outcome and leaves out the outcomes that do
  * nothing. A key is held until the dance resets, and two presses interrupted by
- * another key tap the tap key, then hold it. A TO() key moves to its layer instead,
- * which stays after the reset; two interrupted presses move to the tap layer. Rows
- * with `repeats_on_triple_tap` tap the tap key three times on a third tap and once
- * on each further tap.
+ * another key tap the tap key, then hold it. Rows with `repeats_on_triple_tap` tap
+ * the tap key three times on a third tap and once on each further tap.
  */
 
 #include QMK_KEYBOARD_H
 
-#include "layers/layers.h"
 #include "tap_dance/tap_dance.h"
 
 const dance_t dances[DANCE_COUNT] = {
@@ -24,14 +21,8 @@ const dance_t dances[DANCE_COUNT] = {
             .double_hold           = KC_LEFT_GUI,
             .repeats_on_triple_tap = true,
         },
-    /** Tap: navigation gate layer; double tap: system layer. */
-    [DANCE_1] =
-        {
-            .tap        = TO(LAYER_NAVIGATION_GATE),
-            .double_tap = TO(LAYER_SYSTEM),
-        },
     /** Tap: left paren; hold: left brace; double tap: left bracket. */
-    [DANCE_2] =
+    [DANCE_1] =
         {
             .tap                   = KC_LPRN,
             .hold                  = KC_LCBR,
@@ -39,7 +30,7 @@ const dance_t dances[DANCE_COUNT] = {
             .repeats_on_triple_tap = true,
         },
     /** Tap: right paren; hold: right brace; double tap: right bracket. */
-    [DANCE_3] =
+    [DANCE_2] =
         {
             .tap                   = KC_RPRN,
             .hold                  = KC_RCBR,
@@ -50,7 +41,7 @@ const dance_t dances[DANCE_COUNT] = {
      * Tap: middle click; hold: wheel down; double tap: middle click, registered
      * twice; double hold: wheel left.
      */
-    [DANCE_4] =
+    [DANCE_3] =
         {
             .tap                        = KC_MS_BTN3,
             .hold                       = KC_MS_WH_DOWN,
@@ -63,7 +54,7 @@ const dance_t dances[DANCE_COUNT] = {
      * Tap: right click; hold: wheel up; double tap: right click, registered twice;
      * double hold: wheel right.
      */
-    [DANCE_5] =
+    [DANCE_4] =
         {
             .tap                        = KC_MS_BTN2,
             .hold                       = KC_MS_WH_UP,
@@ -71,15 +62,5 @@ const dance_t dances[DANCE_COUNT] = {
             .double_hold                = KC_MS_WH_RIGHT,
             .registers_double_tap_twice = true,
             .repeats_on_triple_tap      = true,
-        },
-    /** Double hold: base layer, the way out of the lock layer. */
-    [DANCE_15] =
-        {
-            .double_hold = TO(LAYER_BASE),
-        },
-    /** Double hold: base layer, the way out of the lock layer. */
-    [DANCE_16] =
-        {
-            .double_hold = TO(LAYER_BASE),
         },
 };

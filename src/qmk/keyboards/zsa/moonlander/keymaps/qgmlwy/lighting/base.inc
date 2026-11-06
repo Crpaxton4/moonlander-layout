@@ -22,7 +22,7 @@
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_BLUE_180,
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,    COLOR_BLUE_179,
     COLOR_OFF,      COLOR_OFF,        COLOR_OFF,      COLOR_OFF,
-    COLOR_OFF,      COLOR_COOL_WHITE, COLOR_OFF,
+    COLOR_OFF,      COLOR_OFF,        COLOR_OFF,
     // right thumb keys, then the large thumb key
     COLOR_BLUE_180, COLOR_BLUE_180,   COLOR_BLUE_180, COLOR_ORANGE
 },

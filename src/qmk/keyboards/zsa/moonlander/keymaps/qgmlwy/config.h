@@ -1,15 +1,11 @@
 /** @file
- * Build-time settings for the qgmlwy keymap: one-shot keys, USB wakeup, mouse keys,
- * Oryx identification, layer state size and lighting.
+ * Build-time settings for the qgmlwy keymap: USB wakeup, mouse keys, Oryx
+ * identification and lighting.
  *
  * Each `#undef` clears a default that the keyboard or QMK may already have set (the
  * keyboard sets several mouse key values), so the value here wins without a
  * redefinition warning.
  */
-
-/** Time in ms after which a pending one-shot modifier or layer is released unused. */
-#undef ONESHOT_TIMEOUT
-#define ONESHOT_TIMEOUT 5000
 
 /** Time in ms to wait after waking the host from USB suspend; 0 skips the wait. */
 #define USB_SUSPEND_WAKEUP_DELAY 0
@@ -47,9 +43,6 @@
  * It is also the USB serial number string.
  */
 #define SERIAL_NUMBER "LzzVe/pjxZ7X"
-
-/** Makes the layer state a 16-bit mask, which allows up to 16 layers. */
-#define LAYER_STATE_16BIT
 
 /**
  * Startup speed of the RGB matrix effects, from 0 to 255.

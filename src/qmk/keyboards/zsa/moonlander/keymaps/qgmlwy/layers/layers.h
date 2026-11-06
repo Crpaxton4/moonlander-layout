@@ -16,14 +16,6 @@ enum layer {
     LAYER_BASE = 0,
     /** Base layer with arrows in place of mouse movement. */
     LAYER_ARROWS = 1,
-    /** Mostly transparent gate to the text navigation layer. */
-    LAYER_NAVIGATION_GATE = 2,
-    /** Ctrl/Shift+arrows and word selection. */
-    LAYER_TEXT_NAVIGATION = 3,
-    /** Bootloader, NKRO, EEPROM clear, RGB and music keys. */
-    LAYER_SYSTEM = 4,
-    /** Every key disabled; double-hold either thumb dance to leave. */
-    LAYER_LOCK = 5,
     /** Number of layers. */
     LAYER_COUNT,
 };

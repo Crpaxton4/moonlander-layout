@@ -20,22 +20,15 @@
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #include "layers/base.inc"
 #include "layers/arrows.inc"
-#include "layers/navigation_gate.inc"
-#include "layers/text_navigation.inc"
-#include "layers/system.inc"
-#include "layers/lock.inc"
 };
 
 /** QMK actions of the tap dances, indexed by slot; each plays its `dances` row. */
 tap_dance_action_t tap_dance_actions[] = {
-    [DANCE_0]  = ACTION_TAP_DANCE_TABLE(DANCE_0),
-    [DANCE_1]  = ACTION_TAP_DANCE_TABLE(DANCE_1),
-    [DANCE_2]  = ACTION_TAP_DANCE_TABLE(DANCE_2),
-    [DANCE_3]  = ACTION_TAP_DANCE_TABLE(DANCE_3),
-    [DANCE_4]  = ACTION_TAP_DANCE_TABLE(DANCE_4),
-    [DANCE_5]  = ACTION_TAP_DANCE_TABLE(DANCE_5),
-    [DANCE_15] = ACTION_TAP_DANCE_TABLE(DANCE_15),
-    [DANCE_16] = ACTION_TAP_DANCE_TABLE(DANCE_16),
+    [DANCE_0] = ACTION_TAP_DANCE_TABLE(DANCE_0),
+    [DANCE_1] = ACTION_TAP_DANCE_TABLE(DANCE_1),
+    [DANCE_2] = ACTION_TAP_DANCE_TABLE(DANCE_2),
+    [DANCE_3] = ACTION_TAP_DANCE_TABLE(DANCE_3),
+    [DANCE_4] = ACTION_TAP_DANCE_TABLE(DANCE_4),
 };
 
 /**

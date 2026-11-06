@@ -2,10 +2,9 @@
  * Tap dance slots of the qgmlwy keymap, the shape of their definitions and the
  * QMK callbacks that play them.
  *
- * Every dance is one row of `dances`, which names the key each outcome holds or,
- * with TO(), the layer it moves to. One set of callbacks plays every row, and the
- * keymap's `tap_dance_actions` binds each slot to its row with
- * ACTION_TAP_DANCE_TABLE().
+ * Every dance is one row of `dances`, which names the key each outcome holds. One
+ * set of callbacks plays every row, and the keymap's `tap_dance_actions` binds each
+ * slot to its row with ACTION_TAP_DANCE_TABLE().
  */
 
 #pragma once
@@ -22,9 +21,6 @@ enum tap_dance_codes {
     DANCE_2,
     DANCE_3,
     DANCE_4,
-    DANCE_5,
-    DANCE_15,
-    DANCE_16,
     /** Number of tap dance slots; sizes `dances`. */
     DANCE_COUNT,
 };
@@ -32,9 +28,8 @@ enum tap_dance_codes {
 /**
  * Definition of one tap dance: the key each outcome holds, and two options.
  *
- * KC_NO makes an outcome do nothing. A TO() key moves to its layer instead of being
- * held, and the layer stays after the dance resets. Two presses interrupted by
- * another key tap the tap key once, then hold it.
+ * KC_NO makes an outcome do nothing. Two presses interrupted by another key tap the
+ * tap key once, then hold it.
  */
 typedef struct {
     /** Held on a single tap; tapped, then held, on an interrupted double tap. */
@@ -76,8 +71,8 @@ extern const dance_t dances[DANCE_COUNT];
 void dance_on_each_tap(tap_dance_state_t *state, void *user_data);
 
 /**
- * Resolves a dance's taps to one outcome and holds that outcome's key, or moves to
- * the layer of a TO() key; records the held key for dance_reset().
+ * Resolves a dance's taps to one outcome and holds that outcome's key; records the
+ * held key for dance_reset().
  *
  * @param state     Tap count and key state of the dance.
  * @param user_data The dance's definition in `dances`.
