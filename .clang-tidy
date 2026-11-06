@@ -1,14 +1,13 @@
 ---
-# Every finding is an error, so the exit status is non-zero when there is any.
-# All files are still analysed first.
+# Each finding is an error, so the exit status is not zero if there is a finding.
+# clang-tidy still analyzes all files first.
 #
-# -Wdocumentation and -Wdocumentation-unknown-command come from
-# ExtraArgsBefore below; their clang-diagnostic-* entries let them through
-# the -* filter.
+# ExtraArgsBefore below adds -Wdocumentation and -Wdocumentation-unknown-command.
+# Their clang-diagnostic-* entries let them pass the -* filter.
 #
-# bugprone-signed-bitwise is off: it reports QMK's int keycode macros (LCTL,
-# LSFT, LT, TD, LAYOUT and others) at every use, never this userspace's own
-# bitwise logic.
+# bugprone-signed-bitwise is off. It reports the int keycode macros of QMK (LCTL,
+# LSFT, LT, TD, LAYOUT and others) at each use. It never reports the bitwise logic
+# of this userspace.
 Checks: >-
     -*,
     bugprone-*,
@@ -23,26 +22,27 @@ Checks: >-
     clang-diagnostic-documentation-unknown-command
 WarningsAsErrors: "*"
 
-# Only this userspace's keyboards tree is reported, never QMK or ChibiOS.
+# clang-tidy reports only the keyboards tree of this userspace, never QMK or
+# ChibiOS.
 HeaderFilterRegex: "/src/qmk/keyboards/"
 
-# The compile database holds arm-none-eabi-gcc commands. clang takes its target
-# from the gcc driver name; these are the arguments it can't use:
-# - -mno-thumb-interwork: unknown to clang, a hard error.
-# - -fsingle-precision-constant: unsupported optimization flag.
-# - -Werror: would turn compiler warnings into errors that bypass Checks.
-# - -DQMK_MCU_ARCH=cortex-m4: read by make only, no C code uses it. Its
-#   replacement list trips bugprone-macro-parentheses at a command-line
-#   location, which HeaderFilterRegex can't exclude.
+# The compile database contains arm-none-eabi-gcc commands. clang gets its target
+# from the name of the gcc driver. clang cannot use these arguments:
+# - -mno-thumb-interwork: clang does not know this flag. It is a hard error.
+# - -fsingle-precision-constant: clang does not support this optimization flag.
+# - -Werror: it makes compiler warnings into errors that Checks does not control.
+# - -DQMK_MCU_ARCH=cortex-m4: only make reads it, and no C code uses it. Its
+#   replacement list causes a bugprone-macro-parentheses finding at a command-line
+#   location. HeaderFilterRegex cannot exclude that location.
 RemovedArgs:
     - -mno-thumb-interwork
     - -fsingle-precision-constant
     - -Werror
     - -DQMK_MCU_ARCH=cortex-m4
 
-# ExtraArgsBefore, not ExtraArgs: clang-tidy appends ExtraArgs after the `--`
-# that ends an inferred command (keymap.c has no database entry of its own),
-# where the compiler reads them as file names.
+# Use ExtraArgsBefore, not ExtraArgs. keymap.c has no compile database entry, so
+# clang-tidy infers its command. clang-tidy adds ExtraArgs after the `--` at the
+# end of that command, where the compiler reads them as file names.
 ExtraArgsBefore:
     - -Wdocumentation
     - -Wdocumentation-unknown-command
@@ -50,12 +50,13 @@ ExtraArgsBefore:
 CheckOptions:
     readability-function-size.LineThreshold: 25
     readability-function-cognitive-complexity.Threshold: 8
-    # QMK macros hide control flow (wait_ms() expands to do/if/else), which
-    # would count against every function that calls them
+    # QMK macros hide control flow. For example, wait_ms() expands to do/if/else.
+    # Without this option, that control flow counts against each function that
+    # calls the macros.
     readability-function-cognitive-complexity.IgnoreMacros: true
 
-    # Only 0 is accepted. Literals in #define, enum and const initializers are
-    # never reported.
+    # The check accepts only 0. It never reports literals in #define, enum and
+    # const initializers.
     readability-magic-numbers.IgnoredIntegerValues: ""
     readability-magic-numbers.IgnorePowersOf2IntegerValues: false
     readability-magic-numbers.IgnoredFloatingPointValues: ""

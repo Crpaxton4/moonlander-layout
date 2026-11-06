@@ -1,6 +1,7 @@
 /** @file
- * A file being checked, and the functions of source.c that read it and place its
- * findings. Each function is documented where it is defined, in source.c.
+ * The file that the checker examines, and the functions in source.c that read the
+ * file and add its findings. The documentation of each function is at its
+ * definition in source.c.
  */
 
 #pragma once
@@ -11,19 +12,19 @@
 
 #include "support.h"
 
-/** A file being checked. */
+/** A file that the checker examines. */
 typedef struct {
-    /** Path of the file as given. */
+    /** The path of the file, as the command line gives it. */
     const char *path;
-    /** What tree-sitter parses: the file's text inside its kind's wrapper. */
+    /** The text that tree-sitter parses: the file text in its file kind wrapper. */
     buffer_t parsed;
-    /** Offset of the file's own text in `parsed`. */
+    /** The offset of the file text in `parsed`. */
     size_t text_start;
-    /** Length of the file's own text. */
+    /** The length of the file text. */
     size_t text_length;
-    /** Lines the wrapper adds before the file's text. */
+    /** The number of lines that the wrapper adds before the file text. */
     uint32_t wrapper_rows;
-    /** Where findings go. */
+    /** The list that gets the findings. */
     findings_t *findings;
 } source_t;
 

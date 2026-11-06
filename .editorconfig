@@ -1,5 +1,5 @@
-# Whitespace and line rules for every file, read by editors and enforced by
-# editorconfig-checker. Modelled on QMK upstream's .editorconfig.
+# Whitespace and line rules for all files. editorconfig-checker enforces them, and
+# Prettier and shfmt also read them. The model is the .editorconfig of QMK upstream.
 root = true
 
 [*]
@@ -11,35 +11,37 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 max_line_length = 88
 
-# To match GitHub Actions formatting
+# This agrees with the YAML format of GitHub Actions.
 [*.{yaml,yml}]
 indent_size = 2
 
-# Pinned action SHAs and image digests can't be wrapped
+# Pinned action SHAs and image digests cannot wrap.
 [.github/workflows/*.{yaml,yml}]
 max_line_length = off
 
-# JSON holds unwrappable values such as schema URLs; Prettier still formats it
+# JSON contains values that cannot wrap, for example schema URLs. Prettier still
+# formats JSON.
 [*.json]
 max_line_length = off
 
-# Two trailing spaces are a Markdown line break
+# In Markdown, two trailing spaces are a line break.
 [*.md]
 trim_trailing_whitespace = false
 
-# make requires tabs in recipes
+# make requires tabs in recipes.
 [{Makefile,*.mk}]
 indent_style = tab
 
-# Keymap grid files keep one keyboard row per line, however long
+# A keymap grid file keeps each keyboard row on one line, at any length.
 [*.inc]
 max_line_length = off
 
-# Standards checker goldens hold its output as it is: one finding per line,
-# however long its path and message
+# The goldens of the standards checker contain its output without change: one
+# finding on each line, at any length of path and message.
 [*.expected]
 max_line_length = off
 
-# shfmt: a line continued with \ starts with its && || or | operator
+# shfmt: when a line continues with \, the next line starts with the &&, || or |
+# operator.
 [*.sh]
 binary_next_line = true

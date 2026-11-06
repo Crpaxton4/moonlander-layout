@@ -1,25 +1,25 @@
-# Documentation check for the userspace's C sources, run by
-# `make analyze` from the repo root. It lists the settings that differ
-# from Doxygen's defaults and every rule the check enforces.
+# The documentation check for the C sources of the userspace. `make analyze` runs
+# it from the root of the repository. This file contains the settings that are
+# different from the Doxygen defaults, and all rules of the check.
 
-# Sources: the userspace's C files, including the keymap grid files
+# The sources are the C files of the userspace, and the keymap grid files.
 INPUT = src/qmk/keyboards
 RECURSIVE = YES
 FILE_PATTERNS = *.c *.h *.inc
 EXTENSION_MAPPING = inc=C
 OPTIMIZE_OUTPUT_FOR_C = YES
 
-# Undocumented entities are reported, not extracted, static functions included.
-# The first sentence of a comment is its brief.
+# Doxygen reports undocumented entities, also static functions, and does not
+# extract them. The first sentence of a comment is its brief description.
 EXTRACT_ALL = NO
 EXTRACT_STATIC = YES
 JAVADOC_AUTOBRIEF = YES
 
-# The rules the check enforces: every entity is documented, every parameter of
-# a documented function is documented, and docs are complete and well formed.
-# Only warnings print, as `file:line: message`, and the run exits non-zero once
-# every warning is reported.
-# Doxygen checks only the members of files that carry a @file comment.
+# The rules of the check: each entity has documentation, each parameter of a
+# documented function has documentation, and all documentation is complete and
+# correct. Doxygen prints only warnings, as `file:line: message`. After it reports
+# all warnings, it exits with a non-zero status.
+# Doxygen checks only the members of files that have a @file comment.
 WARN_IF_UNDOCUMENTED = YES
 WARN_NO_PARAMDOC = YES
 WARN_IF_INCOMPLETE_DOC = YES
@@ -28,8 +28,8 @@ QUIET = YES
 WARN_FORMAT = "$file:$line: $text"
 WARN_AS_ERROR = FAIL_ON_WARNINGS
 
-# A check, not a docs site. Doxygen warns when it has no output format, so it
-# writes only XML, into a gitignored directory.
+# This is a check, not a documentation site. Doxygen gives a warning if it has no
+# output format. Thus it writes only XML, into a directory that git ignores.
 OUTPUT_DIRECTORY = doxygen
 GENERATE_HTML = NO
 GENERATE_LATEX = NO

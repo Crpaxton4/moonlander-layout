@@ -1,8 +1,9 @@
 /** @file
- * Support code shared by the checker's files: growing buffers and arrays, findings,
- * their order and their output. Each function is documented where it is defined, in
- * support.c. Doxygen takes the declaration of describe() for a function of its own,
- * as it carries a format attribute, so it is documented here too.
+ * The code that the checker files share: buffers and arrays that grow, and the
+ * findings with their sort order and output. The documentation of each function is
+ * at its definition in support.c. Doxygen reads the declaration of describe() as a
+ * different function because of its format attribute. Thus describe() also has its
+ * documentation here.
  */
 
 #pragma once
@@ -10,51 +11,51 @@
 #include <stddef.h>
 #include <stdio.h>
 
-/** Size of a finding's message, terminator included. */
+/** The size of a finding message. The size includes the terminator. */
 #define MESSAGE_SIZE 160
 
-/** Number of the first line and column in a finding; tree-sitter counts from 0. */
+/** The number of the first line and column in a finding. tree-sitter counts from 0. */
 #define FIRST_POSITION 1
 
-/** Characters that separate words on a line. */
+/** The characters that separate words on a line. */
 #define BLANKS " \t"
 
-/** Number of rows in the array @p array. */
+/** The number of elements in the array @p array. */
 #define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
 
-/** A growing block of bytes, NUL-terminated after each append(). */
+/** A block of bytes that grows. append() puts a NUL after the bytes. */
 typedef struct {
     /** The bytes. */
     char *data;
-    /** Bytes in use, the terminator excluded. */
+    /** The number of bytes in use, without the terminator. */
     size_t length;
-    /** Bytes allocated. */
+    /** The number of bytes that are allocated. */
     size_t capacity;
 } buffer_t;
 
-/** One finding, as printed. */
+/** One finding, as the checker prints it. */
 typedef struct {
-    /** Order in which the finding was reported, the last sort key. */
+    /** The report order of the finding. It is the last sort key. */
     size_t sequence;
-    /** Line, counted from FIRST_POSITION. */
+    /** The line. The first line is FIRST_POSITION. */
     unsigned long line;
-    /** Column in bytes, counted from FIRST_POSITION. */
+    /** The column in bytes. The first column is FIRST_POSITION. */
     unsigned long column;
-    /** Path of the file as given. */
+    /** The path of the file, as the command line gives it. */
     const char *path;
-    /** Name of the rule. */
+    /** The name of the rule. */
     const char *rule;
-    /** What is wrong. */
+    /** The description of the problem. */
     char message[MESSAGE_SIZE];
 } finding_t;
 
-/** Every finding so far. */
+/** All findings until now. */
 typedef struct {
-    /** The findings, in file order, each file's sorted once it is checked. */
+    /** The findings in file order. Each file has its findings in sort order. */
     finding_t *items;
-    /** Findings in use. */
+    /** The number of findings in use. */
     size_t count;
-    /** Findings allocated. */
+    /** The number of findings that are allocated. */
     size_t capacity;
 } findings_t;
 
@@ -68,7 +69,7 @@ int append_stream(buffer_t *buffer, FILE *stream);
  * Writes the message of a finding.
  *
  * @param finding The finding.
- * @param format  printf() format of the message, followed by its arguments.
+ * @param format  The printf() format of the message. The format arguments follow it.
  */
 void describe(finding_t *finding, const char *format, ...)
     __attribute__((format(printf, 2, 3)));

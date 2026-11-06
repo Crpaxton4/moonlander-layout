@@ -1,6 +1,6 @@
 /** @file
- * The function of rules.c that checks one file. It is documented where it is
- * defined, in rules.c.
+ * The declaration of check_source() from rules.c. Its documentation is at its
+ * definition in rules.c.
  */
 
 #pragma once

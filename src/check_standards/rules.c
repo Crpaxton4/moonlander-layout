@@ -1,29 +1,30 @@
 /** @file
- * The checker's rules, and the walk over a file's syntax tree that hands every node
- * to every rule in `rules`.
+ * The rules of the checker, and the walk that gives each node of a syntax tree to
+ * each rule in `rules`.
  *
  * Rules:
- * - `file-docstring`: the file's very first bytes open a Doxygen comment block that
- *   holds `@file` and a description. Nothing may come before it, not even a blank
- *   line. The word after `@file` on its line is the file name, not the description.
+ * - `file-docstring`: the first bytes of the file open a Doxygen comment block that
+ *   contains `@file` and a description. Nothing can come before the block, also no
+ *   blank line. The word after `@file` on the same line is the file name, not the
+ *   description.
  * - `nesting`: control flow in function bodies nests only as `constructs` allows,
- *   at most MAX_NESTING_DEPTH levels deep.
- * - `parse-error`: tree-sitter found an error or a missing token, so the rules
- *   can't see that part of the file.
- * - `io-error`: the file could not be read.
+ *   to a maximum of MAX_NESTING_DEPTH levels.
+ * - `parse-error`: tree-sitter found an error or a missing token. The rules cannot
+ *   examine that part of the file.
+ * - `io-error`: the checker cannot read the file.
  *
- * Nesting is judged by tree-sitter node type, inside function bodies only:
- * - Nothing may be nested inside an `if`. An `if` that is all of an `else` continues
- *   its chain at the same level, so `else if` chains are flat.
- * - A `for` may contain `if` and `for`, and `while` and `do` the same, but `while`,
- *   `do` and `switch` only appear at the top level of a function body.
- * - A `switch` contains only its cases, and a case holds no control flow at all.
- * - `?:` counts as an `if`, and `goto` as a branch that can't contain anything;
- *   `return`, `break` and `continue` are exits, allowed anywhere.
- * - A node is inside a construct anywhere in its subtree: an `if` condition counts
- *   as inside the `if`, and a `for` header as inside the `for`.
- * - Compound statements, labels, preprocessor conditionals and every other node
- *   add no level: they pass their enclosing construct on to their children.
+ * The nesting rule uses the tree-sitter node type, and only in function bodies:
+ * - Nothing can nest in an `if`. An `if` that is the full body of an `else`
+ *   continues its chain at the same level. Thus `else if` chains are flat.
+ * - A `for`, a `while` and a `do` can contain an `if` and a `for`. A `while`, a `do`
+ *   and a `switch` can only be at the top level of a function body.
+ * - A `switch` contains only its cases. A case contains no control flow.
+ * - `?:` counts as an `if`, and `goto` as a branch that cannot contain anything.
+ *   The exits `return`, `break` and `continue` are allowed at all levels.
+ * - A construct contains its full subtree: an `if` condition is in the `if`, and a
+ *   `for` header is in the `for`.
+ * - Compound statements, labels, preprocessor conditionals and all other nodes add
+ *   no level. Their children are in the same construct as the node.
  */
 
 #include <ctype.h>
@@ -32,32 +33,32 @@
 
 #include "rules.h"
 
-/** Deepest nesting of control flow allowed in a function body. */
+/** The maximum nesting depth of control flow in a function body. */
 #define MAX_NESTING_DEPTH 2
 
-/** Most characters of source a parse-error message quotes. */
+/** The maximum number of source characters that a parse-error message quotes. */
 #define QUOTE_LENGTH 40
 
-/** Opens a Doxygen comment block. */
+/** The start of a Doxygen comment block. */
 #define DOC_COMMENT_OPEN "/**"
 
-/** Closes a C comment. */
+/** The end of a C comment. */
 #define COMMENT_CLOSE "*/"
 
-/** Doxygen command that documents a file. */
+/** The Doxygen command that documents a file. */
 #define FILE_COMMAND "@file"
 
-/** Characters that end the file name after FILE_COMMAND. */
+/** The characters that end the file name after FILE_COMMAND. */
 #define WHITESPACE " \t\r\n"
 
-/** Bit of the construct kind @p kind in a construct_t `may_contain` mask. */
+/** The bit of the construct kind @p kind in a `may_contain` mask of construct_t. */
 #define BIT(kind) (1U << (kind))
 
-/** Control-flow constructs of the nesting rule, each its row in `constructs`. */
+/** The constructs of the nesting rule. Each value is its row index in `constructs`. */
 typedef enum {
     /** A function body, the outermost level. */
     KIND_FUNCTION,
-    /** An `if` statement, `else` branches included. */
+    /** An `if` statement, with its `else` branches. */
     KIND_IF,
     /** A `for` loop. */
     KIND_FOR,
@@ -69,44 +70,44 @@ typedef enum {
     KIND_SWITCH,
     /** A `case` or `default` label and the statements after it. */
     KIND_CASE,
-    /** A conditional expression, the ternary operator. */
+    /** A conditional expression (the ternary operator). */
     KIND_TERNARY,
     /** A `goto` statement. */
     KIND_GOTO,
-    /** Number of construct kinds. */
+    /** The number of construct kinds. */
     KIND_COUNT,
 } construct_kind_t;
 
-/** What may be nested directly inside a construct that holds no control flow. */
+/** The mask of a construct that contains no control flow. */
 #define NOTHING 0U
 
-/** What a `switch` may contain directly: its cases. */
+/** The mask of a `switch`: only its cases. */
 #define CASES BIT(KIND_CASE)
 
-/** What a loop body may contain directly: one level of branches and `for` loops. */
+/** The mask of a loop body: one level of branches and `for` loops. */
 #define LOOP_BODY (BIT(KIND_IF) | BIT(KIND_FOR) | BIT(KIND_TERNARY) | BIT(KIND_GOTO))
 
-/** What a function body may contain directly: a loop body plus the top-level kinds. */
+/** The mask of a function body: the loop body kinds and the top-level kinds. */
 #define FUNCTION_BODY (LOOP_BODY | BIT(KIND_WHILE) | BIT(KIND_DO) | BIT(KIND_SWITCH))
 
-/** A control-flow construct of the nesting rule and what may be nested inside it. */
+/** A construct of the nesting rule, and the constructs that it can contain. */
 typedef struct {
-    /** tree-sitter node type of the construct. */
+    /** The tree-sitter node type of the construct. */
     const char *node_type;
-    /** Name of the construct in messages. */
+    /** The name of the construct in messages. */
     const char *label;
     /**
-     * Parent node type under which the construct continues the construct around
-     * that parent instead of nesting in it, or NULL.
+     * A parent node type, or NULL. Under this parent, the construct continues the
+     * construct around the parent. It does not nest in it.
      */
     const char *continues_under;
-    /** BIT() mask of the constructs allowed directly inside this one. */
+    /** The BIT() mask of the constructs that can be directly in this construct. */
     unsigned may_contain;
-    /** Nesting levels the construct adds: 1, or 0 for a function body or a case. */
+    /** The number of levels that the construct adds: 1, or 0 for a body or a case. */
     int levels;
 } construct_t;
 
-/** The nesting rule's constructs, indexed by construct_kind_t. */
+/** The constructs of the nesting rule. construct_kind_t is the index. */
 static const construct_t constructs[KIND_COUNT] = {
     [KIND_FUNCTION] = {"function_definition", "function", NULL, FUNCTION_BODY, 0},
     [KIND_IF]       = {"if_statement", "if", "else_clause", NOTHING, 1},
@@ -119,81 +120,81 @@ static const construct_t constructs[KIND_COUNT] = {
     [KIND_GOTO]     = {"goto_statement", "goto", NULL, NOTHING, 1},
 };
 
-/** Where a node sits in a function body. */
+/** The position of a node in a function body. */
 typedef struct {
-    /** Innermost construct around the node, or NULL outside function bodies. */
+    /** The innermost construct around the node, or NULL outside function bodies. */
     const construct_t *construct;
-    /** Nesting levels around the node. */
+    /** The number of nesting levels around the node. */
     int depth;
 } scope_t;
 
-/** What a walk knows about a node's parent. */
+/** The data that the walk has about the parent of a node. */
 typedef struct {
-    /** File the nodes belong to. */
+    /** The file of the nodes. */
     source_t *source;
-    /** Node type of the parent, "" for the root. */
+    /** The node type of the parent, or "" for the root. */
     const char *type;
-    /** Scope of the parent's children. */
+    /** The scope of the children of the parent. */
     scope_t scope;
 } parent_t;
 
-/** One node of a walk, as the rules see it. */
+/** One node of the walk, as the rules see it. */
 typedef struct {
-    /** File the node belongs to. */
+    /** The file of the node. */
     source_t *source;
     /** The node. */
     TSNode node;
-    /** Construct the node opens, or NULL if it opens none. */
+    /** The construct that the node opens, or NULL. */
     const construct_t *opens;
-    /** Scope the node sits in. */
+    /** The scope of the node. */
     scope_t scope;
 } visit_t;
 
 /**
- * Judges one node for one rule and reports what is wrong with it.
+ * Examines one node for one rule and reports each problem.
  *
- * @param rule  Name of the rule, for findings.
+ * @param rule  The name of the rule, for findings.
  * @param visit The node and its context.
  */
 typedef void rule_visitor_t(const char *rule, const visit_t *visit);
 
-/** A rule: its name and the visitor every node of a walk is handed to. */
+/** A rule: its name and the visitor that gets each node of the walk. */
 typedef struct {
-    /** Name of the rule in findings. */
+    /** The name of the rule in findings. */
     const char *name;
-    /** Judges each node. */
+    /** The function that examines each node. */
     rule_visitor_t *visit;
 } rule_t;
 
-/** Docstring of a file: the Doxygen comment its first bytes open, if any. */
+/** The docstring of a file: the Doxygen comment that its first bytes open, if any. */
 typedef struct {
-    /** First byte after the opening of the comment, or NULL if there is none. */
+    /** The first byte after the comment start, or NULL if there is no comment. */
     const char *body;
-    /** The closing of the comment, or NULL if there is none. */
+    /** The comment end, or NULL if there is no end. */
     const char *body_end;
-    /** The comment's first FILE_COMMAND, or NULL if there is none. */
+    /** The first FILE_COMMAND in the comment, or NULL if there is none. */
     const char *command;
 } docstring_t;
 
-/** One requirement of the file-docstring rule and the message if it isn't met. */
+/** One requirement of the file-docstring rule, and its message. */
 typedef struct {
     /**
-     * Tells whether a docstring meets the requirement.
+     * Tells if a docstring meets the requirement.
      *
-     * @param docstring The docstring, which meets every earlier requirement.
-     * @return Whether it meets this one.
+     * @param docstring The docstring. It meets all earlier requirements.
+     * @return True if it meets this requirement.
      */
     bool (*passes)(const docstring_t *docstring);
-    /** Message when it doesn't. */
+    /** The message if the docstring does not meet the requirement. */
     const char *message;
 } docstring_check_t;
 
 /**
  * Finds a C string in a range of bytes.
  *
- * @param start  Start of the range.
- * @param end    End of the range.
- * @param needle The string looked for.
+ * @param start  The start of the range.
+ * @param end    The end of the range.
+ * @param needle The string to find.
  * @return The first byte of the first @p needle in the range, or NULL.
  */
 static const char *find_text(const char *start, const char *end, const char *needle) {
@@ -207,11 +208,11 @@ static const char *find_text(const char *start, const char *end, const char *nee
 }
 
 /**
- * Tells whether a range of bytes holds a letter or a digit.
+ * Tells if a range of bytes contains a letter or a digit.
  *
- * @param start Start of the range.
- * @param end   End of the range.
- * @return Whether any byte of the range is alphanumeric.
+ * @param start The start of the range.
+ * @param end   The end of the range.
+ * @return True if a byte of the range is a letter or a digit.
  */
 static bool has_alphanumeric(const char *start, const char *end) {
     for (const char *at = start; at < end; at++) {
@@ -225,13 +226,15 @@ static bool has_alphanumeric(const char *start, const char *end) {
 /**
  * Finds the docstring at the start of a file.
  *
- * @param text   The file's text, followed by a NUL.
- * @param length Length of the text.
- * @return The docstring; `body` is NULL if the text doesn't begin with one.
+ * @param text   The text of the file, with a NUL after it.
+ * @param length The length of the text.
+ * @return The docstring. Its `body` is NULL if the text does not start with one.
  */
 static docstring_t find_docstring(const char *text, size_t length) {
     docstring_t docstring   = {.body = NULL, .body_end = NULL, .command = NULL};
     size_t      open_length = strlen(DOC_COMMENT_OPEN);
+    /* A slash after DOC_COMMENT_OPEN closes the comment at once. That empty comment
+     * is not a Doxygen block. */
     if (length < open_length || memcmp(text, DOC_COMMENT_OPEN, open_length) != 0 ||
         text[open_length] == '/') {
         return docstring;
@@ -245,41 +248,41 @@ static docstring_t find_docstring(const char *text, size_t length) {
 }
 
 /**
- * Tells whether a file begins with a Doxygen comment.
+ * Tells if a file starts with a Doxygen comment.
  *
- * @param docstring The file's docstring.
- * @return Whether it was found.
+ * @param docstring The docstring of the file.
+ * @return True if find_docstring() found it.
  */
 static bool opens_doc_comment(const docstring_t *docstring) {
     return docstring->body != NULL;
 }
 
 /**
- * Tells whether a docstring is closed.
+ * Tells if a docstring has an end.
  *
  * @param docstring The docstring.
- * @return Whether its closing was found.
+ * @return True if it has an end.
  */
 static bool is_closed(const docstring_t *docstring) {
     return docstring->body_end != NULL;
 }
 
 /**
- * Tells whether a docstring holds FILE_COMMAND.
+ * Tells if a docstring contains FILE_COMMAND.
  *
  * @param docstring The docstring.
- * @return Whether it does.
+ * @return True if it contains FILE_COMMAND.
  */
 static bool has_file_command(const docstring_t *docstring) {
     return docstring->command != NULL;
 }
 
 /**
- * Tells whether a docstring describes its file: whether it holds a letter or a
- * digit outside FILE_COMMAND and the file name after it on its line.
+ * Tells if a docstring describes its file. A description is a letter or a digit
+ * that is not FILE_COMMAND or the file name after it on the same line.
  *
- * @param docstring The docstring, which holds FILE_COMMAND.
- * @return Whether it does.
+ * @param docstring The docstring. It contains FILE_COMMAND.
+ * @return True if it has a description.
  */
 static bool has_description(const docstring_t *docstring) {
     const char *name = docstring->command + strlen(FILE_COMMAND);
@@ -290,7 +293,7 @@ static bool has_description(const docstring_t *docstring) {
     return has_alphanumeric(name + strcspn(name, WHITESPACE), docstring->body_end);
 }
 
-/** The file-docstring rule's requirements, in order: each needs the earlier ones. */
+/** The requirements of the file-docstring rule. Each one needs the ones before it. */
 static const docstring_check_t docstring_checks[] = {
     {opens_doc_comment, "file does not begin with a /** comment"},
     {is_closed, "the opening /** comment is not closed"},
@@ -299,10 +302,10 @@ static const docstring_check_t docstring_checks[] = {
 };
 
 /**
- * Rule file-docstring: reports, at the root node, the first requirement of
- * `docstring_checks` that the file's docstring doesn't meet.
+ * Rule file-docstring. At the root node, it reports the first requirement in
+ * `docstring_checks` that the docstring of the file does not meet.
  *
- * @param rule  Name of the rule.
+ * @param rule  The name of the rule.
  * @param visit The node.
  */
 static void check_file_docstring(const char *rule, const visit_t *visit) {
@@ -323,7 +326,7 @@ static void check_file_docstring(const char *rule, const visit_t *visit) {
 }
 
 /**
- * Bit of a construct in a construct_t `may_contain` mask.
+ * Gets the bit of a construct in a `may_contain` mask of construct_t.
  *
  * @param construct The construct, a row of `constructs`.
  * @return Its BIT().
@@ -333,10 +336,10 @@ static unsigned construct_bit(const construct_t *construct) {
 }
 
 /**
- * Rule nesting: reports a construct that its enclosing construct may not contain,
- * or that nests deeper than MAX_NESTING_DEPTH.
+ * Rule nesting. It reports a construct that its outer construct cannot contain, or
+ * that nests deeper than MAX_NESTING_DEPTH.
  *
- * @param rule  Name of the rule.
+ * @param rule  The name of the rule.
  * @param visit The node.
  */
 static void check_nesting(const char *rule, const visit_t *visit) {
@@ -359,11 +362,11 @@ static void check_nesting(const char *rule, const visit_t *visit) {
 }
 
 /**
- * Length of the quote of a source fragment: up to its first line end, at most
- * QUOTE_LENGTH.
+ * Gets the length of the quote of a source fragment. The quote stops at the first
+ * line end, with a maximum of QUOTE_LENGTH.
  *
- * @param text The fragment, NUL-terminated.
- * @return Characters to quote.
+ * @param text The NUL-terminated fragment.
+ * @return The number of characters to quote.
  */
 static int quote_length(const char *text) {
     size_t length = strcspn(text, "\r\n");
@@ -371,9 +374,10 @@ static int quote_length(const char *text) {
 }
 
 /**
- * Rule parse-error: reports every error and every missing token tree-sitter found.
+ * Rule parse-error. It reports each error and each missing token that tree-sitter
+ * found.
  *
- * @param rule  Name of the rule.
+ * @param rule  The name of the rule.
  * @param visit The node.
  */
 static void check_parse_error(const char *rule, const visit_t *visit) {
@@ -390,7 +394,7 @@ static void check_parse_error(const char *rule, const visit_t *visit) {
     }
 }
 
-/** Every rule, in the order each node is handed to them. */
+/** All rules, in the order in which each node goes to them. */
 static const rule_t rules[] = {
     {"file-docstring", check_file_docstring},
     {"nesting", check_nesting},
@@ -400,7 +404,7 @@ static const rule_t rules[] = {
 /**
  * Finds the construct of a node type.
  *
- * @param node_type tree-sitter node type.
+ * @param node_type The tree-sitter node type.
  * @return The row of `constructs` for @p node_type, or NULL.
  */
 static const construct_t *find_construct(const char *node_type) {
@@ -413,12 +417,12 @@ static const construct_t *find_construct(const char *node_type) {
 }
 
 /**
- * Tells whether a construct continues the one around its parent, as `else if`
+ * Tells if a construct continues the construct around its parent, as `else if`
  * does.
  *
  * @param construct   The construct.
- * @param parent_type Node type of its parent.
- * @return Whether @p parent_type is the construct's `continues_under`.
+ * @param parent_type The node type of its parent.
+ * @return True if @p parent_type is the `continues_under` of the construct.
  */
 static bool continues_chain(const construct_t *construct, const char *parent_type) {
     if (construct->continues_under == NULL) {
@@ -428,12 +432,12 @@ static bool continues_chain(const construct_t *construct, const char *parent_typ
 }
 
 /**
- * Finds the construct a node opens.
+ * Finds the construct that a node opens.
  *
  * @param node   The node.
- * @param parent The node's parent.
- * @return The node's construct, or NULL if it is none, continues a chain, or lies
- *         outside function bodies.
+ * @param parent The parent of the node.
+ * @return The construct of the node. NULL if the node is not a construct, continues
+ *         a chain, or is outside function bodies.
  */
 static const construct_t *opened_construct(TSNode node, const parent_t *parent) {
     const construct_t *construct = find_construct(ts_node_type(node));
@@ -447,11 +451,11 @@ static const construct_t *opened_construct(TSNode node, const parent_t *parent) 
 }
 
 /**
- * Scope of a node's children.
+ * Gets the scope of the children of a node.
  *
- * @param scope     Scope of the node.
- * @param construct Construct the node opens, or NULL.
- * @return @p scope, or the scope inside @p construct.
+ * @param scope     The scope of the node.
+ * @param construct The construct that the node opens, or NULL.
+ * @return @p scope, or the scope in @p construct.
  */
 static scope_t enter(scope_t scope, const construct_t *construct) {
     if (construct == NULL) {
@@ -461,10 +465,10 @@ static scope_t enter(scope_t scope, const construct_t *construct) {
 }
 
 /**
- * Hands a node and, depth first, every node below it to every rule.
+ * Gives a node and all nodes below it to each rule, depth first.
  *
- * @param cursor Cursor on the node; back on it on return.
- * @param parent The node's parent.
+ * @param cursor A cursor on the node. On return, the cursor is on the node again.
+ * @param parent The parent of the node.
  */
 static void walk(TSTreeCursor *cursor, const parent_t *parent) {
     TSNode             node  = ts_tree_cursor_current_node(cursor);
@@ -488,7 +492,7 @@ static void walk(TSTreeCursor *cursor, const parent_t *parent) {
  * Reads, parses and checks one file.
  *
  * @param parser The parser.
- * @param source The file, with nothing loaded yet.
+ * @param source The file. It has a path and no text.
  */
 void check_source(TSParser *parser, source_t *source) {
     int error = load_source(source);

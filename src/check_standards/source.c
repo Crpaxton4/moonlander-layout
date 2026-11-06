@@ -1,10 +1,11 @@
 /** @file
- * Reading a file into the text that tree-sitter parses, and placing findings in the
- * file: QMK sources hold code that tree-sitter can't parse as it is.
+ * Reads a file into the text that tree-sitter parses, and adds findings at positions
+ * in the file. QMK sources contain code that tree-sitter cannot parse directly.
  *
- * An `.inc` file holds the elements of a brace initializer, so it is parsed inside
- * one; see `file_kinds`. The words of `blanked_words` and the lines of
- * `blanked_directives` are parsed as spaces.
+ * An `.inc` file contains the elements of a brace initializer. Thus the checker
+ * parses the file in an initializer. See `file_kinds`. Before the parse, the checker
+ * replaces the words in `blanked_words` and the lines in `blanked_directives` with
+ * spaces.
  */
 
 #include <ctype.h>
@@ -16,52 +17,53 @@
 
 #include "source.h"
 
-/** Characters between a line's start and a preprocessor directive's name. */
+/** The characters between the start of a line and a preprocessor directive name. */
 #define DIRECTIVE_LEAD "# \t"
 
-/** How a kind of file is parsed: inside a wrapper that makes it a translation unit. */
+/** How the checker parses a file kind: in a wrapper that makes a translation unit. */
 typedef struct {
-    /** End of the file names of this kind. */
+    /** The end of the file names of this kind. */
     const char *suffix;
-    /** Text parsed before the file's own. */
+    /** The text before the file text. */
     const char *before;
-    /** Text parsed after the file's own. */
+    /** The text after the file text. */
     const char *after;
 } file_kind_t;
 
-/** Files parsed inside a wrapper; every other file is parsed as it is. */
+/** The file kinds that need a wrapper. The checker parses all other files directly. */
 static const file_kind_t file_kinds[] = {
     {".inc", "static const int inc[] = {\n", "\n};\n"},
 };
 
-/** A file parsed as it is. */
+/** The file kind of a file without a wrapper. */
 static const file_kind_t translation_unit = {"", "", ""};
 
 /**
- * Words that tree-sitter can't parse and no rule needs, replaced by spaces before
- * parsing, in comments and strings too, so every position stays where it was.
+ * Words that tree-sitter cannot parse and that no rule needs. The checker replaces
+ * them with spaces before the parse, also in comments and strings. Thus all
+ * positions stay the same.
  */
 static const char *const blanked_words[] = {
-    /* AVR's program memory attribute, a macro that tree-sitter takes for a name */
+    /* The AVR program memory attribute. tree-sitter reads this macro as a name. */
     "PROGMEM",
 };
 
 /**
- * Preprocessor directives whose lines are replaced by spaces before parsing, like
+ * Preprocessor directives whose lines the checker replaces with spaces, as for
  * `blanked_words`.
  */
 static const char *const blanked_directives[] = {
-    /* tree-sitter parses an include only where a declaration or a statement can
-     * be, not inside an initializer, where the keymap's tables include their rows */
+    /* tree-sitter parses an include only at a declaration or a statement. The keymap
+     * tables include their rows in an initializer. */
     "include",
 };
 
 /**
- * Tells whether a C string ends with another.
+ * Tells if a C string ends with an other string.
  *
  * @param text   The string.
- * @param suffix The ending looked for.
- * @return Whether @p text ends with @p suffix.
+ * @param suffix The end to find.
+ * @return True if @p text ends with @p suffix.
  */
 static bool ends_with(const char *text, const char *suffix) {
     size_t text_length   = strlen(text);
@@ -73,10 +75,10 @@ static bool ends_with(const char *text, const char *suffix) {
 }
 
 /**
- * Finds how a file is parsed.
+ * Finds the file kind of a file.
  *
- * @param path Path of the file.
- * @return The row of `file_kinds` whose suffix @p path ends with, or
+ * @param path The path of the file.
+ * @return The row of `file_kinds` whose suffix is the end of @p path, or
  *         `translation_unit`.
  */
 static const file_kind_t *find_file_kind(const char *path) {
@@ -92,7 +94,7 @@ static const file_kind_t *find_file_kind(const char *path) {
  * Counts the newlines in a C string.
  *
  * @param text The string.
- * @return Number of newlines in @p text.
+ * @return The number of newlines in @p text.
  */
 static uint32_t count_newlines(const char *text) {
     uint32_t newlines = 0;
@@ -105,21 +107,21 @@ static uint32_t count_newlines(const char *text) {
 }
 
 /**
- * Tells whether a byte can be part of a C identifier.
+ * Tells if a byte can be part of a C identifier.
  *
  * @param byte The byte.
- * @return Whether it is a letter, a digit or an underscore.
+ * @return True if the byte is a letter, a digit or an underscore.
  */
 static bool is_word_byte(char byte) {
     return isalnum((unsigned char)byte) != 0 || byte == '_';
 }
 
 /**
- * Tells whether a text starts with a whole word.
+ * Tells if a text starts with a full word.
  *
- * @param text The text, NUL-terminated.
+ * @param text The NUL-terminated text.
  * @param word The word.
- * @return Whether @p text starts with @p word, not followed by a word byte.
+ * @return True if @p text starts with @p word and no word byte follows the word.
  */
 static bool starts_with_word(const char *text, const char *word) {
     size_t length = strlen(word);
@@ -130,9 +132,9 @@ static bool starts_with_word(const char *text, const char *word) {
 }
 
 /**
- * Replaces a word of `blanked_words` with spaces if one starts at a word start.
+ * Replaces a word of `blanked_words` with spaces if the word starts at @p at.
  *
- * @param at The word start, in a NUL-terminated buffer.
+ * @param at The start of a word in a NUL-terminated buffer.
  */
 static void blank_word(char *at) {
     for (size_t index = 0; index < COUNT_OF(blanked_words); index++) {
@@ -143,9 +145,10 @@ static void blank_word(char *at) {
 }
 
 /**
- * Replaces a line with spaces if it holds a directive of `blanked_directives`.
+ * Replaces a line with spaces if the line contains a directive of
+ * `blanked_directives`.
  *
- * @param line The line start, in a NUL-terminated buffer.
+ * @param line The start of the line in a NUL-terminated buffer.
  */
 static void blank_directive(char *line) {
     const char *hash = line + strspn(line, BLANKS);
@@ -161,8 +164,8 @@ static void blank_directive(char *line) {
 }
 
 /**
- * Replaces every word of `blanked_words` and every line of `blanked_directives` in
- * a buffer with spaces.
+ * Replaces each word of `blanked_words` and each line of `blanked_directives` in a
+ * buffer with spaces.
  *
  * @param buffer The buffer.
  */
@@ -181,10 +184,10 @@ static void blank_unparsable(buffer_t *buffer) {
 }
 
 /**
- * Reads a file into its parse buffer, inside its file kind's wrapper.
+ * Reads a file into its parse buffer, in the wrapper of its file kind.
  *
- * @param source The file, with its path set and nothing loaded yet.
- * @return 0, or the errno value of the error that stopped the file being read.
+ * @param source The file. It has a path and no text.
+ * @return 0, or the errno value of the error that stopped the read.
  */
 int load_source(source_t *source) {
     const file_kind_t *kind   = find_file_kind(source->path);
@@ -207,8 +210,8 @@ int load_source(source_t *source) {
  * Converts a row of the parse buffer to a line of the file.
  *
  * @param source The file.
- * @param row    Row in the parse buffer, counted from 0.
- * @return The line, counted from FIRST_POSITION; rows of the wrapper count as the
+ * @param row    The row in the parse buffer. The first row is 0.
+ * @return The line. The first line is FIRST_POSITION. A row of the wrapper gives the
  *         first line.
  */
 static unsigned long file_line(const source_t *source, uint32_t row) {
@@ -219,10 +222,10 @@ static unsigned long file_line(const source_t *source, uint32_t row) {
 /**
  * Adds a finding without a message.
  *
- * @param source The file the finding is in.
- * @param rule   Name of the rule.
- * @param point  Where the finding is in the parse buffer.
- * @return The finding, for its message.
+ * @param source The file of the finding.
+ * @param rule   The name of the rule.
+ * @param point  The position of the finding in the parse buffer.
+ * @return The finding, for describe().
  */
 finding_t *add_finding(source_t *source, const char *rule, TSPoint point) {
     findings_t *list = source->findings;

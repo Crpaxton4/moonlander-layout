@@ -1,6 +1,6 @@
 /** @file
- * Support code of the checker: growing buffers and arrays, the messages of findings,
- * the order findings are printed in, and the output.
+ * The code that the checker files share: buffers and arrays that grow, the messages
+ * of findings, the sort order of findings, and the output.
  */
 
 #include <errno.h>
@@ -11,23 +11,24 @@
 
 #include "support.h"
 
-/** Bytes read from a file at a time. */
+/** The number of bytes that one read gets from a file. */
 #define READ_CHUNK_SIZE 4096
 
-/** Factor a full array grows by. */
+/** The factor by which a full array grows. */
 #define GROWTH_FACTOR 2
 
-/** Items a growing array holds beyond twice those in use. */
+/** The number of items that an array gets in addition to twice the items in use. */
 #define MIN_CAPACITY 16
 
 /**
- * Makes room in an array for at least one item after its first @p count.
+ * Makes space in an array for one or more items after the first @p count items.
  *
- * @param items     The array, or NULL if none is allocated yet.
- * @param item_size Size of one item.
- * @param capacity  Items allocated; updated when the array grows.
- * @param count     Items in use.
- * @return The array, moved if it grew.
+ * @param items     The array, or NULL if it has no allocation.
+ * @param item_size The size of one item.
+ * @param capacity  The number of items that are allocated. The function changes it
+ *                  when the array grows.
+ * @param count     The number of items in use.
+ * @return The array. Its address can change when it grows.
  */
 void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     if (count < *capacity) {
@@ -43,10 +44,10 @@ void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
 }
 
 /**
- * Makes room in a buffer for @p extra more bytes and the terminator.
+ * Makes space in a buffer for @p extra more bytes and the terminator.
  *
  * @param buffer The buffer.
- * @param extra  Bytes to add after its current length.
+ * @param extra  The number of bytes to add after the current length.
  */
 static void reserve_bytes(buffer_t *buffer, size_t extra) {
     buffer->data =
@@ -54,7 +55,7 @@ static void reserve_bytes(buffer_t *buffer, size_t extra) {
 }
 
 /**
- * Appends a C string to a buffer.
+ * Adds a C string at the end of a buffer.
  *
  * @param buffer The buffer.
  * @param text   The string.
@@ -68,7 +69,7 @@ void append(buffer_t *buffer, const char *text) {
 }
 
 /**
- * Appends everything left in a stream to a buffer, without the terminator.
+ * Adds all remaining bytes of a stream at the end of a buffer, without a terminator.
  *
  * @param buffer The buffer.
  * @param stream The stream.
@@ -92,7 +93,7 @@ int append_stream(buffer_t *buffer, FILE *stream) {
  * Writes the message of a finding.
  *
  * @param finding The finding.
- * @param format  printf() format of the message, followed by its arguments.
+ * @param format  The printf() format of the message. The format arguments follow it.
  */
 void describe(finding_t *finding, const char *format, ...) {
     va_list arguments;
@@ -102,24 +103,25 @@ void describe(finding_t *finding, const char *format, ...) {
 }
 
 /**
- * Orders two numbers for qsort().
+ * Compares two numbers for qsort().
  *
  * @param left  The first number.
  * @param right The second number.
- * @return Negative, zero or positive as @p left is less than, equal to or greater
- *         than @p right.
+ * @return A negative value, zero or a positive value if @p left is less than, equal
+ *         to or more than @p right.
  */
 static int compare_numbers(size_t left, size_t right) {
     return (left > right) - (left < right);
 }
 
 /**
- * Orders two findings of one file by line, column and reporting order, for qsort().
+ * Compares two findings of one file for qsort(). The sort keys are the line, the
+ * column and the report order.
  *
  * @param first  The first finding.
  * @param second The second finding.
- * @return Negative, zero or positive as @p first goes before, with or after
- *         @p second.
+ * @return A negative value, zero or a positive value if @p first comes before, at
+ *         the same position as, or after @p second.
  */
 int compare_findings(const void *first, const void *second) {
     const finding_t *one   = first;
@@ -130,10 +132,10 @@ int compare_findings(const void *first, const void *second) {
 }
 
 /**
- * Prints every finding and the summary line.
+ * Prints each finding and the summary line.
  *
  * @param findings   The findings.
- * @param file_count Number of files checked.
+ * @param file_count The number of files that the checker examined.
  */
 void print_findings(const findings_t *findings, int file_count) {
     for (size_t index = 0; index < findings->count; index++) {
