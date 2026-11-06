@@ -1,7 +1,7 @@
 name: "Build and analyze firmware"
 
-# Runs on main fill the main-scope caches, which every PR can restore. They
-# always run the full job, whatever the push changed, and check main itself.
+# A run on main fills the main-scope caches, which all PRs can restore. A run on
+# main always runs the full job, for all changes, and checks main itself.
 on:
   pull_request:
   push:
@@ -10,34 +10,36 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
-      # The release build sets it: every change on main already passed the
-      # analysis on its PR, and a failing check must not stop the release.
+      # The release build sets this input. All changes on main passed the
+      # analysis on their PR, and a failed check must not stop the release.
       skip-analysis:
         description: "Build the firmware only, without the static analysis"
         type: boolean
         default: false
 
-# A new push to a PR cancels the PR's older run. Every other run has a group
-# of its own, so no run on main, and no release build, is ever cancelled or
-# held pending. In a workflow_call, github.workflow and github.run_id are the
-# caller's, so the group starts with a fixed name: a called workflow that
-# shares its caller's group deadlocks.
+# A new push to a PR cancels the older run of that PR. All other runs have their
+# own group, so GitHub never cancels or holds a run on main or a release build.
+# In a workflow_call, github.workflow and github.run_id come from the caller.
+# Thus the group starts with a fixed name, because a called workflow that shares
+# the group of its caller deadlocks.
 concurrency:
   group: build-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Files that feed the firmware build or the static analysis. PRs touching none
-# of them skip the firmware job; a skipped job still satisfies its required
-# check, which a `paths:` trigger filter would leave pending forever.
+# The files that the firmware build or the static analysis use. A PR that changes
+# none of them skips the firmware job. A skipped job still satisfies its required
+# check. With a `paths:` trigger filter, the required check stays pending.
 env:
   FIRMWARE_PATHS: '^src/qmk/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$'
-  # The uv release that setup-uv installs. Must match UV_VERSION in lint.yaml
+  # The uv release that setup-uv installs. It must be the same as UV_VERSION in
+  # lint.yaml.
   UV_VERSION: "0.13.7"
 
 jobs:
   changes:
     if: github.event_name == 'pull_request'
-    # Pinned to the development machine's Ubuntu release so CI tools match local ones.
+    # The Ubuntu release of the development machine, so that the CI tools are the
+    # same as the local tools.
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     outputs:
@@ -53,49 +55,52 @@ jobs:
   firmware:
     name: "Build and analyze firmware"
     needs: changes
-    # Skips only when the gate says `false`: a failed gate has no output, so
-    # the job runs.
+    # The job skips only if the gate gives `false`. A failed gate has no output,
+    # so the job runs.
     if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.firmware != 'false') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
     env:
-      # QMK's prebuilt toolchains (qmk/qmk_toolchains) and flashing tools
-      # (qmk/qmk_flashutils), the releases in QMK's qmk_cli 1.2.0 image. The
-      # build uses the ARM toolchain, and dfu-suffix from the flashing tools,
-      # which appends the DFU suffix to the firmware. Each is pinned by release
-      # and the sha256 of its Linux x64 asset, so the firmware toolchain
-      # changes only on purpose: a new toolchain release changes the firmware
-      # bytes. Bump each release and its sha256 together, by hand.
+      # The prebuilt toolchains (qmk/qmk_toolchains) and flash tools
+      # (qmk/qmk_flashutils) of QMK, at the releases in the QMK qmk_cli 1.2.0
+      # image. The build uses the ARM toolchain and dfu-suffix, which adds the DFU
+      # suffix to the firmware. Each pin is a release and the sha256 of its Linux
+      # x64 asset. A new toolchain release changes the firmware bytes, so only a
+      # manual pin change can change the toolchain. Change each release and its
+      # sha256 together, by hand.
       QMK_TOOLCHAINS_RELEASE: "v15.2.0-1"
       QMK_TOOLCHAINS_SHA256: "6b136919e3526f3f373e91f7d011a006e968a3169262d33cf6efa3e6c605c3ca"
       QMK_FLASHUTILS_RELEASE: "20260318"
       QMK_FLASHUTILS_SHA256: "acb2f17ff5e6c555c657d0203fe647ea535fa98d214af8bf428015c7d0a20a15"
-      # The QMK CLI from PyPI, the version in the same image. Bump it by hand.
+      # The QMK CLI from PyPI, at the version in the same image. Change it by
+      # hand.
       QMK_CLI_VERSION: "1.2.0"
-      # uv resolves the QMK CLI's dependencies and qmk_firmware's unpinned
-      # requirements as PyPI had them at this time, so every run installs the
-      # same versions. Bump it by hand.
+      # uv resolves the dependencies of the QMK CLI and the unpinned requirements
+      # of qmk_firmware as PyPI had them at this time. Thus all runs install the
+      # same versions. Change it by hand.
       QMK_PYTHON_DEPS_DATE: "2026-11-05T00:00:00Z"
       # The qmk_firmware submodules that the Moonlander build and the analysis
-      # read, without their own submodules. The others are for other
-      # platforms and for QMK's tests. `qmk compile` never fetches missing
-      # submodules; a missing one that the build needs fails the build.
+      # read, without their own submodules. The other submodules are for other
+      # platforms and for the QMK tests. `qmk compile` never gets a missing
+      # submodule, so the build fails if it needs a missing one.
       QMK_SUBMODULES: "lib/chibios lib/chibios-contrib lib/lufa lib/printf modules/zsa"
-      # ccache's static Linux x64 release (ccache/ccache), pinned by release
-      # and the sha256 of its asset. Bump both together, by hand.
+      # The static Linux x64 release of ccache (ccache/ccache). The pin is the
+      # release and the sha256 of its asset. Change both together, by hand.
       CCACHE_VERSION: "4.14.2"
       CCACHE_SHA256: "b20ff6415151226ac5a10dfd6839700c694bd67d1871c8fddb266d366ff25bfb"
-    # Actions are pinned to commit SHAs; the trailing comment names the release
+    # Each action has a pin to a commit SHA. The comment at the end of the line
+    # gives the release. Dependabot updates the SHA and that comment together, so
+    # the comment stays on the same line.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # src/qmk/.qmk-ref holds a pinned commit on ZSA's firmware25 branch, bumped
-      # by hand. checkout takes a commit SHA as ref. The qmk_firmware checkout
-      # is cached; the key holds the pinned commit and the submodule list, and
-      # every run checks the checkout against the pin, so a cache never serves
-      # another commit.
+      # src/qmk/.qmk-ref contains a pinned commit on the firmware25 branch of ZSA.
+      # Change it by hand. checkout accepts a commit SHA as ref. The cache key of
+      # the qmk_firmware checkout contains the pinned commit and the submodule
+      # list. Each run compares the checkout with the pin, so a cache never gives
+      # a different commit.
       - name: "Compute ZSA firmware cache key"
         id: qmk
         run: |
@@ -110,7 +115,7 @@ jobs:
           path: qmk_firmware
           key: ${{ steps.qmk.outputs.key }}
 
-      # No credentials stay in qmk_firmware/.git, which goes into the cache
+      # qmk_firmware/.git goes into the cache, so no credentials stay in it.
       - name: "Check out ZSA firmware"
         if: ${{ steps.qmk-cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -128,9 +133,9 @@ jobs:
           read -ra submodules <<< "$QMK_SUBMODULES"
           git submodule update --init --depth 1 --jobs "${#submodules[@]}" -- "${submodules[@]}"
 
-      # qmk_firmware must be at the pinned commit, and each submodule in the
-      # list at the commit that qmk_firmware records for it. `git submodule
-      # status` starts such a line with a space.
+      # qmk_firmware must be at the pinned commit. Each submodule in the list must
+      # be at the commit that qmk_firmware records for it. `git submodule status`
+      # starts the line of such a submodule with a space.
       - name: "Verify ZSA firmware checkout"
         working-directory: qmk_firmware
         env:
@@ -155,8 +160,8 @@ jobs:
           done
           exit "$status"
 
-      # Saved only after the checkout matches the pin, and before the build,
-      # so no build output goes into the cache
+      # This step saves the checkout after the pin check and before the build, so
+      # no build output goes into the cache.
       - name: "Save ZSA firmware"
         if: ${{ steps.qmk-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -164,13 +169,13 @@ jobs:
           path: qmk_firmware
           key: ${{ steps.qmk.outputs.key }}
 
-      # The release assets are cached. The key holds both release pins and the
-      # runner image; every run checks each asset against its sha256 pin, so a
-      # cache never serves another release. The same step gives the prefix of
-      # the ccache cache keys, which holds the runner OS, the toolchain release
-      # and the ccache release, but not the image version: no file of the image
-      # goes into a compiled object, and ccache hashes the compiler binary and
-      # every input file itself.
+      # The cache key of the release assets contains the two release pins and the
+      # runner image. Each run compares each asset with its sha256 pin, so a cache
+      # never gives a different release. This step also gives the prefix of the
+      # ccache cache keys. The prefix contains the runner OS, the toolchain release
+      # and the ccache release, but not the image version. No file of the image
+      # goes into a compiled object, and ccache itself hashes the compiler binary
+      # and all input files.
       - name: "Compute QMK toolchain and ccache cache keys"
         id: toolchain-key
         run: |
@@ -186,8 +191,8 @@ jobs:
           path: ${{ runner.temp }}/qmk-assets
           key: ${{ steps.toolchain-key.outputs.key }}
 
-      # The toolchain asset is named after the GCC version: the release tag
-      # without its leading `v` and its trailing build number
+      # The name of the toolchain asset contains the GCC version. That version is
+      # the release tag without its first `v` and its last build number.
       - name: "Download QMK toolchain"
         if: ${{ steps.toolchain-cache.outputs.cache-hit != 'true' }}
         working-directory: ${{ runner.temp }}
@@ -201,9 +206,9 @@ jobs:
           curl -fsSL -o qmk-assets/flashutils.tar.zst \
             "$base/qmk_flashutils/releases/download/$QMK_FLASHUTILS_RELEASE/qmk_flashutils-$QMK_FLASHUTILS_RELEASE-linuxX64.tar.zst"
 
-      # Unpacks the ARM toolchain, without the AVR and RISC-V ones, and
-      # dfu-suffix into QMK_DISTRIB_DIR, as QMK's bootstrap lays them out. The
-      # QMK CLI puts QMK_DISTRIB_DIR/bin first on PATH.
+      # This step extracts the ARM toolchain (not the AVR and RISC-V toolchains)
+      # and dfu-suffix into QMK_DISTRIB_DIR, with the layout of the QMK bootstrap.
+      # The QMK CLI puts QMK_DISTRIB_DIR/bin first on PATH.
       - name: "Install QMK toolchain"
         working-directory: ${{ runner.temp }}
         run: |
@@ -222,8 +227,8 @@ jobs:
           "$dir/bin/arm-none-eabi-gcc" --version
           "$dir/bin/dfu-suffix" --version
 
-      # Saved only after the assets match their sha256 pins, and before the
-      # build, so a build failure doesn't discard them
+      # This step saves the assets after the sha256 check and before the build,
+      # so a failed build does not discard them.
       - name: "Save QMK toolchain"
         if: ${{ steps.toolchain-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -231,8 +236,8 @@ jobs:
           path: ${{ runner.temp }}/qmk-assets
           key: ${{ steps.toolchain-key.outputs.key }}
 
-      # uv downloads the QMK CLI and clang-tidy from PyPI faster than the
-      # Actions cache restores them, so uv's cache is off
+      # uv downloads the QMK CLI and clang-tidy from PyPI faster than the Actions
+      # cache restores them. Thus the uv cache is off.
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: ${{ env.UV_VERSION }}
@@ -247,8 +252,8 @@ jobs:
             exit 1
           fi
 
-      # qmk_firmware's Python code runs in the QMK CLI's environment, so its
-      # requirements go into the same tool environment
+      # The Python code of qmk_firmware runs in the environment of the QMK CLI.
+      # Thus its requirements go into the same tool environment.
       - name: "Install QMK CLI"
         run: |
           uv tool install --exclude-newer "$QMK_PYTHON_DEPS_DATE" \
@@ -260,18 +265,17 @@ jobs:
           qmk config user.qmk_home="$GITHUB_WORKSPACE/qmk_firmware"
           user.overlay_dir="$GITHUB_WORKSPACE/src/qmk"
 
-      # ccache keeps the compiled objects between runs, so a build compiles
-      # only the files whose inputs changed. A cache entry holds the pinned
-      # ccache release asset and one build's objects, and a run restores the
-      # newest entry under the prefix. Runs on main always compile through
-      # ccache and save the entries, which every PR can restore. A PR run only
-      # reads them: it compiles through ccache only when it restored an entry;
-      # without one it compiles with the plain compiler, so a missing cache
-      # costs it only the lookup. The release build never uses ccache, so its
-      # firmware never comes from a cache entry. ccache hashes the compiler
-      # binary and every source and header, so an entry never serves an object
-      # built from other inputs. The paths are the same on every run, so no
-      # base directory is set.
+      # ccache keeps the compiled objects between runs, so a build compiles only
+      # the files whose inputs changed. A cache entry contains the pinned ccache
+      # release asset and the objects of one build. A run restores the newest
+      # entry with the prefix. A run on main always compiles through ccache and
+      # saves the entries, which all PRs can restore. A PR run only reads them. It
+      # compiles through ccache only if it restored an entry. Without an entry, it
+      # uses the plain compiler, so a missing cache costs only the lookup. The
+      # release build never uses ccache, so its firmware never comes from a cache
+      # entry. ccache hashes the compiler binary and all sources and headers, so
+      # an entry never gives an object from different inputs. The paths are the
+      # same in all runs, so the job sets no base directory.
       - name: "Restore ccache"
         id: ccache-cache
         if: ${{ !inputs.skip-analysis }}
@@ -281,15 +285,15 @@ jobs:
           key: ${{ steps.toolchain-key.outputs.ccache-prefix }}${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: ${{ steps.toolchain-key.outputs.ccache-prefix }}
 
-      # ccache runs as the compiler: QMK finds arm-none-eabi-gcc on PATH, and
-      # QMK_PATH_PREFIX puts a link of that name to ccache first. The compile
-      # database records the link, which clang-tidy reads as the compiler.
-      # QMK's USE_CCACHE would record `ccache` as the compiler instead. ccache
-      # runs the real compiler from CCACHE_PATH. Depend mode takes the headers
-      # from the compiler's dependency file (QMK compiles with -MMD), so a
-      # cache miss runs no extra preprocessor pass. The asset comes from the
-      # restored entry, else from the release. The stamp marks the start of
-      # the build.
+      # ccache runs as the compiler. QMK finds arm-none-eabi-gcc on PATH, and
+      # QMK_PATH_PREFIX puts a link with that name to ccache first. The compile
+      # database records the link, and clang-tidy reads it as the compiler. The
+      # USE_CCACHE option of QMK records `ccache` as the compiler, so the job does
+      # not use that option. ccache runs the real compiler from CCACHE_PATH.
+      # Depend mode gets the headers from the dependency file of the compiler
+      # (QMK compiles with -MMD), so a cache miss runs no extra preprocessor pass.
+      # The asset comes from the restored entry, or else from the release. The
+      # stamp file marks the start of the build.
       - name: "Install ccache"
         id: ccache
         if: ${{ !inputs.skip-analysis && (github.event_name == 'push' || steps.ccache-cache.outputs.cache-matched-key != '') }}
@@ -316,25 +320,24 @@ jobs:
             echo "QMK_PATH_PREFIX=$bin"
             echo "CCACHE_PATH=$QMK_DISTRIB_DIR/bin"
             echo "CCACHE_DIR=$dir/objects"
-            # Hashes the compiler binary, not its mtime
+            # ccache hashes the compiler binary, not its mtime.
             echo "CCACHE_COMPILERCHECK=content"
             echo "CCACHE_DEPEND=true"
-            # One build's objects take about 2 MB
+            # The objects of one build use approximately 2 MB.
             echo "CCACHE_MAXSIZE=50M"
           } >> "$GITHUB_ENV"
           CCACHE_DIR="$dir/objects" "$bin/ccache" --zero-stats
           touch "$RUNNER_TEMP/ccache-build-start"
 
-      # One QMK build gives both the firmware in .build/ and the compile database
       - name: "Build firmware and compile database"
         run: make compiledb
 
-      # Prints the build's hits and misses, then removes every cache file that
-      # the build didn't use, so an entry holds one build's objects. Only a run
-      # on main that stored new objects saves the cache: else the restored
-      # entry already holds the same files. A PR run never saves: its new
-      # objects are mostly the files it changed, which its next push changes
-      # again, and a save costs more time than recompiling them.
+      # This step prints the hits and misses of the build. Then it removes each
+      # cache file that the build did not use, so an entry contains the objects of
+      # one build. Only a run on main that stored new objects saves the cache.
+      # Otherwise, the restored entry already contains the same files. A PR run
+      # never saves. Its new objects are mostly from the changed files, which the
+      # next push changes again. A save takes more time than a new compile.
       - name: "Prune ccache"
         id: ccache-prune
         if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
@@ -353,9 +356,9 @@ jobs:
           path: ${{ runner.temp }}/ccache
           key: ${{ steps.toolchain-key.outputs.ccache-prefix }}${{ github.run_id }}-${{ github.run_attempt }}
 
-      # The steps from here on run even when an earlier one failed, so a
-      # failing build still runs the analysis and a failing check still
-      # uploads the firmware; the job fails at the end.
+      # The steps from here run also if an earlier step failed. Thus a failed
+      # build still runs the analysis, and a failed check still uploads the
+      # firmware. The job fails at the end.
       - name: "Install clang-tidy"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         run: |
@@ -363,11 +366,12 @@ jobs:
           clang-tidy --version
 
       # The official release binary, as setup.sh installs it. It goes first on
-      # PATH, so no other doxygen on the runner shadows it.
+      # PATH, so no other doxygen on the runner hides it.
       - name: "Install Doxygen"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         env:
-          # Must match DOXYGEN_VERSION and DOXYGEN_SHA256 in setup.sh
+          # These must be the same as DOXYGEN_VERSION and DOXYGEN_SHA256 in
+          # setup.sh.
           DOXYGEN_VERSION: "1.18.0"
           DOXYGEN_SHA256: "14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
         run: |
@@ -383,10 +387,10 @@ jobs:
           which -a doxygen
           doxygen --version
 
-      # One run of every check, so a failing check never hides another's
-      # findings. Each check prints a `timing` line, even when it fails. The
-      # compile database is the one the build step wrote, so make doesn't
-      # build it again.
+      # One run of all checks, so a failed check never hides the findings of a
+      # different check. Each check prints a `timing` line, also if it fails. The
+      # compile database is the one from the build step, so make does not build
+      # it again.
       - name: "Run static analysis"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         run: |
@@ -409,10 +413,10 @@ jobs:
             ' "$RUNNER_TEMP/analyze.log"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # The firmware only. upload-artifact stores the files relative to
-      # .build/, so the release step finds the .bin at the artifact's root.
-      # .build/ is a dot directory, which upload-artifact skips unless
-      # include-hidden-files is on.
+      # Only the firmware. upload-artifact stores the files relative to .build/,
+      # so the release step finds the .bin at the root of the artifact. .build/
+      # is a dot directory, and upload-artifact skips it if include-hidden-files
+      # is off.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
