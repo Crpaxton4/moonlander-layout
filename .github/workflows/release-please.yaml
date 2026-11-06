@@ -1,8 +1,7 @@
 name: "Release Please"
 
-# A GitHub App token is used because events created with GITHUB_TOKEN don't
-# trigger workflows: the release PR would never get its required checks, and
-# its merge would never re-run this workflow to cut the release.
+# Events from GITHUB_TOKEN start no workflows, so the job uses a GitHub App token
+# for the release PR
 on:
   push:
     branches:
@@ -10,7 +9,7 @@ on:
 
 jobs:
   release-please:
-    # Pinned to the development machine's Ubuntu release so CI tools match local ones.
+    # Same Ubuntu release as the development machine
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
