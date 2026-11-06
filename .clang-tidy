@@ -1,13 +1,6 @@
 ---
-# Each finding is an error, so the exit status is not zero if there is a finding.
-# clang-tidy still analyzes all files first.
-#
-# ExtraArgsBefore below adds -Wdocumentation and -Wdocumentation-unknown-command.
-# Their clang-diagnostic-* entries let them pass the -* filter.
-#
-# bugprone-signed-bitwise is off. It reports the int keycode macros of QMK (LCTL,
-# LSFT, LT, TD, LAYOUT and others) at each use. It never reports the bitwise logic
-# of this userspace.
+# The clang-diagnostic-* entries let the ExtraArgsBefore warnings pass the -*
+# filter. bugprone-signed-bitwise reports each use of the QMK keycode macros.
 Checks: >-
     -*,
     bugprone-*,
@@ -22,27 +15,18 @@ Checks: >-
     clang-diagnostic-documentation-unknown-command
 WarningsAsErrors: "*"
 
-# clang-tidy reports only the keyboards tree of this userspace, never QMK or
-# ChibiOS.
 HeaderFilterRegex: "/src/qmk/keyboards/"
 
-# The compile database contains arm-none-eabi-gcc commands. clang gets its target
-# from the name of the gcc driver. clang cannot use these arguments:
-# - -mno-thumb-interwork: clang does not know this flag. It is a hard error.
-# - -fsingle-precision-constant: clang does not support this optimization flag.
-# - -Werror: it makes compiler warnings into errors that Checks does not control.
-# - -DQMK_MCU_ARCH=cortex-m4: only make reads it, and no C code uses it. Its
-#   replacement list causes a bugprone-macro-parentheses finding at a command-line
-#   location. HeaderFilterRegex cannot exclude that location.
+# clang does not know the first two gcc flags. -Werror bypasses Checks, and the
+# macro causes a finding that HeaderFilterRegex cannot exclude.
 RemovedArgs:
     - -mno-thumb-interwork
     - -fsingle-precision-constant
     - -Werror
     - -DQMK_MCU_ARCH=cortex-m4
 
-# Use ExtraArgsBefore, not ExtraArgs. keymap.c has no compile database entry, so
-# clang-tidy infers its command. clang-tidy adds ExtraArgs after the `--` at the
-# end of that command, where the compiler reads them as file names.
+# clang-tidy puts ExtraArgs after the `--` of the inferred keymap.c command, where
+# the compiler reads them as file names.
 ExtraArgsBefore:
     - -Wdocumentation
     - -Wdocumentation-unknown-command
@@ -50,13 +34,10 @@ ExtraArgsBefore:
 CheckOptions:
     readability-function-size.LineThreshold: 25
     readability-function-cognitive-complexity.Threshold: 8
-    # QMK macros hide control flow. For example, wait_ms() expands to do/if/else.
-    # Without this option, that control flow counts against each function that
-    # calls the macros.
+    # QMK macros such as wait_ms() hide control flow that counts against each caller.
     readability-function-cognitive-complexity.IgnoreMacros: true
 
-    # The check accepts only 0. It never reports literals in #define, enum and
-    # const initializers.
+    # The check never reports literals in #define, enum and const initializers.
     readability-magic-numbers.IgnoredIntegerValues: ""
     readability-magic-numbers.IgnorePowersOf2IntegerValues: false
     readability-magic-numbers.IgnoredFloatingPointValues: ""

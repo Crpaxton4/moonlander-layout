@@ -1,6 +1,5 @@
 /** @file
- * The declaration of check_source() from rules.c. Its documentation is at its
- * definition in rules.c.
+ * The interface of rules.c.
  */
 
 #pragma once
