@@ -1,6 +1,5 @@
 /** @file
- * Layers and tap dance actions of the qgmlwy keymap, and the key event dispatch
- * to its feature modules.
+ * Layers and tap dance actions of the qgmlwy keymap, and its key event hook.
  *
  * QMK compiles this file only inside its keymap introspection, which sizes
  * `keymaps` and `tap_dance_actions` with `sizeof`, so both tables are defined
@@ -12,7 +11,6 @@
 #include "dual_function/dual_function.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
-#include "modded_pointer_media/modded_pointer_media.h"
 #include "tap_dance/tap_dance.h"
 
 /** Keys of each layer, indexed by layer, matrix row and matrix column. */
@@ -31,19 +29,13 @@ tap_dance_action_t tap_dance_actions[] = {
 };
 
 /**
- * Hands each key event to the feature modules, in a fixed order.
- *
- * Each module handles its own keycodes and returns true for any other, so at most
- * one module acts on a key, and QMK goes on processing the key unless that module
- * returned false.
+ * Hands each key event to the copy and paste keys.
  *
  * @param keycode Keycode of the key event.
  * @param record  Key event.
- * @return False when a module fully handled the event, true otherwise.
+ * @return False when process_dual_function() fully handled the event, true
+ *         otherwise.
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (!process_modded_pointer_media(keycode, record)) {
-        return false;
-    }
     return process_dual_function(keycode, record);
 }
