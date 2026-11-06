@@ -29,7 +29,6 @@ const uint8_t PROGMEM ledmap[][RGB_MATRIX_LED_COUNT][3] = {
 #include "lighting/arrows.inc"
 #include "lighting/function_media.inc"
 #include "lighting/shortcuts.inc"
-#include "lighting/launcher.inc"
 #include "lighting/window_manager.inc"
 #include "lighting/navigation_gate.inc"
 #include "lighting/text_navigation.inc"

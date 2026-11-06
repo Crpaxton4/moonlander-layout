@@ -1,7 +1,7 @@
 /** @file
- * Base layer: QGMLWY alphas and the number row, one-shot keys to the function,
- * launcher and window manager layers along the bottom left, and mouse movement
- * and buttons on the bottom right.
+ * Base layer: QGMLWY alphas and the number row, one-shot keys to the function
+ * and window manager layers along the bottom left, and mouse movement and buttons
+ * on the bottom right.
  */
 
 // clang-format off
@@ -10,7 +10,7 @@
     KC_TAB,        KC_Q,        KC_G,                      KC_M,                KC_L,                      KC_W,     DUAL_FUNC_0,        TD(DANCE_1),          KC_Y,             KC_F,       KC_U,     KC_B,       KC_SCLN,     KC_BSLS,
     LSFT(KC_TAB),  KC_D,        KC_S,                      KC_T,                KC_N,                      KC_R,     DUAL_FUNC_1,        OSL(LAYER_SHORTCUTS), KC_I,             KC_A,       KC_E,     KC_O,       KC_H,        KC_QUOTE,
     KC_LEFT_SHIFT, KC_Z,        KC_X,                      KC_C,                KC_V,                      KC_J,                                               KC_K,             KC_P,       KC_COMMA, KC_DOT,     KC_SLASH,    TD(DANCE_2),
-    TD(DANCE_0),   KC_LEFT_ALT, OSL(LAYER_FUNCTION_MEDIA), OSL(LAYER_LAUNCHER), OSL(LAYER_WINDOW_MANAGER), KC_ENTER,                                           TO(LAYER_ARROWS), KC_MS_LEFT, KC_MS_UP, KC_MS_DOWN, KC_MS_RIGHT, TD(DANCE_3),
+    TD(DANCE_0),   KC_LEFT_ALT, OSL(LAYER_FUNCTION_MEDIA), KC_NO,               OSL(LAYER_WINDOW_MANAGER), KC_ENTER,                                           TO(LAYER_ARROWS), KC_MS_LEFT, KC_MS_UP, KC_MS_DOWN, KC_MS_RIGHT, TD(DANCE_3),
                                                                                 KC_SPACE,                  KC_BSPC,  KC_DELETE,          TD(DANCE_4),          TD(DANCE_5),      KC_MS_BTN1
 ),
     // clang-format on

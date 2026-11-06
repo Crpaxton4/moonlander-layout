@@ -23,7 +23,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #include "layers/arrows.inc"
 #include "layers/function_media.inc"
 #include "layers/shortcuts.inc"
-#include "layers/launcher.inc"
 #include "layers/window_manager.inc"
 #include "layers/navigation_gate.inc"
 #include "layers/text_navigation.inc"

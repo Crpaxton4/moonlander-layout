@@ -43,8 +43,6 @@
 #define COLOR_CYAN {129, 255, 255}
 /** Sky blue. */
 #define COLOR_SKY_BLUE {139, 255, 239}
-/** Pale greyish blue. */
-#define COLOR_PALE_BLUE {139, 33, 224}
 /** Blue, hue 179. */
 #define COLOR_BLUE_179 {179, 255, 255}
 /** Blue, hue 180. */
