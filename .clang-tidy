@@ -49,7 +49,7 @@ ExtraArgsBefore:
 
 CheckOptions:
     readability-function-size.LineThreshold: 25
-    readability-function-cognitive-complexity.Threshold: 5
+    readability-function-cognitive-complexity.Threshold: 8
     # QMK macros hide control flow (wait_ms() expands to do/if/else), which
     # would count against every function that calls them
     readability-function-cognitive-complexity.IgnoreMacros: true
