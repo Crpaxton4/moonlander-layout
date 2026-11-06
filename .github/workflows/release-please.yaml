@@ -35,9 +35,11 @@ jobs:
 
       - name: "Auto-merge release PR"
         if: ${{ steps.release.outputs.pr }}
+        # GitHub evaluates step env also when the if is false, so fromJSON of an empty
+        # output fails. The script reads the PR number from the raw JSON
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_NUMBER: ${{ fromJSON(steps.release.outputs.pr).number }}
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
         run: .github/scripts/release-please/auto-merge-release-pr.sh
 
   build:
