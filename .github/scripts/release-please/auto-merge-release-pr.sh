@@ -2,7 +2,8 @@
 set -euo pipefail
 
 : "${GH_TOKEN:?not set or empty}"
-: "${PR_NUMBER:?not set or empty}"
+: "${RELEASE_PR:?not set or empty}"
 : "${GITHUB_REPOSITORY:?not set or empty}"
 
-gh pr merge --auto --squash --repo "$GITHUB_REPOSITORY" "$PR_NUMBER"
+number=$(jq -er .number <<<"$RELEASE_PR")
+gh pr merge --auto --squash --repo "$GITHUB_REPOSITORY" "$number"
