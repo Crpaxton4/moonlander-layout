@@ -7,7 +7,6 @@ TAP_DANCE_ENABLE = yes
 SPACE_CADET_ENABLE = no
 
 SRC += tap_dance/tap_dance.c
-SRC += tap_dance/tap_outcome.c
 SRC += tap_dance/dances.c
 SRC += macros/macros.c
 SRC += dual_function/dual_function.c

@@ -7,51 +7,37 @@
 #include "dual_function/dual_function.h"
 #include "keycodes/keycodes.h"
 
-/**
- * Registers a key while the key event is a press, releases it otherwise.
- *
- * @param keycode Key to register or release.
- * @param record  Key event that decides which.
- */
-static void register_while_pressed(uint16_t keycode, keyrecord_t *record) {
-    if (record->event.pressed) {
-        register_code16(keycode);
-    } else {
-        unregister_code16(keycode);
-    }
-}
+/** Tap key and hold key of one `DUAL_FUNC_*` key. */
+typedef struct {
+    /** The `DUAL_FUNC_*` keycode. */
+    uint16_t keycode;
+    /** Key sent when the event is a tap. */
+    uint16_t tap;
+    /** Key sent when the event is a hold. */
+    uint16_t hold;
+} dual_function_t;
 
-/**
- * Registers or releases the tap key on a tap and the hold key on a hold.
- *
- * @param record       Key event, with its tap count.
- * @param tap_keycode  Key sent when the event is a tap.
- * @param hold_keycode Key sent when the event is a hold.
- */
-static void dual_function_event(keyrecord_t *record, uint16_t tap_keycode,
-                                uint16_t hold_keycode) {
-    if (record->tap.count > 0) {
-        register_while_pressed(tap_keycode, record);
-    } else {
-        register_while_pressed(hold_keycode, record);
-    }
-}
+/** Tap and hold key of each `DUAL_FUNC_*` key. */
+static const dual_function_t dual_functions[] = {
+    {DUAL_FUNC_0, LCTL(KC_C), LCTL(LSFT(KC_C))},
+    {DUAL_FUNC_1, LCTL(KC_V), LCTL(LSFT(KC_V))},
+    {DUAL_FUNC_2, KC_MEDIA_PREV_TRACK, KC_MEDIA_REWIND},
+    {DUAL_FUNC_3, KC_MEDIA_NEXT_TRACK, KC_MEDIA_FAST_FORWARD},
+};
 
 bool process_dual_function(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case DUAL_FUNC_0:
-            dual_function_event(record, LCTL(KC_C), LCTL(LSFT(KC_C)));
-            return false;
-        case DUAL_FUNC_1:
-            dual_function_event(record, LCTL(KC_V), LCTL(LSFT(KC_V)));
-            return false;
-        case DUAL_FUNC_2:
-            dual_function_event(record, KC_MEDIA_PREV_TRACK, KC_MEDIA_REWIND);
-            return false;
-        case DUAL_FUNC_3:
-            dual_function_event(record, KC_MEDIA_NEXT_TRACK, KC_MEDIA_FAST_FORWARD);
-            return false;
-        default:
-            return true;
+    for (size_t i = 0; i < ARRAY_SIZE(dual_functions); i++) {
+        if (dual_functions[i].keycode != keycode) {
+            continue;
+        }
+        uint16_t sent =
+            record->tap.count > 0 ? dual_functions[i].tap : dual_functions[i].hold;
+        if (record->event.pressed) {
+            register_code16(sent);
+        } else {
+            unregister_code16(sent);
+        }
+        return false;
     }
+    return true;
 }

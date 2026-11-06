@@ -9,7 +9,7 @@
 
 #pragma once
 
-/** Off: `set_layer_color()` turns an all-zero entry's LED off. */
+/** Off: `rgb_matrix_indicators_user()` turns an all-zero entry's LED off. */
 #define COLOR_OFF {0, 0, 0}
 /** White at under half brightness. */
 #define COLOR_GREY {0, 0, 112}
