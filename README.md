@@ -42,8 +42,16 @@ Then the script builds the firmware one time.
 
 To build and flash the firmware, do these steps:
 
-1. Run `make`.
-2. Flash `.build/zsa_moonlander_reva_qgmlwy.bin` with [Keymapp][keymapp].
+1. Run `make`. It prints the name of the new firmware file.
+2. Flash that file from `.build/` with [Keymapp][keymapp].
+
+The name of each firmware file ends in the commit of the build, for example
+`zsa_moonlander_reva_qgmlwy-2bcdfa9.bin`. If `src/qmk/` has changes with no commit,
+the name also ends in `-dirty-` and the first 8 digits of the SHA-256 hash of the file.
+`make` keeps the older firmware files in `.build/`. `make clean` removes them.
+
+The firmware of a PR build in CI has the PR number and the commit in its name, for
+example `zsa_moonlander_reva_qgmlwy-pr117-1243469.bin`.
 
 The `Makefile` in the root directory has more targets. To see all the targets and
 their descriptions, run this command:
@@ -100,7 +108,9 @@ table. A commit-msg hook does the same check on local commits.
 ## Releases
 
 When a merge changes `src/qmk/`, release-please makes a release PR. The release PR
-merges automatically. CI then attaches the firmware `.bin` file to the GitHub release.
+merges automatically. CI then attaches the firmware file to the GitHub release. The
+name of that file ends in the release tag, for example
+`zsa_moonlander_reva_qgmlwy-v1.0.29.bin`.
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 
 [keymapp]: https://www.zsa.io/keymapp
