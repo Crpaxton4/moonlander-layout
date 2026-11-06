@@ -1,23 +1,18 @@
-# Every hook runs and reports, even after an earlier one fails; the run fails
-# at the end if any hook did.
 fail_fast: false
 default_install_hook_types: [pre-commit, commit-msg]
-# Code-judging hooks run at commit time (pre-commit stage) and in CI, which
-# runs the manual stage (lint.yaml).
+# CI runs the manual stage (lint.yaml), so each check hook has both stages
 
 repos:
   - repo: local
     hooks:
-      # Same config as the PR title check, which squash-merge turns into the
-      # commit on main
       - id: commitlint
         name: commitlint
         entry: npx --no -- commitlint --edit
         language: system
         stages: [commit-msg]
 
-  # Files owned by release-please, npm or a third party are left in the form
-  # their owner writes them.
+  # Owners of these files (release-please, npm and a third party) set their
+  # format
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
     rev: 3.11.1
     hooks:
@@ -32,24 +27,20 @@ repos:
             ^LICENSE$
           )
 
-  # The rev must match .llvm-version, which pins clang-tidy to the same LLVM
-  # release.
+  # Keep the rev equal to .llvm-version
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v23.1.3
     hooks:
       - id: clang-format
         name: clang-format
         stages: [pre-commit, manual]
-        # .c and .h, plus .inc keymap grid fragments, which are C
+        # .inc keymap grid fragments are C
         types_or: [c, inc]
-        # Reports violations without rewriting files. The upstream entry is
-        # `clang-format -i`, so the entry is replaced as well as the args.
+        # Upstream entry `clang-format -i` changes files, so this hook replaces it
         entry: clang-format
         args: [--dry-run, -Werror]
 
-  # Prettier reads .editorconfig; .prettierignore skips the files tools write.
-  # require_serial gives one run per hook, so the findings end in a single
-  # summary line.
+  # require_serial gives one run, so the findings end in one summary line
   - repo: local
     hooks:
       - id: prettier
@@ -60,8 +51,6 @@ repos:
         require_serial: true
         stages: [pre-commit, manual]
 
-  # pre-commit builds actionlint with a Go toolchain it downloads itself when Go
-  # is not installed.
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
     hooks:
@@ -69,8 +58,7 @@ repos:
         name: actionlint
         stages: [pre-commit, manual]
 
-  # apt's shellcheck, pinned in setup.sh and lint.yaml. actionlint lints
-  # workflow run: blocks with the same binary.
+  # setup.sh and lint.yaml pin this apt shellcheck. actionlint uses the same binary
   - repo: local
     hooks:
       - id: shellcheck
@@ -80,11 +68,8 @@ repos:
         types: [shell]
         stages: [pre-commit, manual]
 
-  # The repository's own C checker, built against the apt tree-sitter packages
-  # pinned in setup.sh and lint.yaml; in CI it runs only in Lint, as the Static
-  # analysis container ships a different tree-sitter.
-  # require_serial: one build and one summary line. The fixtures break its rules
-  # on purpose.
+  # require_serial gives one build and one summary line. The fixtures break the
+  # rules on purpose
   - repo: local
     hooks:
       - id: check-standards
@@ -96,7 +81,6 @@ repos:
         require_serial: true
         stages: [pre-commit, manual]
 
-  # Style comes from .editorconfig. -d prints a diff instead of rewriting.
   - repo: https://github.com/scop/pre-commit-shfmt
     rev: v3.14.1-1
     hooks:

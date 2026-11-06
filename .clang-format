@@ -1,4 +1,4 @@
-# QMK upstream's style (qmk_firmware/.clang-format) with an 88-column limit
+# QMK upstream style with an 88-column limit
 ---
 BasedOnStyle: Google
 AlignAfterOpenBracket: Align

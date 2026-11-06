@@ -1,3 +1,3 @@
 /** @file
- * Placeholder for the tests of the QMK userspace in src/qmk/.
+ * Not implemented: placeholder for the tests of src/qmk/
  */

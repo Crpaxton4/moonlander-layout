@@ -1,25 +1,15 @@
-# Documentation check for the userspace's C sources, run by
-# `make analyze` from the repo root. It lists the settings that differ
-# from Doxygen's defaults and every rule the check enforces.
-
-# Sources: the userspace's C files, including the keymap grid files
+# `make analyze` runs Doxygen from the repository root, so the paths start there
 INPUT = src/qmk/keyboards
 RECURSIVE = YES
 FILE_PATTERNS = *.c *.h *.inc
 EXTENSION_MAPPING = inc=C
 OPTIMIZE_OUTPUT_FOR_C = YES
 
-# Undocumented entities are reported, not extracted, static functions included.
-# The first sentence of a comment is its brief.
 EXTRACT_ALL = NO
 EXTRACT_STATIC = YES
 JAVADOC_AUTOBRIEF = YES
 
-# The rules the check enforces: every entity is documented, every parameter of
-# a documented function is documented, and docs are complete and well formed.
-# Only warnings print, as `file:line: message`, and the run exits non-zero once
-# every warning is reported.
-# Doxygen checks only the members of files that carry a @file comment.
+# Doxygen checks only the members of files that have a @file comment
 WARN_IF_UNDOCUMENTED = YES
 WARN_NO_PARAMDOC = YES
 WARN_IF_INCOMPLETE_DOC = YES
@@ -28,8 +18,7 @@ QUIET = YES
 WARN_FORMAT = "$file:$line: $text"
 WARN_AS_ERROR = FAIL_ON_WARNINGS
 
-# A check, not a docs site. Doxygen warns when it has no output format, so it
-# writes only XML, into a gitignored directory.
+# Doxygen gives a warning without an output format, so it writes only XML
 OUTPUT_DIRECTORY = doxygen
 GENERATE_HTML = NO
 GENERATE_LATEX = NO

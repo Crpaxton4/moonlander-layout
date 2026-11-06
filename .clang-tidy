@@ -1,14 +1,6 @@
 ---
-# Every finding is an error, so the exit status is non-zero when there is any.
-# All files are still analysed first.
-#
-# -Wdocumentation and -Wdocumentation-unknown-command come from
-# ExtraArgsBefore below; their clang-diagnostic-* entries let them through
-# the -* filter.
-#
-# bugprone-signed-bitwise is off: it reports QMK's int keycode macros (LCTL,
-# LSFT, LT, TD, LAYOUT and others) at every use, never this userspace's own
-# bitwise logic.
+# clang-diagnostic-* entries let the ExtraArgsBefore warnings pass the -*
+# filter. bugprone-signed-bitwise reports each use of the QMK keycode macros
 Checks: >-
     -*,
     bugprone-*,
@@ -23,26 +15,18 @@ Checks: >-
     clang-diagnostic-documentation-unknown-command
 WarningsAsErrors: "*"
 
-# Only this userspace's keyboards tree is reported, never QMK or ChibiOS.
 HeaderFilterRegex: "/src/qmk/keyboards/"
 
-# The compile database holds arm-none-eabi-gcc commands. clang takes its target
-# from the gcc driver name; these are the arguments it can't use:
-# - -mno-thumb-interwork: unknown to clang, a hard error.
-# - -fsingle-precision-constant: unsupported optimization flag.
-# - -Werror: would turn compiler warnings into errors that bypass Checks.
-# - -DQMK_MCU_ARCH=cortex-m4: read by make only, no C code uses it. Its
-#   replacement list trips bugprone-macro-parentheses at a command-line
-#   location, which HeaderFilterRegex can't exclude.
+# clang does not know the first two gcc flags. -Werror bypasses Checks, and the
+# macro causes a finding that HeaderFilterRegex cannot exclude
 RemovedArgs:
     - -mno-thumb-interwork
     - -fsingle-precision-constant
     - -Werror
     - -DQMK_MCU_ARCH=cortex-m4
 
-# ExtraArgsBefore, not ExtraArgs: clang-tidy appends ExtraArgs after the `--`
-# that ends an inferred command (keymap.c has no database entry of its own),
-# where the compiler reads them as file names.
+# clang-tidy puts ExtraArgs after the `--` of the inferred keymap.c command, where
+# the compiler reads them as file names
 ExtraArgsBefore:
     - -Wdocumentation
     - -Wdocumentation-unknown-command
@@ -50,12 +34,10 @@ ExtraArgsBefore:
 CheckOptions:
     readability-function-size.LineThreshold: 25
     readability-function-cognitive-complexity.Threshold: 8
-    # QMK macros hide control flow (wait_ms() expands to do/if/else), which
-    # would count against every function that calls them
+    # QMK macros such as wait_ms() hide control flow that counts against each caller
     readability-function-cognitive-complexity.IgnoreMacros: true
 
-    # Only 0 is accepted. Literals in #define, enum and const initializers are
-    # never reported.
+    # Literals in #define, enum and const initializers never cause a finding
     readability-magic-numbers.IgnoredIntegerValues: ""
     readability-magic-numbers.IgnorePowersOf2IntegerValues: false
     readability-magic-numbers.IgnoredFloatingPointValues: ""

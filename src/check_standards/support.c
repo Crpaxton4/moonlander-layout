@@ -1,6 +1,5 @@
 /** @file
- * Support code of the checker: growing buffers and arrays, the messages of findings,
- * the order findings are printed in, and the output.
+ * Buffers, findings and output of the checker
  */
 
 #include <errno.h>
@@ -11,24 +10,13 @@
 
 #include "support.h"
 
-/** Bytes read from a file at a time. */
 #define READ_CHUNK_SIZE 4096
 
-/** Factor a full array grows by. */
 #define GROWTH_FACTOR 2
 
-/** Items a growing array holds beyond twice those in use. */
 #define MIN_CAPACITY 16
 
-/**
- * Makes room in an array for at least one item after its first @p count.
- *
- * @param items     The array, or NULL if none is allocated yet.
- * @param item_size Size of one item.
- * @param capacity  Items allocated; updated when the array grows.
- * @param count     Items in use.
- * @return The array, moved if it grew.
- */
+/** Array can move, so use the return value. Without memory, the program stops */
 void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     if (count < *capacity) {
         return items;
@@ -42,23 +30,12 @@ void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     return grown;
 }
 
-/**
- * Makes room in a buffer for @p extra more bytes and the terminator.
- *
- * @param buffer The buffer.
- * @param extra  Bytes to add after its current length.
- */
+/** Makes space for extra bytes and also for the terminator */
 static void reserve_bytes(buffer_t *buffer, size_t extra) {
     buffer->data =
         reserve(buffer->data, sizeof(char), &buffer->capacity, buffer->length + extra);
 }
 
-/**
- * Appends a C string to a buffer.
- *
- * @param buffer The buffer.
- * @param text   The string.
- */
 void append(buffer_t *buffer, const char *text) {
     size_t length = strlen(text);
     reserve_bytes(buffer, length);
@@ -67,13 +44,7 @@ void append(buffer_t *buffer, const char *text) {
     buffer->data[buffer->length] = '\0';
 }
 
-/**
- * Appends everything left in a stream to a buffer, without the terminator.
- *
- * @param buffer The buffer.
- * @param stream The stream.
- * @return 0, or the errno value of a read error.
- */
+/** Returns 0, or the errno value of a read error. It adds no terminator */
 int append_stream(buffer_t *buffer, FILE *stream) {
     size_t read_size = 0;
     do {
@@ -88,12 +59,6 @@ int append_stream(buffer_t *buffer, FILE *stream) {
     return 0;
 }
 
-/**
- * Writes the message of a finding.
- *
- * @param finding The finding.
- * @param format  printf() format of the message, followed by its arguments.
- */
 void describe(finding_t *finding, const char *format, ...) {
     va_list arguments;
     va_start(arguments, format);
@@ -101,26 +66,11 @@ void describe(finding_t *finding, const char *format, ...) {
     va_end(arguments);
 }
 
-/**
- * Orders two numbers for qsort().
- *
- * @param left  The first number.
- * @param right The second number.
- * @return Negative, zero or positive as @p left is less than, equal to or greater
- *         than @p right.
- */
+/** A subtraction of size_t values can wrap, but this form cannot */
 static int compare_numbers(size_t left, size_t right) {
     return (left > right) - (left < right);
 }
 
-/**
- * Orders two findings of one file by line, column and reporting order, for qsort().
- *
- * @param first  The first finding.
- * @param second The second finding.
- * @return Negative, zero or positive as @p first goes before, with or after
- *         @p second.
- */
 int compare_findings(const void *first, const void *second) {
     const finding_t *one   = first;
     const finding_t *other = second;
@@ -129,12 +79,6 @@ int compare_findings(const void *first, const void *second) {
     return order != 0 ? order : compare_numbers(one->sequence, other->sequence);
 }
 
-/**
- * Prints every finding and the summary line.
- *
- * @param findings   The findings.
- * @param file_count Number of files checked.
- */
 void print_findings(const findings_t *findings, int file_count) {
     for (size_t index = 0; index < findings->count; index++) {
         const finding_t *finding = &findings->items[index];

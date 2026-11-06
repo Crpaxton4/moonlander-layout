@@ -1,6 +1,4 @@
-# Files written by tools, left in the form their owner writes them.
-# release-please
+# Tools write these files in their own format
 CHANGELOG.md
 .release-please-manifest.json
-# npm
 package-lock.json

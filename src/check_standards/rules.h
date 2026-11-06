@@ -1,6 +1,5 @@
 /** @file
- * The function of rules.c that checks one file. It is documented where it is
- * defined, in rules.c.
+ * Interface of rules.c
  */
 
 #pragma once
