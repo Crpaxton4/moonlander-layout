@@ -14,3 +14,5 @@ SRC += special_mode/special_mode.c
 SRC += status_leds/status_leds.c
 SRC += symbol_holds/symbol_holds.c
 SRC += precision_key/precision_key.c
+SRC += case_modes/case_modes_logic.c
+SRC += case_modes/case_modes.c
