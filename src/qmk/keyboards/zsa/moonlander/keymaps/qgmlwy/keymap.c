@@ -218,7 +218,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_NAV][LEFT_THUMB_KEYS] =
             {
                 [LEFT_LARGE_THUMB]  = KC_TRANSPARENT,
-                [LEFT_OUTER_THUMB]  = PRECISION_HOLD_KEY,
+                [LEFT_OUTER_THUMB]  = KC_TRANSPARENT,
                 [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },
@@ -275,7 +275,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_NAV][RIGHT_THUMB_KEYS] =
             {
                 [RIGHT_LARGE_THUMB]  = KC_TRANSPARENT,
-                [RIGHT_OUTER_THUMB]  = KC_TRANSPARENT,
+                [RIGHT_OUTER_THUMB]  = QK_MOUSE_ACCELERATION_0,
                 [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
             },

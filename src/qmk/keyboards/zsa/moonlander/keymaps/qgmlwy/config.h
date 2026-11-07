@@ -32,8 +32,8 @@
 
 /**
  * Top cursor speed, in steps of `MOUSEKEY_MOVE_DELTA` counts per movement report.
- * The precision hold of the nav mode sets QMK's copy of this value to one while it
- * lasts.
+ * The precision key of the nav mode sets QMK's copy of this value to one while it is
+ * held.
  */
 #undef MOUSEKEY_MAX_SPEED
 #define MOUSEKEY_MAX_SPEED 20

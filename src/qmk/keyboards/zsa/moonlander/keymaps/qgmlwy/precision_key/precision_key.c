@@ -1,5 +1,5 @@
 /** @file
- * Top cursor speed of the precision hold.
+ * Top cursor speed of the precision key.
  */
 
 // #region Includes
@@ -7,21 +7,20 @@
 #include QMK_KEYBOARD_H
 #include "mousekey.h"
 
-#include "keycodes/keycodes.h"
 #include "precision_key/precision_key.h"
 
 // #endregion
 
 // #region Macros
 
-/** Top cursor speed while the precision hold lasts, in counts per report */
+/** Top cursor speed while the precision key is held, in counts per report */
 #define PRECISION_TOP_SPEED 1
 
 // #endregion
 
 // #region Data
 
-/** Top cursor speed before the start of the precision hold */
+/** Top cursor speed before the push of the precision key */
 static uint8_t normal_top_speed;
 
 // #endregion
@@ -29,7 +28,7 @@ static uint8_t normal_top_speed;
 // #region Public functions
 
 bool process_precision_key(uint16_t keycode, keyrecord_t *record) {
-    if (keycode != PRECISION_HOLD_KEY || record->tap.count > 0) {
+    if (keycode != QK_MOUSE_ACCELERATION_0) {
         return true;
     }
     if (record->event.pressed) {

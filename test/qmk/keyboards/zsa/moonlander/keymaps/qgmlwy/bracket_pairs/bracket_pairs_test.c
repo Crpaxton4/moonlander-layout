@@ -267,14 +267,13 @@ static const grid_position_t nav_tab_key = {
 };
 
 /**
- * Thumb key L1 of the nav mode: Space on a tap, the precision key on a hold. The
- * thumb keys have no grid row, so the row and column are the matrix row and column.
- * key_at() reads a left half position as a matrix position.
+ * Precision key R1 of the nav mode. The thumb keys have no grid row. key_at() moves
+ * the left thumb row to the right thumb row for a column of the right half.
  */
-static const grid_position_t precision_hold_key = {
+static const grid_position_t precision_key = {
     .layer  = LAYER_NAV,
     .row    = LEFT_THUMB_KEYS,
-    .column = LEFT_OUTER_THUMB,
+    .column = FIRST_RIGHT_COLUMN + RIGHT_OUTER_THUMB,
 };
 
 /** Backtick (1,1) of the special mode */
@@ -375,7 +374,6 @@ static const uint16_t clearing_keys[] = {
     QK_MOUSE_BUTTON_3,
     QK_MOUSE_WHEEL_UP,
     QK_MOUSE_WHEEL_DOWN,
-    QK_MOUSE_ACCELERATION_0,
 };
 
 /** Modifier bits of the Ctrl, Alt and GUI home row holds */
@@ -1560,13 +1558,13 @@ static void bracket_pairs_r10_nav_mode_keys_clear_stack(void **state) {
     }
 }
 
-static void bracket_pairs_nav_mode_precision_hold_keeps_pair(void **state) {
+static void bracket_pairs_nav_mode_precision_key_keeps_pair(void **state) {
     (void)state;
     start_case();
     open_pair_and_type_abc();
     turn_on_nav_mode();
-    // Hold of the precision key moves no cursor, so the pair stays
-    assert_false(push_and_release(keycode_of(precision_hold_key), NOT_A_TAP));
+    // Precision key moves no cursor, so the pair stays
+    assert_false(push_and_release(keycode_of(precision_key), NOT_A_TAP));
     assert_true(bracket_pairs_are_open());
     type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
@@ -1582,7 +1580,11 @@ static void bracket_pairs_r4_nav_mode_space_tap_counts(void **state) {
     start_case();
     hold_key(keycode_of(opening_parenthesis_key));
     turn_on_nav_mode();
-    tap_tap_hold_key(keycode_of(precision_hold_key));
+    // Thumb key L1 of the nav mode is the Space of the default mode
+    assert_int_equal(
+        keycode_at_keymap_location(LAYER_NAV, LEFT_THUMB_KEYS, LEFT_OUTER_THUMB),
+        KC_TRANSPARENT);
+    type_key(KC_SPACE);
     type_key(keycode_of(left_arrow_key));
     type_key(keycode_of(nav_tab_key));
     // Space and Left are in the pair, so the jump-out sends Right two times
@@ -1646,7 +1648,7 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r10_top_row_hold_clears_stack),
     cmocka_unit_test(bracket_pairs_r10_ac7_mouse_key_then_tab),
     cmocka_unit_test(bracket_pairs_r10_nav_mode_keys_clear_stack),
-    cmocka_unit_test(bracket_pairs_nav_mode_precision_hold_keeps_pair),
+    cmocka_unit_test(bracket_pairs_nav_mode_precision_key_keeps_pair),
     cmocka_unit_test(bracket_pairs_r4_nav_mode_space_tap_counts),
     cmocka_unit_test(bracket_pairs_nav_mode_bottom_letter_row_has_no_opener),
     cmocka_unit_test(bracket_pairs_r10_shortcut_clears_stack),

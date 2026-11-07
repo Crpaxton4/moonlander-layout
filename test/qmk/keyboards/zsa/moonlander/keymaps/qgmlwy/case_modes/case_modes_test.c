@@ -506,27 +506,20 @@ static void case_modes_r6_nav_key_ends_mode(void **state) {
     }
 }
 
-static void case_modes_r6_precision_hold_ends_mode(void **state) {
+static void case_modes_r6_precision_key_ends_mode(void **state) {
     (void)state;
     start_case();
     assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     type_text("max");
-    // Hold of thumb key L1 in the nav mode sets the precision speed and sends no key
-    hold_key(PRECISION_HOLD_KEY);
+    reset_fake_qmk();
+    // Precision key R1 of the nav mode takes its push and release, and sends no key
+    keyrecord_t precision_key = {.event = {.pressed = true}};
+    assert_false(process_record_user(QK_MOUSE_ACCELERATION_0, &precision_key));
+    precision_key.event.pressed = false;
+    assert_false(process_record_user(QK_MOUSE_ACCELERATION_0, &precision_key));
     assert_recorded_calls(NULL, 0);
     type_text(" x");
     assert_host_got(" x");
-}
-
-static void case_modes_r1_nav_mode_space_tap_separates_words(void **state) {
-    (void)state;
-    start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
-    type_text("max");
-    // Tap of thumb key L1 in the nav mode is Space, which the mode changes
-    assert_false(push_key(PRECISION_HOLD_KEY, A_TAP));
-    type_text("retry");
-    assert_host_got("max_retry");
 }
 
 static void case_modes_nav_mode_snake_case_key_has_no_hold(void **state) {
@@ -587,8 +580,7 @@ static const struct CMUnitTest case_modes_cases[] = {
     cmocka_unit_test(case_modes_end_all_ends_mode),
     cmocka_unit_test(case_modes_sent_keys_count_in_bracket_pairs),
     cmocka_unit_test(case_modes_r6_nav_key_ends_mode),
-    cmocka_unit_test(case_modes_r6_precision_hold_ends_mode),
-    cmocka_unit_test(case_modes_r1_nav_mode_space_tap_separates_words),
+    cmocka_unit_test(case_modes_r6_precision_key_ends_mode),
     cmocka_unit_test(case_modes_nav_mode_snake_case_key_has_no_hold),
     cmocka_unit_test(case_modes_nav_mode_camel_case_key_has_no_hold),
     cmocka_unit_test(case_modes_nav_mode_key_ends_mode_of_default_mode_key),

@@ -36,7 +36,7 @@
 /** Layer state of the plain mode */
 #define PLAIN_MODE ONLY_LAYER(LAYER_PLAIN)
 
-/** Layer state of the nav mode, which has the precision hold */
+/** Layer state of the nav mode, which has the precision key */
 #define NAV_MODE ONLY_LAYER(LAYER_NAV)
 
 /** Tap count that QMK gives both events of the tap of a tap-hold key */
@@ -213,8 +213,7 @@ static void plain_mode_r5_precision_key_does_not_operate(void **state) {
     (void)state;
     start_with_layers(PLAIN_MODE);
     mk_max_speed = TOP_SPEED;
-    // Tap count 0 is a hold
-    assert_true(send_key_event(PRECISION_HOLD_KEY, true));
+    assert_true(send_key_event(QK_MOUSE_ACCELERATION_0, true));
     assert_int_equal(mk_max_speed, TOP_SPEED);
 }
 
@@ -266,10 +265,9 @@ static void plain_mode_r4_precision_key_release_after_mode_start(void **state) {
     (void)state;
     start_with_layers(NAV_MODE);
     mk_max_speed = TOP_SPEED;
-    // Tap count 0 is a hold, which sets the precision speed until the release
-    send_key_event(PRECISION_HOLD_KEY, true);
+    send_key_event(QK_MOUSE_ACCELERATION_0, true);
     layer_state = PLAIN_MODE;
-    send_key_event(PRECISION_HOLD_KEY, false);
+    send_key_event(QK_MOUSE_ACCELERATION_0, false);
     assert_int_equal(mk_max_speed, TOP_SPEED);
 }
 

@@ -37,9 +37,8 @@ typedef struct {
 
 // #region Data
 
-/** Small right thumb keys R1 to R3, which send no key in each mode */
-static const uint8_t small_right_thumb_keys[] = {
-    RIGHT_OUTER_THUMB,
+/** Small right thumb keys R2 and R3, which send no key in each mode */
+static const uint8_t free_right_thumb_keys[] = {
     RIGHT_MIDDLE_THUMB,
     RIGHT_INNER_THUMB,
 };
@@ -424,7 +423,7 @@ static void keymap_nav_left_thumb_keys(void **state) {
         .keys =
             {
                 [LEFT_LARGE_THUMB]  = KC_TRANSPARENT,
-                [LEFT_OUTER_THUMB]  = PRECISION_HOLD_KEY,
+                [LEFT_OUTER_THUMB]  = KC_TRANSPARENT,
                 [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },
@@ -523,7 +522,7 @@ static void keymap_nav_right_thumb_keys(void **state) {
         .keys =
             {
                 [RIGHT_LARGE_THUMB]  = KC_TRANSPARENT,
-                [RIGHT_OUTER_THUMB]  = KC_TRANSPARENT,
+                [RIGHT_OUTER_THUMB]  = QK_MOUSE_ACCELERATION_0,
                 [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
             },
@@ -583,10 +582,14 @@ static void keymap_free_positions_send_nothing_in_both_modes(void **state) {
     // Old wheel up position (3,13)
     uint8_t letter_row = RIGHT_BOTTOM_LETTER_ROW;
     assert_key_sends_nothing_in_both_modes(letter_row, LAST_RIGHT_HALF_COLUMN);
-    for (size_t index = 0; index < ARRAY_SIZE(small_right_thumb_keys); index++) {
-        uint8_t thumb = small_right_thumb_keys[index];
+    for (size_t index = 0; index < ARRAY_SIZE(free_right_thumb_keys); index++) {
+        uint8_t thumb = free_right_thumb_keys[index];
         assert_key_sends_nothing_in_both_modes(RIGHT_THUMB_KEYS, thumb);
     }
+    // Thumb key R1 is the precision key of the nav mode only
+    assert_int_equal(
+        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_OUTER_THUMB),
+        KC_NO);
 }
 
 /**
@@ -613,23 +616,21 @@ static void keymap_default_mode_has_no_mouse_key(void **state) {
 }
 
 /**
- * Fails the test at the first key of a nav layer row that is a tap-hold key, other
- * than the precision hold.
+ * Fails the test at the first key of a nav layer row that is a tap-hold key.
  *
  * @param row Row in the key matrix.
  */
 static void assert_no_hold_key_in_nav_row(uint8_t row) {
     for (uint8_t column = 0; column < MATRIX_COLS; column++) {
-        uint16_t keycode     = keycode_at_keymap_location(LAYER_NAV, row, column);
-        bool     is_hold_key = IS_QK_MOD_TAP(keycode) || IS_QK_LAYER_TAP(keycode);
-        if (is_hold_key && keycode != PRECISION_HOLD_KEY) {
+        uint16_t keycode = keycode_at_keymap_location(LAYER_NAV, row, column);
+        if (IS_QK_MOD_TAP(keycode) || IS_QK_LAYER_TAP(keycode)) {
             print_error("Row %d, column %d\n", row, column);
             fail_msg("Keycode 0x%04X is a tap-hold key", keycode);
         }
     }
 }
 
-static void keymap_nav_keys_have_no_hold_but_the_precision_hold(void **state) {
+static void keymap_nav_keys_have_no_hold(void **state) {
     (void)state;
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         assert_no_hold_key_in_nav_row(row);
@@ -1288,7 +1289,7 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_nav_right_thumb_keys),
     cmocka_unit_test(keymap_free_positions_send_nothing_in_both_modes),
     cmocka_unit_test(keymap_default_mode_has_no_mouse_key),
-    cmocka_unit_test(keymap_nav_keys_have_no_hold_but_the_precision_hold),
+    cmocka_unit_test(keymap_nav_keys_have_no_hold),
     cmocka_unit_test(keymap_combo_positions_left_number_row),
     cmocka_unit_test(keymap_combo_positions_left_top_row),
     cmocka_unit_test(keymap_combo_positions_left_home_row),
