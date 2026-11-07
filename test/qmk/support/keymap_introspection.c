@@ -28,18 +28,6 @@ uint16_t keycode_at_keymap_location(uint8_t layer, uint8_t row, uint8_t column) 
     return keymaps[layer][row][column];
 }
 
-uint16_t tap_dance_count(void) {
-    return (uint16_t)ARRAY_SIZE(tap_dance_actions);
-}
-
-tap_dance_action_t *tap_dance_get(uint16_t slot) {
-    // Same result as QMK for a slot outside the table
-    if (slot >= tap_dance_count()) {
-        return NULL;
-    }
-    return &tap_dance_actions[slot];
-}
-
 uint16_t combo_count(void) {
     return (uint16_t)ARRAY_SIZE(key_combos);
 }
