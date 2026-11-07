@@ -177,11 +177,11 @@ static void key_event_log_r6_input_record_of_a_release(void **state) {
     assert_console_text("KL,I,1234,u,2,3,0,0004,00,00,0,0\n");
 }
 
-static void key_event_log_r6_input_record_of_a_copy_key(void **state) {
+static void key_event_log_r6_input_record_of_a_mod_tap_key(void **state) {
     (void)state;
     start_with_logging(true);
-    assert_false(send_key_event(COPY_KEY, true));
-    assert_console_text("KL,I,0,d,2,3,0,4006,00,00,0,0\n");
+    assert_true(send_key_event(LCTL_T(KC_D), true));
+    assert_console_text("KL,I,0,d,2,3,0,2107,00,00,0,0\n");
 }
 
 static void key_event_log_r7_output_record_of_a_changed_report(void **state) {
@@ -290,7 +290,7 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r3_combo_sends_no_key),
     cmocka_unit_test(key_event_log_r6_input_record_of_a_push),
     cmocka_unit_test(key_event_log_r6_input_record_of_a_release),
-    cmocka_unit_test(key_event_log_r6_input_record_of_a_copy_key),
+    cmocka_unit_test(key_event_log_r6_input_record_of_a_mod_tap_key),
     cmocka_unit_test(key_event_log_r7_output_record_of_a_changed_report),
     cmocka_unit_test(key_event_log_r7_output_record_of_an_nkro_report),
     cmocka_unit_test(key_event_log_r9_idle_off_after_thirty_minutes),

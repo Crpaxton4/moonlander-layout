@@ -71,7 +71,7 @@ static void keymap_base_left_top_row(void **state) {
                 KC_M,
                 KC_L,
                 KC_W,
-                COPY_KEY,
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, LEFT_TOP_ROW, &expected);
@@ -83,12 +83,12 @@ static void keymap_base_left_home_row(void **state) {
         .keys =
             {
                 KC_NO,
-                KC_D,
-                KC_S,
-                KC_T,
-                KC_N,
+                LCTL_T(KC_D),
+                LALT_T(KC_S),
+                LGUI_T(KC_T),
+                LSFT_T(KC_N),
                 KC_R,
-                PASTE_KEY,
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, LEFT_HOME_ROW, &expected);
@@ -99,7 +99,7 @@ static void keymap_base_left_bottom_letter_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_LEFT_SHIFT,
+                KC_NO,
                 KC_Z,
                 KC_X,
                 KC_C,
@@ -116,8 +116,8 @@ static void keymap_base_left_bottom_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                TD(DANCE_CTRL_OR_GUI),
-                KC_LEFT_ALT,
+                KC_NO,
+                KC_NO,
                 KC_NO,
                 KC_NO,
                 KC_NO,
@@ -183,10 +183,10 @@ static void keymap_base_right_home_row(void **state) {
             {
                 KC_NO,
                 KC_I,
-                KC_A,
-                KC_E,
-                KC_O,
-                KC_H,
+                RSFT_T(KC_A),
+                RGUI_T(KC_E),
+                LALT_T(KC_O),
+                RCTL_T(KC_H),
                 KC_QUOTE,
             },
     };
