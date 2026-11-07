@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.6.0...v1.7.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add plain wheel keys with smooth scrolling ([#149](https://github.com/Crpaxton4/moonlander-layout/issues/149)) ([0ff31c4](https://github.com/Crpaxton4/moonlander-layout/commit/0ff31c45969cad046e0995f3bc1a1fe7418cd5ed))
+
 ## [1.6.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.5.0...v1.6.0) (2026-11-07)
 
 
