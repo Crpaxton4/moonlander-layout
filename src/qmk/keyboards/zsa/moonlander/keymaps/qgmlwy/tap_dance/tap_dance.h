@@ -21,7 +21,7 @@ enum tap_dance_codes {
     DANCE_RIGHT_BRACKETS,
     DANCE_MIDDLE_CLICK_OR_WHEEL,
     DANCE_RIGHT_CLICK_OR_WHEEL,
-    DANCE_COUNT, ///< Number of tap dance slots; sizes `dances`
+    DANCE_COUNT, /**< Number of tap dance slots; sizes `dances` */
 };
 
 /**
@@ -31,12 +31,12 @@ enum tap_dance_codes {
  * tap key once, then hold it.
  */
 typedef struct {
-    uint16_t tap;                        ///< Held on a single tap
-    uint16_t hold;                       ///< Held while the dance key is held
-    uint16_t double_tap;                 ///< Held on a double tap
-    uint16_t double_hold;                ///< Held on a tap followed by a hold
-    bool     registers_double_tap_twice; ///< Double tap: registers twice, releases once
-    bool     repeats_on_triple_tap;      ///< Third tap: tap key 3 times, then 1 per tap
+    uint16_t tap;                        /**< Held on a single tap */
+    uint16_t hold;                       /**< Held while the dance key is held */
+    uint16_t double_tap;                 /**< Held on a double tap */
+    uint16_t double_hold;                /**< Held on a tap followed by a hold */
+    bool     registers_double_tap_twice; /**< Double tap: two registers, one release */
+    bool     repeats_on_triple_tap;      /**< Repeats the tap key from the third tap */
 } dance_t;
 
 /**
@@ -47,7 +47,7 @@ typedef struct {
  */
 extern dance_t dances[DANCE_COUNT];
 
-/// QMK tap dance action that plays the definition in `dances` at a slot
+/** QMK tap dance action that plays the definition in `dances` at a slot */
 #define ACTION_TAP_DANCE_TABLE(slot)                                         \
     {                                                                        \
         .fn        = {dance_on_each_tap, dance_finished, dance_reset, NULL}, \

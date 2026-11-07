@@ -13,7 +13,7 @@
 #include "layers/layers.h"
 #include "tap_dance/tap_dance.h"
 
-/// Keys of each layer, indexed by layer, matrix row and matrix column
+/** Keys of each layer, indexed by layer, matrix row and matrix column */
 const uint16_t PROGMEM
     keymaps[][MATRIX_ROWS][MATRIX_COLS] =
         {
@@ -248,7 +248,7 @@ const uint16_t PROGMEM
                 },
 };
 
-/// QMK actions of the tap dances, indexed by slot; each plays its `dances` row
+/** QMK actions of the tap dances, indexed by slot; each plays its `dances` row */
 tap_dance_action_t tap_dance_actions[] = {
     [DANCE_CTRL_OR_GUI]           = ACTION_TAP_DANCE_TABLE(DANCE_CTRL_OR_GUI),
     [DANCE_LEFT_BRACKETS]         = ACTION_TAP_DANCE_TABLE(DANCE_LEFT_BRACKETS),
