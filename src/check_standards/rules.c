@@ -41,7 +41,7 @@ typedef enum {
     KIND_DO,       /**< `do` loop */
     KIND_SWITCH,   /**< `switch` statement */
     KIND_CASE,     /**< `case` or `default` label of a switch */
-    KIND_TERNARY,  /**< `?:` expression */
+    KIND_TERNARY,  /**< Conditional expression */
     KIND_GOTO,     /**< `goto` statement */
     KIND_COUNT,    /**< Number of kinds */
 } construct_kind_t;
