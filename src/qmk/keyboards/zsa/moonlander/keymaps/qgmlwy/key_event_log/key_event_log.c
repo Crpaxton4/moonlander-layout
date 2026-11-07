@@ -1,10 +1,10 @@
 /** @file
  * Records of the key event log on the QMK console.
  *
- * Tap dances, dual-function keys and QMK's tap code send keys from callbacks,
- * often a push and a release in one pass of the main loop. Thus the output records
- * come from a host driver that sends each report and then compares it with the
- * last report. A comparison in the housekeeping task would not see those keys.
+ * Keymap code that uses QMK's tap code sends a push and a release in one pass of
+ * the main loop. Thus the output records come from a host driver that sends each
+ * report and then compares it with the last report. A comparison in the
+ * housekeeping task would not see those keys.
  */
 
 #include QMK_KEYBOARD_H

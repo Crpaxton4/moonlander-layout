@@ -17,10 +17,10 @@ static void config_usb_suspend_wakeup_delay(void **state) {
     assert_int_equal(USB_SUSPEND_WAKEUP_DELAY, 0);
 }
 
-static void config_mk_combined(void **state) {
+static void config_default_acceleration_mode(void **state) {
     (void)state;
-#ifndef MK_COMBINED
-    fail_msg("MK_COMBINED is not defined");
+#ifdef MK_COMBINED
+    fail_msg("MK_COMBINED is defined");
 #endif
 }
 
@@ -29,19 +29,14 @@ static void config_mousekey_move_delta(void **state) {
     assert_int_equal(MOUSEKEY_MOVE_DELTA, 1);
 }
 
-static void config_mousekey_interval(void **state) {
-    (void)state;
-    assert_int_equal(MOUSEKEY_INTERVAL, 9);
-}
-
-static void config_mousekey_wheel_delay(void **state) {
-    (void)state;
-    assert_int_equal(MOUSEKEY_WHEEL_DELAY, 200);
-}
-
 static void config_mousekey_delay(void **state) {
     (void)state;
     assert_int_equal(MOUSEKEY_DELAY, 80);
+}
+
+static void config_mousekey_interval(void **state) {
+    (void)state;
+    assert_int_equal(MOUSEKEY_INTERVAL, 9);
 }
 
 static void config_mousekey_max_speed(void **state) {
@@ -54,14 +49,40 @@ static void config_mousekey_time_to_max(void **state) {
     assert_int_equal(MOUSEKEY_TIME_TO_MAX, 80);
 }
 
+static void config_mousekey_wheel_delay(void **state) {
+    (void)state;
+    assert_int_equal(MOUSEKEY_WHEEL_DELAY, 80);
+}
+
+static void config_mousekey_wheel_interval(void **state) {
+    (void)state;
+    assert_int_equal(MOUSEKEY_WHEEL_INTERVAL, 15);
+}
+
 static void config_mousekey_wheel_max_speed(void **state) {
     (void)state;
-    assert_int_equal(MOUSEKEY_WHEEL_MAX_SPEED, 6);
+    assert_int_equal(MOUSEKEY_WHEEL_MAX_SPEED, 8);
 }
 
 static void config_mousekey_wheel_time_to_max(void **state) {
     (void)state;
-    assert_int_equal(MOUSEKEY_WHEEL_TIME_TO_MAX, 1);
+    assert_int_equal(MOUSEKEY_WHEEL_TIME_TO_MAX, 60);
+}
+
+static void config_pointing_device_hires_scroll_enable(void **state) {
+    (void)state;
+#ifndef POINTING_DEVICE_HIRES_SCROLL_ENABLE
+    fail_msg("POINTING_DEVICE_HIRES_SCROLL_ENABLE is not defined");
+#endif
+}
+
+static void config_pointing_device_hires_scroll_multiplier(void **state) {
+    (void)state;
+#ifdef POINTING_DEVICE_HIRES_SCROLL_MULTIPLIER
+    assert_int_equal(POINTING_DEVICE_HIRES_SCROLL_MULTIPLIER, 8);
+#else
+    fail_msg("POINTING_DEVICE_HIRES_SCROLL_MULTIPLIER is not defined");
+#endif
 }
 
 static void config_moonlander_user_leds(void **state) {
@@ -139,15 +160,18 @@ static void config_serial_number(void **state) {
 /** Cases of this program, in the order of config.h */
 static const struct CMUnitTest config_cases[] = {
     cmocka_unit_test(config_usb_suspend_wakeup_delay),
-    cmocka_unit_test(config_mk_combined),
+    cmocka_unit_test(config_default_acceleration_mode),
     cmocka_unit_test(config_mousekey_move_delta),
-    cmocka_unit_test(config_mousekey_interval),
-    cmocka_unit_test(config_mousekey_wheel_delay),
     cmocka_unit_test(config_mousekey_delay),
+    cmocka_unit_test(config_mousekey_interval),
     cmocka_unit_test(config_mousekey_max_speed),
     cmocka_unit_test(config_mousekey_time_to_max),
+    cmocka_unit_test(config_mousekey_wheel_delay),
+    cmocka_unit_test(config_mousekey_wheel_interval),
     cmocka_unit_test(config_mousekey_wheel_max_speed),
     cmocka_unit_test(config_mousekey_wheel_time_to_max),
+    cmocka_unit_test(config_pointing_device_hires_scroll_enable),
+    cmocka_unit_test(config_pointing_device_hires_scroll_multiplier),
     cmocka_unit_test(config_moonlander_user_leds),
     cmocka_unit_test(config_combo_only_from_layer),
     cmocka_unit_test(config_tapping_term),

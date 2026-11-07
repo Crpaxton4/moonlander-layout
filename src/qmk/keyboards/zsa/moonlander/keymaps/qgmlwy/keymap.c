@@ -1,11 +1,10 @@
 /** @file
- * Layers, tap dance actions and combos of the qgmlwy keymap, and its key event and
- * housekeeping hooks.
+ * Layers and combos of the qgmlwy keymap, and its key event and housekeeping
+ * hooks.
  *
  * QMK compiles this file only inside its keymap introspection, which sizes
- * `keymaps`, `tap_dance_actions` and `key_combos` with `sizeof`. Thus the three
- * tables are in this file. Each feature is in its own module, which `rules.mk`
- * compiles.
+ * `keymaps` and `key_combos` with `sizeof`. Thus the two tables are in this file.
+ * Each feature is in its own module, which `rules.mk` compiles.
  */
 
 #include QMK_KEYBOARD_H
@@ -14,10 +13,10 @@
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
+#include "precision_key/precision_key.h"
 #include "special_mode/special_mode.h"
 #include "status_leds/status_leds.h"
 #include "symbol_holds/symbol_holds.h"
-#include "tap_dance/tap_dance.h"
 
 /** Keys of each layer, indexed by layer, matrix row and matrix column */
 const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
@@ -117,7 +116,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 SYMBOL_HOLD(KC_COMMA),
                 SYMBOL_HOLD(KC_DOT),
                 SYMBOL_HOLD(KC_SLASH),
-                KC_NO,
+                QK_MOUSE_WHEEL_UP,
             },
         [LAYER_BASE][RIGHT_BOTTOM_ROW] =
             {
@@ -127,14 +126,14 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 QK_MOUSE_CURSOR_UP,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
-                KC_NO,
+                QK_MOUSE_WHEEL_DOWN,
             },
         [LAYER_BASE][RIGHT_THUMB_KEYS] =
             {
                 [RIGHT_LARGE_THUMB]  = TO(LAYER_ARROWS),
                 [RIGHT_OUTER_THUMB]  = QK_MOUSE_BUTTON_1,
-                [RIGHT_MIDDLE_THUMB] = TD(DANCE_RIGHT_CLICK_OR_WHEEL),
-                [RIGHT_INNER_THUMB]  = TD(DANCE_MIDDLE_CLICK_OR_WHEEL),
+                [RIGHT_MIDDLE_THUMB] = QK_MOUSE_BUTTON_2,
+                [RIGHT_INNER_THUMB]  = QK_MOUSE_BUTTON_3,
             },
 
         [LAYER_ARROWS][LEFT_NUMBER_ROW] =
@@ -483,12 +482,6 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
 };
 
-/** QMK actions of the tap dances, indexed by slot; each plays its `dances` row */
-tap_dance_action_t tap_dance_actions[] = {
-    [DANCE_MIDDLE_CLICK_OR_WHEEL] = ACTION_TAP_DANCE_TABLE(DANCE_MIDDLE_CLICK_OR_WHEEL),
-    [DANCE_RIGHT_CLICK_OR_WHEEL]  = ACTION_TAP_DANCE_TABLE(DANCE_RIGHT_CLICK_OR_WHEEL),
-};
-
 /** Keys of the logging combo, from LAYER_COMBO_POSITIONS */
 static const uint16_t PROGMEM logging_combo_keys[] = {
     LOGGING_COMBO_LEFT_POSITION,
@@ -512,6 +505,7 @@ static const record_handler_t record_handlers[] = {
     process_key_event_log,
     process_special_mode,
     process_symbol_holds,
+    process_precision_key,
 };
 
 /** Handler for each pass of QMK's main loop */

@@ -47,8 +47,8 @@ target_link_libraries(unit_test PUBLIC cmocka::cmocka)
 add_library(fake_qmk STATIC support/fake_quantum.c)
 target_include_directories(fake_qmk PUBLIC support ${KEYMAP_DIR})
 target_compile_definitions(fake_qmk PUBLIC QMK_KEYBOARD_H="fake_keyboard.h"
-    # Same features as COMBO_ENABLE and TAP_DANCE_ENABLE in rules.mk
-    COMBO_ENABLE TAP_DANCE_ENABLE)
+    # Same feature as COMBO_ENABLE in rules.mk
+    COMBO_ENABLE)
 # QMK includes the keymap config.h before each source, so the tests get the same
 # settings
 target_compile_options(fake_qmk PUBLIC -include ${KEYMAP_DIR}/config.h)
@@ -64,13 +64,12 @@ target_include_directories(keymap_logic PUBLIC ${KEYMAP_DIR})
 # keymap_introspection.c compiles keymap.c
 add_library(qgmlwy_keymap STATIC
     support/keymap_introspection.c
-    ${KEYMAP_DIR}/tap_dance/tap_dance.c
-    ${KEYMAP_DIR}/tap_dance/dances.c
     ${KEYMAP_DIR}/tap_hold/tap_hold.c
     ${KEYMAP_DIR}/key_event_log/key_event_log.c
     ${KEYMAP_DIR}/special_mode/special_mode.c
     ${KEYMAP_DIR}/status_leds/status_leds.c
-    ${KEYMAP_DIR}/symbol_holds/symbol_holds.c)
+    ${KEYMAP_DIR}/symbol_holds/symbol_holds.c
+    ${KEYMAP_DIR}/precision_key/precision_key.c)
 target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
 target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk keymap_logic)
 
@@ -82,7 +81,8 @@ add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_logic_test.c
 add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_test.c
     LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/status_leds/status_leds_test.c LIBRARIES qgmlwy_keymap)
-add_cmocka_test(${KEYMAP_TESTS}/tap_dance/tap_dance_test.c LIBRARIES qgmlwy_keymap)
+add_cmocka_test(${KEYMAP_TESTS}/precision_key/precision_key_test.c
+    LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/symbol_holds/symbol_holds_test.c
     LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/tap_hold/tap_hold_test.c LIBRARIES qgmlwy_keymap)
