@@ -1,28 +1,27 @@
 /** @file
  * QMK callbacks that play every tap dance from its definition in `dances`.
  *
- * The finished callback looks the taps up in `outcomes`, holds that outcome's key
- * or moves to its layer, and records the held key so the reset callback releases
- * exactly that key.
+ * The finished callback looks the taps up in `outcomes`, holds that outcome's key,
+ * and records the held key so the reset callback releases exactly that key.
  */
 
 #include QMK_KEYBOARD_H
 
 #include "tap_dance/tap_dance.h"
 
-/** Milliseconds every dance reset waits before releasing its key. */
-#define RESET_WAIT_MS 10
+/// Milliseconds every dance reset waits before releasing its key
+#define RESET_WAIT_MILLISECONDS 10
 
-/** Tap count of a dance tapped or held once. */
+/// Tap count of a dance tapped or held once
 #define SINGLE_TAP_COUNT 1
 
-/** Tap count of a dance tapped twice, or tapped once and then held. */
+/// Tap count of a dance tapped twice, or tapped once and then held
 #define DOUBLE_TAP_COUNT 2
 
-/** Tap count at which a repeating dance starts repeating its key. */
+/// Tap count at which a repeating dance starts repeating its key
 #define REPEAT_TAP_COUNT 3
 
-/** Taps a repeating dance sends for each tap after REPEAT_TAP_COUNT. */
+/// Taps a repeating dance sends for each tap after REPEAT_TAP_COUNT
 #define TAPS_PER_FURTHER_TAP 1
 
 /**
@@ -30,19 +29,14 @@
  * is the index of its key in the list dance_finished() makes of them.
  */
 enum dance_outcome {
-    /** Tapped once, pressed once and interrupted, or pressed twice and interrupted. */
-    TAPPED,
-    /** Pressed once and still held, uninterrupted. */
-    HELD,
-    /** Tapped twice. */
-    DOUBLE_TAPPED,
-    /** Tapped once, then pressed again and still held. */
-    DOUBLE_HELD,
-    /** Any other tap count, none included: does nothing. */
-    NO_OUTCOME,
+    TAPPED,        ///< Tapped once, or pressed once or twice and interrupted
+    HELD,          ///< Pressed once and still held, uninterrupted
+    DOUBLE_TAPPED, ///< Tapped twice
+    DOUBLE_HELD,   ///< Tapped once, then pressed again and still held
+    NO_OUTCOME,    ///< Any other tap count, none included: does nothing
 };
 
-/** Values a bool takes as an array index: false, then true. */
+/// Values a bool takes as an array index: false, then true
 #define BOOL_VALUES 2
 
 /**
@@ -55,7 +49,7 @@ static const uint8_t outcomes[DOUBLE_TAP_COUNT + 1][BOOL_VALUES][BOOL_VALUES] = 
     [DOUBLE_TAP_COUNT] = {{DOUBLE_TAPPED, DOUBLE_HELD}, {TAPPED, TAPPED}},
 };
 
-/** Key each dance's finished callback held, indexed by its slot; KC_NO for none. */
+/// Key each dance's finished callback held, indexed by its slot; KC_NO for none
 static uint16_t held_keycodes[DANCE_COUNT];
 
 void dance_on_each_tap(tap_dance_state_t *state, void *user_data) {
@@ -80,11 +74,8 @@ void dance_finished(tap_dance_state_t *state, void *user_data) {
             ? outcomes[state->count][(int)state->interrupted][(int)state->pressed]
             : NO_OUTCOME;
     uint16_t keycode              = keys[outcome];
-    held_keycodes[dance - dances] = IS_QK_TO(keycode) ? KC_NO : keycode;
-    if (IS_QK_TO(keycode)) {
-        layer_move(QK_TO_GET_LAYER(keycode));
-    }
-    if (held_keycodes[dance - dances] == KC_NO) {
+    held_keycodes[dance - dances] = keycode;
+    if (keycode == KC_NO) {
         return;
     }
     if (state->count == DOUBLE_TAP_COUNT && state->interrupted) {
@@ -99,7 +90,7 @@ void dance_finished(tap_dance_state_t *state, void *user_data) {
 void dance_reset(tap_dance_state_t *state, void *user_data) {
     const dance_t *dance = user_data;
     size_t         slot  = (size_t)(dance - dances);
-    wait_ms(RESET_WAIT_MS);
+    wait_ms(RESET_WAIT_MILLISECONDS);
     if (held_keycodes[slot] != KC_NO) {
         unregister_code16(held_keycodes[slot]);
     }

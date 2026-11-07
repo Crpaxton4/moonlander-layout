@@ -1,37 +1,54 @@
 /** @file
- * Layer names of the qgmlwy keymap.
+ * Layer names of the qgmlwy keymap, and names for the rows and keys of a layer.
  *
- * Each layer's keys live in `layers/<name>.inc`, laid out like the keyboard: left
- * and right half side by side, one row per line, the large thumb key at the inner
- * end of the fifth row and the three thumb keys on the last line.
+ * `keymaps` gives each row of a layer as `[layer][row] = {keys}`, so the index
+ * names the place of each key and a row with too many keys does not compile.
  */
 
 #pragma once
 
-/**
- * Keymap layers, in the order of their index in `keymaps` and `ledmap`.
- */
+/// Keymap layers, in the order of their index in `keymaps`
 enum layer {
-    /** QGMLWY alphas with mouse keys bottom right. */
-    LAYER_BASE = 0,
-    /** Base layer with arrows in place of mouse movement. */
-    LAYER_ARROWS = 1,
-    /** F1 to F20, media and volume keys. */
-    LAYER_FUNCTION_MEDIA = 2,
-    /** Ctrl+number and tab, browser and editor shortcuts. */
-    LAYER_SHORTCUTS = 3,
-    /** Alt+Ctrl+Shift+grave leader chord macros. */
-    LAYER_LAUNCHER = 4,
-    /** Ctrl/Alt/Shift+F13 to F18 bindings and window keys. */
-    LAYER_WINDOW_MANAGER = 5,
-    /** Mostly transparent gate to the text navigation layer. */
-    LAYER_NAVIGATION_GATE = 6,
-    /** Ctrl/Shift+arrows and word selection. */
-    LAYER_TEXT_NAVIGATION = 7,
-    /** Bootloader, NKRO, EEPROM clear, RGB and music keys. */
-    LAYER_SYSTEM = 8,
-    /** Every key disabled; double-hold either thumb dance to leave. */
-    LAYER_LOCK = 9,
-    /** Number of layers. */
-    LAYER_COUNT,
+    LAYER_BASE   = 0, ///< QGMLWY alphas with mouse keys bottom right
+    LAYER_ARROWS = 1, ///< Base layer with arrows in place of mouse movement
+};
+
+/**
+ * Rows of a layer, each the index of a row in the Moonlander key matrix.
+ *
+ * The matrix has the left half in rows 0 to 5 and the right half in rows 6 to 11,
+ * and each half keeps its thumb keys in its last row. A grid row lists its seven
+ * matrix positions from left to right.
+ */
+enum layer_row {
+    LEFT_NUMBER_ROW         = 0,  ///< Grid row 0, keys (0,0) to (0,6)
+    LEFT_TOP_ROW            = 1,  ///< Grid row 1, keys (1,0) to (1,6)
+    LEFT_HOME_ROW           = 2,  ///< Grid row 2, keys (2,0) to (2,6)
+    LEFT_BOTTOM_LETTER_ROW  = 3,  ///< Grid row 3, (3,0) to (3,5), NO_PHYSICAL_KEY
+    LEFT_BOTTOM_ROW         = 4,  ///< Grid row 4, (4,0) to (4,4), two NO_PHYSICAL_KEY
+    LEFT_THUMB_KEYS         = 5,  ///< Thumb keys L0 to L3, by their `thumb_key` names
+    RIGHT_NUMBER_ROW        = 6,  ///< Grid row 0, keys (0,7) to (0,13)
+    RIGHT_TOP_ROW           = 7,  ///< Grid row 1, keys (1,7) to (1,13)
+    RIGHT_HOME_ROW          = 8,  ///< Grid row 2, keys (2,7) to (2,13)
+    RIGHT_BOTTOM_LETTER_ROW = 9,  ///< Grid row 3, NO_PHYSICAL_KEY, (3,8) to (3,13)
+    RIGHT_BOTTOM_ROW        = 10, ///< Grid row 4, two NO_PHYSICAL_KEY, (4,9) to (4,13)
+    RIGHT_THUMB_KEYS        = 11, ///< Thumb keys R0 to R3, by their `thumb_key` names
+};
+
+/**
+ * Matrix position with no physical key, which keeps the other keys of the row in
+ * their matrix columns.
+ */
+#define NO_PHYSICAL_KEY KC_NO
+
+/// Thumb keys in LEFT_THUMB_KEYS and RIGHT_THUMB_KEYS
+enum thumb_key {
+    LEFT_LARGE_THUMB   = 3, ///< L0, the large left thumb key
+    LEFT_OUTER_THUMB   = 0, ///< L1, the small left thumb key farthest from the middle
+    LEFT_MIDDLE_THUMB  = 1, ///< L2, the small left thumb key between the other two
+    LEFT_INNER_THUMB   = 2, ///< L3, the small left thumb key nearest to the middle
+    RIGHT_LARGE_THUMB  = 3, ///< R0, the large right thumb key
+    RIGHT_OUTER_THUMB  = 6, ///< R1, the small right thumb key farthest from the middle
+    RIGHT_MIDDLE_THUMB = 5, ///< R2, the small right thumb key between the other two
+    RIGHT_INNER_THUMB  = 4, ///< R3, the small right thumb key nearest to the middle
 };

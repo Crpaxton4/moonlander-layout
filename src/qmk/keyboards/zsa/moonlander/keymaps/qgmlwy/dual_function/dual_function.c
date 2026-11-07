@@ -1,5 +1,5 @@
 /** @file
- * Tap and hold keys of the qgmlwy keymap's `DUAL_FUNC_*` keys.
+ * Tap and hold keys of the qgmlwy keymap's dual-function keys.
  */
 
 #include QMK_KEYBOARD_H
@@ -7,22 +7,17 @@
 #include "dual_function/dual_function.h"
 #include "keycodes/keycodes.h"
 
-/** Tap key and hold key of one `DUAL_FUNC_*` key. */
+/// Tap key and hold key of one dual-function key
 typedef struct {
-    /** The `DUAL_FUNC_*` keycode. */
-    uint16_t keycode;
-    /** Key sent when the event is a tap. */
-    uint16_t tap;
-    /** Key sent when the event is a hold. */
-    uint16_t hold;
+    uint16_t keycode; ///< Keycode of the dual-function key, for example COPY_KEY
+    uint16_t tap;     ///< Key sent when the event is a tap
+    uint16_t hold;    ///< Key sent when the event is a hold
 } dual_function_t;
 
-/** Tap and hold key of each `DUAL_FUNC_*` key. */
+/// Tap and hold key of each dual-function key
 static const dual_function_t dual_functions[] = {
-    {DUAL_FUNC_0, LCTL(KC_C), LCTL(LSFT(KC_C))},
-    {DUAL_FUNC_1, LCTL(KC_V), LCTL(LSFT(KC_V))},
-    {DUAL_FUNC_2, KC_MEDIA_PREV_TRACK, KC_MEDIA_REWIND},
-    {DUAL_FUNC_3, KC_MEDIA_NEXT_TRACK, KC_MEDIA_FAST_FORWARD},
+    {COPY_KEY, LCTL(KC_C), LCTL(LSFT(KC_C))},
+    {PASTE_KEY, LCTL(KC_V), LCTL(LSFT(KC_V))},
 };
 
 bool process_dual_function(uint16_t keycode, keyrecord_t *record) {

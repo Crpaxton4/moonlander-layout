@@ -2,10 +2,9 @@
  * Tap dance slots of the qgmlwy keymap, the shape of their definitions and the
  * QMK callbacks that play them.
  *
- * Every dance is one row of `dances`, which names the key each outcome holds or,
- * with TO(), the layer it moves to. One set of callbacks plays every row, and the
- * keymap's `tap_dance_actions` binds each slot to its row with
- * ACTION_TAP_DANCE_TABLE().
+ * Every dance is one row of `dances`, which names the key each outcome holds. One
+ * set of callbacks plays every row, and the keymap's `tap_dance_actions` binds each
+ * slot to its row with ACTION_TAP_DANCE_TABLE().
  */
 
 #pragma once
@@ -17,50 +16,30 @@
  * definition in `dances`.
  */
 enum tap_dance_codes {
-    DANCE_0,
-    DANCE_1,
-    DANCE_2,
-    DANCE_3,
-    DANCE_4,
-    DANCE_5,
-    DANCE_6,
-    DANCE_7,
-    DANCE_8,
-    DANCE_9,
-    DANCE_10,
-    DANCE_11,
-    DANCE_12,
-    DANCE_13,
-    DANCE_14,
-    DANCE_15,
-    DANCE_16,
-    /** Number of tap dance slots; sizes `dances`. */
-    DANCE_COUNT,
+    DANCE_CTRL_OR_GUI,
+    DANCE_LEFT_BRACKETS,
+    DANCE_RIGHT_BRACKETS,
+    DANCE_MIDDLE_CLICK_OR_WHEEL,
+    DANCE_RIGHT_CLICK_OR_WHEEL,
+    DANCE_COUNT, ///< Number of tap dance slots; sizes `dances`
 };
 
 /**
  * Definition of one tap dance: the key each outcome holds, and two options.
  *
- * KC_NO makes an outcome do nothing. A TO() key moves to its layer instead of being
- * held, and the layer stays after the dance resets. Two presses interrupted by
- * another key tap the tap key once, then hold it.
+ * KC_NO makes an outcome do nothing. Two presses interrupted by another key tap the
+ * tap key once, then hold it.
  */
 typedef struct {
-    /** Held on a single tap; tapped, then held, on an interrupted double tap. */
-    uint16_t tap;
-    /** Held while the dance key is held. */
-    uint16_t hold;
-    /** Held on a double tap. */
-    uint16_t double_tap;
-    /** Held on a tap followed by a hold. */
-    uint16_t double_hold;
-    /** Registers the double-tap key twice on a double tap; one release follows. */
-    bool registers_double_tap_twice;
-    /** Taps the tap key three times on a third tap, then once per further tap. */
-    bool repeats_on_triple_tap;
+    uint16_t tap;                        ///< Held on a single tap
+    uint16_t hold;                       ///< Held while the dance key is held
+    uint16_t double_tap;                 ///< Held on a double tap
+    uint16_t double_hold;                ///< Held on a tap followed by a hold
+    bool     registers_double_tap_twice; ///< Double tap: registers twice, releases once
+    bool     repeats_on_triple_tap;      ///< Third tap: tap key 3 times, then 1 per tap
 } dance_t;
 
-/** Definitions of the tap dances, indexed by their slot. */
+/// Definitions of the tap dances, indexed by their slot
 extern const dance_t dances[DANCE_COUNT];
 
 /**
@@ -85,8 +64,8 @@ extern const dance_t dances[DANCE_COUNT];
 void dance_on_each_tap(tap_dance_state_t *state, void *user_data);
 
 /**
- * Resolves a dance's taps to one outcome and holds that outcome's key, or moves to
- * the layer of a TO() key; records the held key for dance_reset().
+ * Resolves a dance's taps to one outcome and holds that outcome's key; records the
+ * held key for dance_reset().
  *
  * @param state     Tap count and key state of the dance.
  * @param user_data The dance's definition in `dances`.
