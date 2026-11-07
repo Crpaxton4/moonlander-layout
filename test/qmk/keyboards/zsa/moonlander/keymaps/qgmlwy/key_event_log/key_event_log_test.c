@@ -54,6 +54,53 @@
 
 // #endregion
 
+// #region Types
+
+/** Keycode at a position of a layer, as a case expects it */
+typedef struct {
+    uint8_t  layer;   /**< Layer of the position */
+    uint8_t  row;     /**< Matrix row of the position */
+    uint8_t  column;  /**< Matrix column of the position */
+    uint16_t keycode; /**< Expected keycode */
+} layer_key_t;
+
+// #endregion
+
+// #region Data
+
+/**
+ * Keys at the logging combo positions (1,6) and (1,7): the combo keys, and the
+ * case mode keys of the base layer
+ */
+static const layer_key_t logging_combo_keys[] = {
+    {
+        .layer   = LAYER_COMBO_POSITIONS,
+        .row     = LEFT_TOP_ROW,
+        .column  = 6,
+        .keycode = LOGGING_COMBO_LEFT_POSITION,
+    },
+    {
+        .layer   = LAYER_COMBO_POSITIONS,
+        .row     = RIGHT_TOP_ROW,
+        .column  = 0,
+        .keycode = LOGGING_COMBO_RIGHT_POSITION,
+    },
+    {
+        .layer   = LAYER_BASE,
+        .row     = LEFT_TOP_ROW,
+        .column  = 6,
+        .keycode = SNAKE_CASE_KEY,
+    },
+    {
+        .layer   = LAYER_BASE,
+        .row     = RIGHT_TOP_ROW,
+        .column  = 0,
+        .keycode = CAMEL_CASE_KEY,
+    },
+};
+
+// #endregion
+
 // #region Static functions
 
 /**
@@ -150,6 +197,20 @@ static void key_event_log_r3_combo_keys(void **state) {
     assert_int_equal(combo->keys[1], LOGGING_COMBO_RIGHT_POSITION);
     assert_int_equal(combo->keys[2], COMBO_END);
     assert_int_equal(combo->keycode, LOGGING_TOGGLE);
+}
+
+static void key_event_log_r3_combo_positions_of_the_case_mode_keys(void **state) {
+    (void)state;
+    // QMK finds the combo keys on LAYER_COMBO_POSITIONS, not on the base layer, so
+    // the tap-hold case mode keys at (1,6) and (1,7) do not change the combo
+    for (size_t index = 0; index < ARRAY_SIZE(logging_combo_keys); index++) {
+        const layer_key_t *key = &logging_combo_keys[index];
+        uint16_t           keycode =
+            keycode_at_keymap_location(key->layer, key->row, key->column);
+        assert_int_equal(keycode, key->keycode);
+    }
+    assert_true(IS_QK_LAYER_TAP(SNAKE_CASE_KEY));
+    assert_true(IS_QK_LAYER_TAP(CAMEL_CASE_KEY));
 }
 
 static void key_event_log_r3_combo_sends_no_key(void **state) {
@@ -328,6 +389,7 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r2_combo_switches_logging_on),
     cmocka_unit_test(key_event_log_r2_combo_switches_logging_off),
     cmocka_unit_test(key_event_log_r3_combo_keys),
+    cmocka_unit_test(key_event_log_r3_combo_positions_of_the_case_mode_keys),
     cmocka_unit_test(key_event_log_r3_combo_sends_no_key),
     cmocka_unit_test(key_event_log_r6_input_record_of_a_push),
     cmocka_unit_test(key_event_log_r6_input_record_of_a_release),

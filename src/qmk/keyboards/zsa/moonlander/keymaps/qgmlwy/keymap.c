@@ -52,22 +52,22 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
     {
         [LAYER_BASE][LEFT_NUMBER_ROW] =
             {
-                KC_ESCAPE,
-                KC_F1,
-                KC_F2,
-                KC_F3,
-                KC_F4,
-                KC_F5,
-                KC_F6,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
         [LAYER_BASE][LEFT_TOP_ROW] =
             {
-                KC_TAB,
-                KC_Q,
-                KC_G,
-                KC_M,
-                KC_L,
-                KC_W,
+                KEY_HOLD(KC_TAB),
+                KEY_HOLD(KC_Q),
+                KEY_HOLD(KC_G),
+                KEY_HOLD(KC_M),
+                KEY_HOLD(KC_L),
+                KEY_HOLD(KC_W),
                 SNAKE_CASE_KEY,
             },
         [LAYER_BASE][LEFT_HOME_ROW] =
@@ -82,7 +82,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][LEFT_BOTTOM_LETTER_ROW] =
             {
-                KC_NO,
+                PROFILING_TOGGLE_KEY,
                 SYMBOL_HOLD(KC_Z),
                 SYMBOL_HOLD(KC_X),
                 SYMBOL_HOLD(KC_C),
@@ -92,7 +92,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][LEFT_BOTTOM_ROW] =
             {
-                PROFILING_TOGGLE_KEY,
+                KC_NO,
                 KC_NO,
                 KC_NO,
                 KC_NO,
@@ -109,22 +109,22 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][RIGHT_NUMBER_ROW] =
             {
-                KC_F7,
-                KC_F8,
-                KC_F9,
-                KC_F10,
-                KC_F11,
-                KC_F12,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 KC_NO,
             },
         [LAYER_BASE][RIGHT_TOP_ROW] =
             {
                 CAMEL_CASE_KEY,
-                KC_Y,
-                KC_F,
-                KC_U,
-                KC_B,
-                KC_SEMICOLON,
+                KEY_HOLD(KC_Y),
+                KEY_HOLD(KC_F),
+                KEY_HOLD(KC_U),
+                KEY_HOLD(KC_B),
+                KEY_HOLD(KC_SEMICOLON),
                 KC_BACKSLASH,
             },
         [LAYER_BASE][RIGHT_HOME_ROW] =
@@ -408,30 +408,30 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_SPECIAL][LEFT_TOP_ROW] =
             {
                 KC_TAB,
-                KC_TILDE,
-                KC_AT,
-                KC_CIRCUMFLEX,
-                KC_PERCENT,
                 KC_GRAVE,
+                KC_AMPERSAND,
+                KC_ASTERISK,
+                KC_LEFT_PAREN,
+                KC_NO,
                 KC_NO,
             },
         [LAYER_SPECIAL][LEFT_HOME_ROW] =
             {
                 SPECIAL_MODE_KEY,
-                KC_EXCLAIM,
-                KC_ASTERISK,
+                KC_TILDE,
                 KC_DOLLAR,
-                KC_EQUAL,
-                KC_AMPERSAND,
+                KC_PERCENT,
+                KC_CIRCUMFLEX,
+                KC_NO,
                 KC_NO,
             },
         [LAYER_SPECIAL][LEFT_BOTTOM_LETTER_ROW] =
             {
                 KC_NO,
+                KC_NO,
+                KC_EXCLAIM,
+                KC_AT,
                 KC_HASH,
-                KC_PIPE,
-                KC_PLUS,
-                KC_MINUS,
                 KC_NO,
                 NO_PHYSICAL_KEY,
             },
@@ -439,9 +439,9 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             {
                 KC_NO,
                 KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_RIGHT_PAREN,
+                KC_PLUS,
+                KC_EQUAL,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -450,7 +450,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 [LEFT_LARGE_THUMB]  = KC_ENTER,
                 [LEFT_OUTER_THUMB]  = KC_SPACE,
                 [LEFT_MIDDLE_THUMB] = KC_BACKSPACE,
-                [LEFT_INNER_THUMB]  = KC_NO,
+                [LEFT_INNER_THUMB]  = KC_DELETE,
             },
         [LAYER_SPECIAL][RIGHT_NUMBER_ROW] =
             {
