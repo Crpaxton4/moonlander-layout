@@ -79,7 +79,8 @@ add_custom_target(doxygen
 add_dependencies(analyze doxygen)
 
 # ----------------------------------------------------------------------------------
-# Firmware: firmware, compile-databases, clang-tidy-keymap and gcc-strict
+# Firmware: firmware, debug-firmware, compile-databases, memory-report,
+# clang-tidy-keymap, clang-tidy-keymap-debug, gcc-strict and gcc-strict-debug
 # ----------------------------------------------------------------------------------
 
 # QMK builds keymaps only with its own make build, so the firmware targets start the
@@ -92,10 +93,22 @@ if("firmware" IN_LIST MOONLANDER_PARTS)
         QUERY NUMBER_OF_LOGICAL_CORES)
     set(QMK_JOBS ${processor_count} CACHE STRING "Number of jobs of the QMK build")
 
+    # Each firmware build has its own QMK build directory and stack usage directory
+    # below these directories
+    set(QMK_BUILD_ROOT ${PROJECT_SOURCE_DIR}/.build/qmk)
+    set(STACK_USAGE_ROOT ${PROJECT_SOURCE_DIR}/.build/stack-usage)
     set(BUILD_FIRMWARE ${CMAKE_COMMAND} -DREPOSITORY=${PROJECT_SOURCE_DIR})
+    set(NORMAL_BUILD -DQMK_BUILD_DIRECTORY=${QMK_BUILD_ROOT}/normal
+        -DSTACK_USAGE_DIRECTORY=${STACK_USAGE_ROOT}/normal -DNAME_TAG=)
+    set(DEBUG_BUILD -DQMK_BUILD_DIRECTORY=${QMK_BUILD_ROOT}/debug
+        -DSTACK_USAGE_DIRECTORY=${STACK_USAGE_ROOT}/debug -DNAME_TAG=debug)
+
+    # `qmk userspace-compile` shows the build output only for a failed build, thus
+    # the firmware targets use `qmk compile`
+    set(qmk_compile_arguments compile -j ${QMK_JOBS} -kb zsa/moonlander/reva -km qgmlwy)
     add_custom_target(firmware
-        COMMAND ${BUILD_FIRMWARE} "-DQMK_ARGUMENTS=userspace-compile;-j;${QMK_JOBS}"
-            -P ${PROJECT_SOURCE_DIR}/src/ci/build-firmware.cmake
+        COMMAND ${BUILD_FIRMWARE} "-DQMK_ARGUMENTS=${qmk_compile_arguments}"
+            ${NORMAL_BUILD} -P ${PROJECT_SOURCE_DIR}/src/ci/build-firmware.cmake
         VERBATIM)
 
     # QMK writes its compile database into src/qmk/ and has no option for the
@@ -103,50 +116,85 @@ if("firmware" IN_LIST MOONLANDER_PARTS)
     # and the unit tests, so this target writes only the keymap database
     set(KEYMAP_DATABASE ${PROJECT_SOURCE_DIR}/.build/compile_commands.json)
     set(QMK_DATABASE ${PROJECT_SOURCE_DIR}/src/qmk/compile_commands.json)
-    set(qmk_compile_arguments compile -j ${QMK_JOBS} --compiledb
-        -kb zsa/moonlander/reva -km qgmlwy)
     set(keymap_directory
         ${PROJECT_SOURCE_DIR}/src/qmk/keyboards/zsa/moonlander/keymaps/qgmlwy)
+    set(WRITE_KEYMAP_DATABASE ${CMAKE_COMMAND} -DQMK_DATABASE=${QMK_DATABASE}
+        -DKEYMAP_C=${keymap_directory}/keymap.c)
     add_custom_target(compile-databases
-        COMMAND ${BUILD_FIRMWARE} "-DQMK_ARGUMENTS=${qmk_compile_arguments}"
+        COMMAND ${BUILD_FIRMWARE}
+            "-DQMK_ARGUMENTS=${qmk_compile_arguments};--compiledb" ${NORMAL_BUILD}
             -P ${PROJECT_SOURCE_DIR}/src/ci/build-firmware.cmake
-        COMMAND ${CMAKE_COMMAND} -DQMK_DATABASE=${QMK_DATABASE}
-            -DKEYMAP_C=${keymap_directory}/keymap.c
-            -DCOMPILE_DATABASE=${KEYMAP_DATABASE}
+        COMMAND ${WRITE_KEYMAP_DATABASE} -DCOMPILE_DATABASE=${KEYMAP_DATABASE}
             -P ${PROJECT_SOURCE_DIR}/src/ci/keymap-compile-database.cmake
         VERBATIM)
 
-    # Each firmware file name contains the commit, so clean cannot name the firmware
-    # files. clean removes the keymap database
-    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-        ${KEYMAP_DATABASE} ${QMK_DATABASE})
+    # Profiling debug build, as rules.mk builds it for DEBUG_PROFILE=yes. The analysis
+    # reads its compile database, because only the debug build compiles the profiling
+    # sources. The debug build is a target and not a make variable, because the
+    # Makefile contains only aliases, and the debug firmware has its own file name
+    set(DEBUG_KEYMAP_DATABASE ${PROJECT_SOURCE_DIR}/.build/debug/compile_commands.json)
+    add_custom_target(debug-firmware
+        COMMAND ${BUILD_FIRMWARE}
+            "-DQMK_ARGUMENTS=${qmk_compile_arguments};--compiledb;-e;DEBUG_PROFILE=yes"
+            ${DEBUG_BUILD} -P ${PROJECT_SOURCE_DIR}/src/ci/build-firmware.cmake
+        COMMAND ${WRITE_KEYMAP_DATABASE} -DCOMPILE_DATABASE=${DEBUG_KEYMAP_DATABASE}
+            -P ${PROJECT_SOURCE_DIR}/src/ci/keymap-compile-database.cmake
+        VERBATIM)
 
-    # Each keymap check stops if the keymap database is missing
-    set(REQUIRE_KEYMAP_DATABASE ${CMAKE_COMMAND} -DCOMPILE_DATABASE=${KEYMAP_DATABASE}
-        -P ${PROJECT_SOURCE_DIR}/src/ci/require-keymap-database.cmake)
+    # Report reads the output of the last normal and debug builds and builds nothing,
+    # so CI can show the report of the firmware that it built
+    add_custom_target(memory-report
+        COMMAND ${CMAKE_COMMAND} -DREPOSITORY=${PROJECT_SOURCE_DIR}
+            "-DBUILD_NAMES=normal;debug" -DQMK_BUILD_ROOT=${QMK_BUILD_ROOT}
+            -DSTACK_USAGE_ROOT=${STACK_USAGE_ROOT}
+            -DREPORT_FILE=${PROJECT_SOURCE_DIR}/.build/memory-report.txt
+            -P ${PROJECT_SOURCE_DIR}/src/ci/memory-report.cmake
+        VERBATIM)
+
+    # Each firmware file name contains the commit, so clean cannot name the firmware
+    # files. clean removes the keymap databases
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${KEYMAP_DATABASE} ${DEBUG_KEYMAP_DATABASE} ${QMK_DATABASE})
+
     file(GLOB_RECURSE KEYMAP_SOURCES CONFIGURE_DEPENDS
         ${PROJECT_SOURCE_DIR}/src/qmk/keyboards/*.c)
     list(SORT KEYMAP_SOURCES)
 
-    set(clang_tidy_keymap_command clang-tidy --quiet -p ${PROJECT_SOURCE_DIR}/.build
-        ${KEYMAP_SOURCES})
-    add_custom_target(clang-tidy-keymap
-        COMMAND ${REQUIRE_KEYMAP_DATABASE}
-        COMMAND ${CMAKE_COMMAND} -DCHECK_NAME=clang-tidy-keymap
-            "-DCHECK_COMMAND=${clang_tidy_keymap_command}"
-            -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
-        VERBATIM)
+    # add_keymap_checks(<suffix> <keymap database>)
+    #
+    # Adds the checks clang-tidy-keymap<suffix> and gcc-strict<suffix> on the keymap
+    # database to analyze. Each check stops if the database is missing, because
+    # without the database the check reads the keymap with no QMK flags
+    function(add_keymap_checks suffix database)
+        cmake_path(GET database PARENT_PATH database_directory)
+        set(require_database ${CMAKE_COMMAND} -DCOMPILE_DATABASE=${database}
+            -P ${PROJECT_SOURCE_DIR}/src/ci/require-keymap-database.cmake)
 
-    set(gcc_strict_command ${CMAKE_COMMAND} -DCOMPILE_DATABASE=${KEYMAP_DATABASE}
-        -DUSERSPACE=${PROJECT_SOURCE_DIR}/src/qmk
-        -P ${PROJECT_SOURCE_DIR}/src/ci/gcc-strict.cmake)
-    add_custom_target(gcc-strict
-        COMMAND ${REQUIRE_KEYMAP_DATABASE}
-        COMMAND ${CMAKE_COMMAND} -DCHECK_NAME=gcc-strict
-            "-DCHECK_COMMAND=${gcc_strict_command}"
-            -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
-        VERBATIM)
-    add_dependencies(analyze clang-tidy-keymap gcc-strict)
+        set(clang_tidy_command clang-tidy --quiet -p ${database_directory}
+            ${KEYMAP_SOURCES})
+        add_custom_target(clang-tidy-keymap${suffix}
+            COMMAND ${require_database}
+            COMMAND ${CMAKE_COMMAND} -DCHECK_NAME=clang-tidy-keymap${suffix}
+                "-DCHECK_COMMAND=${clang_tidy_command}"
+                -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
+            VERBATIM)
+
+        set(gcc_strict_command ${CMAKE_COMMAND} -DCOMPILE_DATABASE=${database}
+            -DUSERSPACE=${PROJECT_SOURCE_DIR}/src/qmk
+            -P ${PROJECT_SOURCE_DIR}/src/ci/gcc-strict.cmake)
+        add_custom_target(gcc-strict${suffix}
+            COMMAND ${require_database}
+            COMMAND ${CMAKE_COMMAND} -DCHECK_NAME=gcc-strict${suffix}
+                "-DCHECK_COMMAND=${gcc_strict_command}"
+                -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
+            VERBATIM)
+        add_dependencies(analyze clang-tidy-keymap${suffix} gcc-strict${suffix})
+    endfunction()
+
+    # Only the debug database has entries for the profiling sources, and only there
+    # DEBUG_PROFILE is set
+    add_keymap_checks("" ${KEYMAP_DATABASE})
+    add_keymap_checks(-debug ${DEBUG_KEYMAP_DATABASE})
 endif()
 
 # ----------------------------------------------------------------------------------

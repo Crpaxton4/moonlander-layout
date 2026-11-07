@@ -233,7 +233,7 @@ jobs:
           path: ${{ runner.temp }}/tree-sitter-debs
           key: ${{ steps.tree-sitter-key.outputs.key }}
 
-      - name: "Build firmware, host programs and unit tests"
+      - name: "Build firmware, debug firmware, host programs and unit tests"
         id: build
         # Input is empty outside a call, and then the job builds all parts. PR values
         # are empty outside a PR, and the tag is empty outside a release
@@ -256,12 +256,27 @@ jobs:
           path: ${{ runner.temp }}/ccache
           key: ${{ steps.toolchain-key.outputs.ccache-prefix }}${{ github.run_id }}-${{ github.run_attempt }}
 
-      # upload-artifact skips the dot directory .build/ without include-hidden-files
+      # Build workflow writes the memory report of the normal and the debug firmware
+      - name: "Summarize memory use"
+        if: ${{ !cancelled() && !inputs.firmware-only && steps.build.outcome == 'success' }}
+        run: .github/scripts/build/summarize-memory-report.sh
+
+      # upload-artifact skips the dot directory .build/ without include-hidden-files.
+      # A release gets the firmware artifact, so it contains no debug firmware
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: firmware
-          path: .build/*.bin
+          path: |
+            .build/*.bin
+            !.build/*-debug.bin
+          include-hidden-files: true
+      # Release build does not build the debug firmware
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() && !inputs.firmware-only }}
+        with:
+          name: debug-firmware
+          path: .build/*-debug.bin
           include-hidden-files: true
 
       # Only the Test and Analyze jobs of this run read the build output

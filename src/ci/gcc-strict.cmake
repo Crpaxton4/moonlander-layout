@@ -42,9 +42,10 @@ set(GCC_STRICT_FLAGS
 
 # QMK adds the include directories and the predefined macros of gcc for clang
 # tools, and gcc stops on a new definition of __STDC__. -o and the dependency
-# flags write files into the QMK build directory
+# flags write files into the QMK build directory. -fstack-usage writes a file into
+# the working directory, which is the qmk_firmware checkout
 set(FLAGS_WITH_VALUE -o -MF -MT -MQ -isystem)
-set(FLAGS_WITHOUT_VALUE -MMD -MP -MD)
+set(FLAGS_WITHOUT_VALUE -MMD -MP -MD -fstack-usage)
 
 # strict_arguments(<variable> <entry>)
 #
