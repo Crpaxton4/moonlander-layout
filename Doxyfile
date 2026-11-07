@@ -1,4 +1,4 @@
-# `make analyze` runs Doxygen from the repository root, so the paths start there
+# Doxygen check runs from the repository root, so the paths start there
 INPUT = src/qmk/keyboards src/check_standards src/key_log_converter
 RECURSIVE = YES
 FILE_PATTERNS = *.c *.h *.inc

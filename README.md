@@ -71,20 +71,21 @@ the firmware.
 ## Host programs
 
 [CMake][cmake] builds the standards checker, the key log converter and the keymap unit
-tests. Each CMake preset in `CMakePresets.json` has its build directory in `.build/`:
+tests, and runs the static analysis. Each CMake preset in `CMakePresets.json` has its
+build directory in `.build/`:
 
-| Configure preset | Parts                                    | Build directory      |
-| ---------------- | ---------------------------------------- | -------------------- |
-| `dev`            | The checker, the converter and the tests | `.build/cmake/`      |
-| `checker`        | The standards checker                    | `.build/checker/`    |
-| `converter`      | The key log converter                    | `.build/converter/`  |
-| `unit-tests`     | The keymap unit tests                    | `.build/unit-tests/` |
-| `windows`        | The key log converter for Windows        | `.build/windows/`    |
+| Configure preset | Parts                             | Build directory      |
+| ---------------- | --------------------------------- | -------------------- |
+| `dev`            | All parts and the static analysis | `.build/cmake/`      |
+| `checker`        | The standards checker             | `.build/checker/`    |
+| `converter`      | The key log converter             | `.build/converter/`  |
+| `unit-tests`     | The keymap unit tests             | `.build/unit-tests/` |
+| `windows`        | The key log converter for Windows | `.build/windows/`    |
 
 The configure step writes the compile database `compile_commands.json` into the build
-directory. Each workflow preset does the configure step, the build and the tests of
-one configure preset. For example, this command builds all parts in `.build/cmake/`
-and runs all the tests:
+directory. Each workflow preset does the configure step and the build of one configure
+preset. The test workflow presets also run the tests. For example, this command builds
+all parts in `.build/cmake/` and runs all the tests:
 
 ```bash
 cmake --workflow --preset test
@@ -163,28 +164,42 @@ To run the checks, use these commands:
 | Command                                    | Result                       |
 | ------------------------------------------ | ---------------------------- |
 | `pre-commit run --all-files`               | Runs the hooks.              |
-| `make analyze`                             | Runs the static analysis.    |
+| `cmake --workflow --preset analyze`        | Runs the static analysis.    |
 | `cmake --workflow --preset checker-test`   | Tests the standards checker. |
 | `cmake --workflow --preset qmk-test`       | Runs the keymap unit tests.  |
 | `cmake --workflow --preset converter-test` | Tests the key log converter. |
 
-The static analysis runs clang-tidy, Doxygen and gcc-strict. The clang-tidy checks of
-the standards checker and of the key log converter are CMake targets. Each target
-needs the configure step of its preset, for example from the workflow preset above:
+The static analysis reads the compile databases and builds no program. Before the
+analysis, run `make compiledb`, because the keymap checks read the compile database of
+the firmware. The analysis runs these checks, and each check is a CMake target:
+
+| Target                  | Check                                                |
+| ----------------------- | ---------------------------------------------------- |
+| `clang-tidy-keymap`     | clang-tidy on the keymap                             |
+| `clang-tidy-checker`    | clang-tidy on the standards checker                  |
+| `clang-tidy-converter`  | clang-tidy on the key log converter                  |
+| `clang-tidy-unit-tests` | clang-tidy on the keymap unit tests                  |
+| `doxygen`               | Doxygen on the keymap, the checker and the converter |
+| `gcc-strict`            | gcc with more warnings on the keymap                 |
+
+The analysis continues after a failed check and shows each failed check. Each check
+prints its duration in a line that starts with `timing`. To run one check, run its
+target in the build directory of the `dev` preset. For example, these commands do the
+configure step and run clang-tidy on the standards checker:
 
 ```bash
-cmake --build --preset checker --target clang-tidy-checker
-cmake --build --preset converter --target clang-tidy-converter
+cmake --preset dev
+cmake --build --preset dev --target clang-tidy-checker
 ```
 
 The hooks are editorconfig-checker, clang-format, Prettier, shellcheck, shfmt,
 actionlint and the standards checker. Git runs these hooks at each commit. The
 standards checker hook builds the checker with the `checker` preset.
 
-The QMK build uses `-Wall -Werror`. clang-tidy and `make gcc-strict` add more compiler
-warnings for the keymap files, but not for the QMK files. `make gcc-strict` compiles
-the keymap files again with the QMK gcc. In that compilation, the QMK headers are
-system headers, thus gcc shows no findings in them.
+The QMK build uses `-Wall -Werror`. clang-tidy and the `gcc-strict` check add more
+compiler warnings for the keymap files, but not for the QMK files. The `gcc-strict`
+check compiles the keymap files again with the QMK gcc. In that compilation, the QMK
+headers are system headers, thus gcc shows no findings in them.
 
 The standards checker has two rules for the `.c`, `.h` and `.inc` files:
 
@@ -225,7 +240,7 @@ The CMake presets give the build directory and the compile database
 `.build/cmake/compile_commands.json`. Thus, tools that read CMake presets can show,
 run and debug each test.
 
-`make analyze` also runs clang-tidy on the test code (`make qmk-test-clang-tidy`).
+The static analysis also runs clang-tidy on the test code (`clang-tidy-unit-tests`).
 
 ## Key log converter
 

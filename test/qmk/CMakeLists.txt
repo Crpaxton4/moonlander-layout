@@ -133,3 +133,14 @@ add_cmocka_test(${KEYMAP_TESTS}/bracket_pairs/bracket_pairs_logic_test.c
 add_cmocka_test(${KEYMAP_TESTS}/bracket_pairs/bracket_pairs_test.c
     LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/plain_mode/plain_mode_test.c LIBRARIES qgmlwy_keymap)
+
+# CMake writes the compile database at the configure step, so clang-tidy does not
+# need a build of the tests
+file(GLOB_RECURSE UNIT_TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
+list(SORT UNIT_TEST_SOURCES)
+add_custom_target(clang-tidy-unit-tests
+    COMMAND ${CMAKE_COMMAND} -DCHECK_NAME=clang-tidy-unit-tests
+        "-DCHECK_COMMAND=clang-tidy;--quiet;-p;${CMAKE_BINARY_DIR};${UNIT_TEST_SOURCES}"
+        -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
+    VERBATIM)
+add_dependencies(analyze clang-tidy-unit-tests)
