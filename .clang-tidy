@@ -17,11 +17,16 @@ WarningsAsErrors: "*"
 
 HeaderFilterRegex: "/src/qmk/keyboards/"
 
-# clang does not know the first two gcc flags. -Werror bypasses Checks, and the
-# macro causes a finding that HeaderFilterRegex cannot exclude
+# clang does not know the gcc flags. -Werror bypasses Checks, and the macro causes
+# a finding that HeaderFilterRegex cannot exclude
 RemovedArgs:
     - -mno-thumb-interwork
     - -fsingle-precision-constant
+    - -fanalyzer
+    - -Wduplicated-cond
+    - -Wduplicated-branches
+    - -Wlogical-op
+    - -Wjump-misses-init
     - -Werror
     - -DQMK_MCU_ARCH=cortex-m4
 
