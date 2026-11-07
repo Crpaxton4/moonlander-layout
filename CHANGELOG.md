@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.3.0...v1.4.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add a number and symbol mode ([#146](https://github.com/Crpaxton4/moonlander-layout/issues/146)) ([ddce701](https://github.com/Crpaxton4/moonlander-layout/commit/ddce701b7a46abaa00ac6853c787ecb2ce4e901e))
+
 ## [1.3.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.2.0...v1.3.0) (2026-11-07)
 
 
