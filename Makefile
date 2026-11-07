@@ -97,8 +97,14 @@ require_grammar = $(if $(GRAMMAR),,$(error No C grammar in $(GRAMMAR_DIR): \
 	install tree-sitter-c-src))
 
 CFLAGS   ?= -O2
-WARNINGS := -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
-	-Wstrict-prototypes -Wmissing-prototypes -Werror
+# Every warning blocks the build. -fanalyzer is GCC's path-based static analysis
+WARNINGS := -std=c11 -Werror -Wall -Wextra -Wpedantic -Wconversion \
+	-Wsign-conversion -Wshadow -Wstrict-prototypes -Wmissing-prototypes \
+	-Wmissing-declarations -Wold-style-definition -Wredundant-decls -Wcast-qual \
+	-Wcast-align -Wbad-function-cast -Wpointer-arith -Wwrite-strings -Wundef \
+	-Wdouble-promotion -Wfloat-equal -Wformat=2 -Wswitch-enum -Wvla -Walloca \
+	-Wnull-dereference -Wduplicated-cond -Wduplicated-branches -Wlogical-op \
+	-Wjump-misses-init -fanalyzer
 
 CHECKER_DIR     := src/check_standards
 CHECKER_TESTS   := test/check_standards
