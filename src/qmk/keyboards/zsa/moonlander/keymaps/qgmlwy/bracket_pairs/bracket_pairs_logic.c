@@ -1,0 +1,280 @@
+/** @file
+ * Pair stack of the bracket and quote pairs.
+ */
+
+#include "bracket_pairs/bracket_pairs_logic.h"
+
+/** Characters of one pair: the opener and the closer */
+#define PAIR_CHARACTERS 2
+
+/** Index step from one entry to the entry above it */
+#define ONE_ENTRY 1
+
+/** Result of a key that goes on with no change */
+static const pair_result_t pass_result = {.passes = true};
+
+/** Result of a new pair, with no kind yet: the pair, then Left into it */
+static const pair_result_t open_pair_result = {
+    .output_count = 3,
+    .outputs      = {PAIR_OUTPUT_OPENER, PAIR_OUTPUT_CLOSER, PAIR_OUTPUT_LEFT},
+};
+
+/** Result of a lone opener, with no kind yet: the opener only */
+static const pair_result_t lone_opener_result = {
+    .output_count = 1,
+    .outputs      = {PAIR_OUTPUT_OPENER},
+};
+
+/** Result of a jump-out: Right, past the closer */
+static const pair_result_t jump_out_result = {
+    .output_count = 1,
+    .outputs      = {PAIR_OUTPUT_RIGHT},
+};
+
+/** Result of a delete of an empty pair: Backspace, then Delete */
+static const pair_result_t delete_pair_result = {
+    .output_count = 2,
+    .outputs      = {PAIR_OUTPUT_BACKSPACE, PAIR_OUTPUT_DELETE},
+};
+
+/**
+ * Gives the top entry of a stack that is not empty.
+ *
+ * @param stack Pair stack with one entry or more.
+ * @return Top entry.
+ */
+static pair_entry_t *top_entry(pair_stack_t *stack) {
+    return &stack->entries[stack->depth - ONE_ENTRY];
+}
+
+/**
+ * Lets a key that types nothing pass.
+ *
+ * @param stack Pair stack.
+ * @param kind  Not used.
+ * @return Result that lets the key pass.
+ */
+static pair_result_t push_no_character(pair_stack_t *stack, enum pair_kind kind) {
+    (void)stack;
+    (void)kind;
+    return pass_result;
+}
+
+/**
+ * Counts a character in the innermost pair, and lets the key pass.
+ *
+ * @param stack Pair stack.
+ * @param kind  Not used.
+ * @return Result that lets the key pass.
+ */
+static pair_result_t push_character(pair_stack_t *stack, enum pair_kind kind) {
+    (void)kind;
+    if (stack->depth > 0) {
+        top_entry(stack)->count++;
+    }
+    return pass_result;
+}
+
+/**
+ * Counts a lone opener in the innermost pair. The module sends the opener itself,
+ * because a held Shift would change "[" into "{" on the host.
+ *
+ * @param stack Pair stack.
+ * @param kind  Pair kind of the opener.
+ * @return Result that sends the opener only.
+ */
+static pair_result_t push_lone_opener(pair_stack_t *stack, enum pair_kind kind) {
+    (void)push_character(stack, kind);
+    pair_result_t result = lone_opener_result;
+    result.kind          = kind;
+    return result;
+}
+
+/**
+ * Removes the bottom entry and moves each other entry down by one.
+ *
+ * @param stack Pair stack with one entry or more.
+ */
+static void remove_oldest_entry(pair_stack_t *stack) {
+    stack->depth--;
+    for (uint8_t index = 0; index < stack->depth; index++) {
+        stack->entries[index] = stack->entries[index + ONE_ENTRY];
+    }
+}
+
+/**
+ * Puts a new pair with no characters on the stack.
+ *
+ * @param stack Pair stack.
+ * @param kind  Kind of the pair.
+ * @return Result that sends the pair and puts the cursor between its characters.
+ */
+static pair_result_t open_pair(pair_stack_t *stack, enum pair_kind kind) {
+    if (stack->depth == PAIR_STACK_CAPACITY) {
+        remove_oldest_entry(stack);
+    }
+    stack->entries[stack->depth] = (pair_entry_t){.kind = kind};
+    stack->depth++;
+    pair_result_t result = open_pair_result;
+    result.kind          = kind;
+    return result;
+}
+
+/**
+ * Removes the top entry, and adds its characters and its two pair characters to
+ * the new top entry, because the cursor is now after the pair.
+ *
+ * @param stack Pair stack with one entry or more.
+ * @return Result that sends Right in place of the key.
+ */
+static pair_result_t jump_out(pair_stack_t *stack) {
+    uint16_t removed_count = top_entry(stack)->count;
+    stack->depth--;
+    if (stack->depth > 0) {
+        pair_entry_t *new_top = top_entry(stack);
+        new_top->count = (uint16_t)(new_top->count + removed_count + PAIR_CHARACTERS);
+    }
+    return jump_out_result;
+}
+
+/**
+ * Jumps out of the innermost pair, or lets Tab pass with no pair.
+ *
+ * @param stack Pair stack.
+ * @param kind  Not used.
+ * @return Result of the push.
+ */
+static pair_result_t push_tab(pair_stack_t *stack, enum pair_kind kind) {
+    (void)kind;
+    if (stack->depth == 0) {
+        return pass_result;
+    }
+    return jump_out(stack);
+}
+
+void pair_stack_clear(pair_stack_t *stack) {
+    stack->depth = 0;
+}
+
+/**
+ * Jumps out of the innermost pair for its own closer. Any other closer clears the
+ * stack, because the host text no longer matches it. With no pair, the closer
+ * passes.
+ *
+ * @param stack Pair stack.
+ * @param kind  Pair of the closer.
+ * @return Result of the push.
+ */
+static pair_result_t push_closer(pair_stack_t *stack, enum pair_kind kind) {
+    if (stack->depth == 0) {
+        return pass_result;
+    } else if (top_entry(stack)->kind != kind) {
+        pair_stack_clear(stack);
+        return pass_result;
+    }
+    return jump_out(stack);
+}
+
+/**
+ * Jumps out of the innermost pair if it is a pair of the same quote, because a
+ * quote is its own closer. Otherwise the quote opens a new pair.
+ *
+ * @param stack Pair stack.
+ * @param kind  Pair of the quote.
+ * @return Result of the push.
+ */
+static pair_result_t push_quote(pair_stack_t *stack, enum pair_kind kind) {
+    if (stack->depth > 0 && top_entry(stack)->kind == kind) {
+        return jump_out(stack);
+    }
+    return open_pair(stack, kind);
+}
+
+/**
+ * Lets Backspace delete one character in the innermost pair. In an empty pair,
+ * Backspace deletes the opener and Delete deletes the closer, so no stray closer
+ * stays.
+ *
+ * @param stack Pair stack.
+ * @param kind  Not used.
+ * @return Result of the push.
+ */
+static pair_result_t push_backspace(pair_stack_t *stack, enum pair_kind kind) {
+    (void)kind;
+    if (stack->depth == 0) {
+        return pass_result;
+    } else if (top_entry(stack)->count > 0) {
+        top_entry(stack)->count--;
+        return pass_result;
+    }
+    stack->depth--;
+    return delete_pair_result;
+}
+
+/**
+ * Clears the stack for a key that can move the host cursor, and lets the key pass.
+ *
+ * @param stack Pair stack.
+ * @param kind  Not used.
+ * @return Result that lets the key pass.
+ */
+static pair_result_t push_clearing_key(pair_stack_t *stack, enum pair_kind kind) {
+    (void)kind;
+    pair_stack_clear(stack);
+    return pass_result;
+}
+
+/**
+ * Gives the result of one key push of a key class, and changes the stack.
+ *
+ * @param stack Pair stack.
+ * @param kind  Pair of an opener, closer or quote.
+ * @return Result of the push.
+ */
+typedef pair_result_t (*key_handler_t)(pair_stack_t *stack, enum pair_kind kind);
+
+/** Handler of each key class, indexed by key class */
+static const key_handler_t key_handlers[] = {
+    [PAIR_KEY_NO_CHARACTER] = push_no_character,
+    [PAIR_KEY_CHARACTER]    = push_character,
+    [PAIR_KEY_OPENER]       = open_pair,
+    [PAIR_KEY_LONE_OPENER]  = push_lone_opener,
+    [PAIR_KEY_CLOSER]       = push_closer,
+    [PAIR_KEY_QUOTE]        = push_quote,
+    [PAIR_KEY_TAB]          = push_tab,
+    [PAIR_KEY_BACKSPACE]    = push_backspace,
+    [PAIR_KEY_CLEARING]     = push_clearing_key,
+};
+
+/**
+ * Clears the stack if no key push occurred for the idle time, and keeps the time of
+ * this push.
+ *
+ * @param stack Pair stack.
+ * @param now   Time of the push in ms.
+ */
+static void note_push_time(pair_stack_t *stack, uint32_t now) {
+    if (now - stack->last_push_time >= PAIR_IDLE_TIME) {
+        pair_stack_clear(stack);
+    }
+    stack->last_push_time = now;
+}
+
+pair_result_t pair_stack_push(pair_stack_t *stack, pair_key_t key, uint32_t now) {
+    note_push_time(stack, now);
+    return key_handlers[key.key_class](stack, key.kind);
+}
+
+void pair_stack_count_sent_key(pair_stack_t *stack, pair_key_t sent, uint32_t now) {
+    note_push_time(stack, now);
+    if (stack->depth == 0) {
+        return;
+    } else if (sent.key_class == PAIR_KEY_CHARACTER) {
+        top_entry(stack)->count++;
+    } else if (sent.key_class == PAIR_KEY_BACKSPACE && top_entry(stack)->count > 0) {
+        top_entry(stack)->count--;
+    } else if (sent.key_class == PAIR_KEY_BACKSPACE) {
+        // Backspace deleted the opener
+        stack->depth--;
+    }
+}

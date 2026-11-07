@@ -16,3 +16,5 @@ SRC += symbol_holds/symbol_holds.c
 SRC += precision_key/precision_key.c
 SRC += case_modes/case_modes_logic.c
 SRC += case_modes/case_modes.c
+SRC += bracket_pairs/bracket_pairs_logic.c
+SRC += bracket_pairs/bracket_pairs.c
