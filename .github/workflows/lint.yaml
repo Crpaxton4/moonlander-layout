@@ -13,16 +13,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Keep equal to PRE_COMMIT_VERSION in setup.sh
-  PRE_COMMIT_VERSION: "4.7.0"
-  # Keep equal to UV_VERSION in build.yaml
-  UV_VERSION: "0.13.7"
-  # Keep equal to SHELLCHECK_VERSION in setup.sh
-  SHELLCHECK_VERSION: "0.9.0-1"
-  # Keep equal to TREE_SITTER_VERSION and TREE_SITTER_C_VERSION in
-  # setup.sh
-  TREE_SITTER_VERSION: "0.20.8-2"
-  TREE_SITTER_C_VERSION: "0.20.5-2"
   # All hooks exclude these release-please files, so a PR that changes only them
   # skips the job. A `paths:` filter keeps the required check pending
   RELEASE_ONLY_PATHS: '^(CHANGELOG\.md|\.release-please-manifest\.json)$'
@@ -63,8 +53,10 @@ jobs:
     # Dependabot updates each SHA pin and its release comment on the same line
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
 
-      # Runner tool cache does not contain the .node-version release, so the job
+      # Runner tool cache does not contain the NODE_VERSION release, so the job
       # caches that release for setup-node
       - name: "Compute node cache key"
         id: node-key
@@ -78,12 +70,11 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version-file: .node-version
+          node-version: ${{ env.NODE_VERSION }}
       - run: .github/scripts/shared/install-npm-packages.sh
 
       - name: "Check node"
         env:
-          NODE_VERSION: ${{ steps.node-key.outputs.version }}
           NODE_DIR: ${{ steps.node-key.outputs.path }}
         run: .github/scripts/lint/check-node.sh
 

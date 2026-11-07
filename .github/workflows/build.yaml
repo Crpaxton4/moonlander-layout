@@ -29,9 +29,7 @@ concurrency:
 # A skipped job satisfies its required check, but a `paths:` filter keeps the
 # check pending
 env:
-  FIRMWARE_PATHS: '^src/(qmk|ci)/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
-  # Keep equal to UV_VERSION in lint.yaml
-  UV_VERSION: "0.13.7"
+  FIRMWARE_PATHS: '^src/(qmk|ci)/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
 
 jobs:
   changes:
@@ -76,13 +74,13 @@ jobs:
       # `qmk compile` never gets a missing submodule, so this list must contain all
       # submodules that the build needs
       QMK_SUBMODULES: "lib/chibios lib/chibios-contrib lib/lufa lib/printf modules/zsa"
-      # Keep equal to JQ_VERSION in setup.sh
-      JQ_VERSION: "1.7.1-3ubuntu0.24.04.2"
       CCACHE_VERSION: "4.14.2"
       CCACHE_SHA256: "b20ff6415151226ac5a10dfd6839700c694bd67d1871c8fddb266d366ff25bfb"
     # Dependabot updates each SHA pin and its release comment on the same line
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
 
       # Each run compares the checkout with the pin, so a cache never gives a different
       # commit
@@ -214,10 +212,6 @@ jobs:
 
       - name: "Install Doxygen"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
-        env:
-          # Keep equal to DOXYGEN_VERSION and DOXYGEN_SHA256 in setup.sh
-          DOXYGEN_VERSION: "1.18.0"
-          DOXYGEN_SHA256: "14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
         run: .github/scripts/build/install-doxygen.sh
 
       - name: "Run static analysis"
