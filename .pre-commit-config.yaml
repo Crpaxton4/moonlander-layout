@@ -63,7 +63,8 @@ repos:
     hooks:
       - id: shellcheck
         name: shellcheck
-        entry: shellcheck
+        # setup.sh sources versions.env, so shellcheck must follow that file
+        entry: shellcheck --external-sources
         language: system
         types: [shell]
         stages: [pre-commit, manual]
