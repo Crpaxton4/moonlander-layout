@@ -18,8 +18,11 @@
 
 // #region Macros
 
-/** Number of keys from F1 to F12 */
-#define FUNCTION_KEY_COUNT 12
+/** Number of digits 1 to 0 on the numpad of the special layer */
+#define NUMPAD_DIGIT_COUNT 10
+
+/** Matrix column of each half that is farthest from the column with the same index */
+#define LAST_MATRIX_COLUMN (MATRIX_COLS - 1)
 
 // #endregion
 
@@ -72,23 +75,52 @@ static uint8_t function_keys_in_row(uint8_t layer, uint8_t row) {
     return function_keys;
 }
 
+/**
+ * Fails the test if a digit of a right-hand row of the special layer does not have
+ * its Shift symbol at the mirrored position of the left hand.
+ *
+ * @param left_row Matrix row of the left half; the right half row is the same row.
+ * @return Number of digits in the right-hand row.
+ */
+static uint8_t assert_mirrored_digit_symbols(uint8_t left_row) {
+    uint8_t digits    = 0;
+    uint8_t right_row = (uint8_t)(left_row + RIGHT_NUMBER_ROW);
+    for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+        uint16_t digit = keycode_at_keymap_location(LAYER_SPECIAL, right_row, column);
+        if (digit < KC_1 || digit > KC_0) {
+            continue;
+        }
+        uint8_t  mirrored_column = (uint8_t)(LAST_MATRIX_COLUMN - column);
+        uint16_t symbol =
+            keycode_at_keymap_location(LAYER_SPECIAL, left_row, mirrored_column);
+        assert_int_equal(symbol, LSFT(digit));
+        digits++;
+    }
+    return digits;
+}
+
 static void keymap_number_of_layers(void **state) {
     (void)state;
     assert_int_equal(keymap_layer_count(), 5);
 }
 
-static void keymap_function_keys_only_on_the_base_number_row(void **state) {
+static void keymap_no_plain_function_key_on_any_layer(void **state) {
     (void)state;
-    uint8_t function_keys = 0;
+    // Holds of the top letter row send the F-keys, so no position sends one at once
     for (uint8_t layer = 0; layer < keymap_layer_count(); layer++) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-            function_keys += function_keys_in_row(layer, row);
+            assert_int_equal(function_keys_in_row(layer, row), 0);
         }
     }
-    assert_int_equal(function_keys, FUNCTION_KEY_COUNT);
-    uint8_t number_row_keys = function_keys_in_row(LAYER_BASE, LEFT_NUMBER_ROW);
-    number_row_keys += function_keys_in_row(LAYER_BASE, RIGHT_NUMBER_ROW);
-    assert_int_equal(number_row_keys, FUNCTION_KEY_COUNT);
+}
+
+static void keymap_special_left_symbols_mirror_the_numpad_digits(void **state) {
+    (void)state;
+    uint8_t digits = 0;
+    for (uint8_t row = LEFT_TOP_ROW; row <= (uint8_t)LEFT_BOTTOM_ROW; row++) {
+        digits += assert_mirrored_digit_symbols(row);
+    }
+    assert_int_equal(digits, NUMPAD_DIGIT_COUNT);
 }
 
 static void keymap_base_left_number_row(void **state) {
@@ -96,13 +128,13 @@ static void keymap_base_left_number_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_ESCAPE,
-                KC_F1,
-                KC_F2,
-                KC_F3,
-                KC_F4,
-                KC_F5,
-                KC_F6,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, LEFT_NUMBER_ROW, &expected);
@@ -113,13 +145,13 @@ static void keymap_base_left_top_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TAB,
-                KC_Q,
-                KC_G,
-                KC_M,
-                KC_L,
-                KC_W,
-                SNAKE_CASE_KEY,
+                LT(0, KC_TAB),
+                LT(0, KC_Q),
+                LT(0, KC_G),
+                LT(0, KC_M),
+                LT(0, KC_L),
+                LT(0, KC_W),
+                LT(0, KC_F6),
             },
     };
     assert_row(LAYER_BASE, LEFT_TOP_ROW, &expected);
@@ -147,7 +179,7 @@ static void keymap_base_left_bottom_letter_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
+                PROFILING_TOGGLE_KEY,
                 LT(0, KC_Z),
                 LT(0, KC_X),
                 LT(0, KC_C),
@@ -195,12 +227,12 @@ static void keymap_base_right_number_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_F7,
-                KC_F8,
-                KC_F9,
-                KC_F10,
-                KC_F11,
-                KC_F12,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 KC_NO,
             },
     };
@@ -212,12 +244,12 @@ static void keymap_base_right_top_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                CAMEL_CASE_KEY,
-                KC_Y,
-                KC_F,
-                KC_U,
-                KC_B,
-                KC_SEMICOLON,
+                LT(0, KC_F7),
+                LT(0, KC_Y),
+                LT(0, KC_F),
+                LT(0, KC_U),
+                LT(0, KC_B),
+                LT(0, KC_SEMICOLON),
                 KC_BACKSLASH,
             },
     };
@@ -708,11 +740,11 @@ static void keymap_special_left_top_row(void **state) {
         .keys =
             {
                 KC_TAB,
-                KC_TILDE,
-                KC_AT,
-                KC_CIRCUMFLEX,
-                KC_PERCENT,
                 KC_GRAVE,
+                KC_LEFT_PAREN,
+                KC_ASTERISK,
+                KC_AMPERSAND,
+                KC_NO,
                 KC_NO,
             },
     };
@@ -725,11 +757,11 @@ static void keymap_special_left_home_row(void **state) {
         .keys =
             {
                 SPECIAL_MODE_KEY,
-                KC_EXCLAIM,
-                KC_ASTERISK,
+                KC_TILDE,
+                KC_CIRCUMFLEX,
+                KC_PERCENT,
                 KC_DOLLAR,
-                KC_EQUAL,
-                KC_AMPERSAND,
+                KC_NO,
                 KC_NO,
             },
     };
@@ -742,10 +774,10 @@ static void keymap_special_left_bottom_letter_row(void **state) {
         .keys =
             {
                 KC_NO,
+                KC_NO,
                 KC_HASH,
-                KC_PIPE,
-                KC_PLUS,
-                KC_MINUS,
+                KC_AT,
+                KC_EXCLAIM,
                 KC_NO,
                 NO_PHYSICAL_KEY,
             },
@@ -760,9 +792,9 @@ static void keymap_special_left_bottom_row(void **state) {
             {
                 KC_NO,
                 KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_EQUAL,
+                KC_PLUS,
+                KC_RIGHT_PAREN,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -778,7 +810,7 @@ static void keymap_special_left_thumb_keys(void **state) {
                 [LEFT_LARGE_THUMB]  = KC_ENTER,
                 [LEFT_OUTER_THUMB]  = KC_SPACE,
                 [LEFT_MIDDLE_THUMB] = KC_BACKSPACE,
-                [LEFT_INNER_THUMB]  = KC_NO,
+                [LEFT_INNER_THUMB]  = KC_DELETE,
             },
     };
     assert_row(LAYER_SPECIAL, LEFT_THUMB_KEYS, &expected);
@@ -1112,7 +1144,7 @@ static void keymap_plain_r3_opaque_with_plain_keys(void **state) {
 /** Cases of this program, in the order of `keymaps` */
 static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_number_of_layers),
-    cmocka_unit_test(keymap_function_keys_only_on_the_base_number_row),
+    cmocka_unit_test(keymap_no_plain_function_key_on_any_layer),
     cmocka_unit_test(keymap_base_left_number_row),
     cmocka_unit_test(keymap_base_left_top_row),
     cmocka_unit_test(keymap_base_left_home_row),
@@ -1161,6 +1193,7 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_special_right_bottom_letter_row),
     cmocka_unit_test(keymap_special_right_bottom_row),
     cmocka_unit_test(keymap_special_right_thumb_keys),
+    cmocka_unit_test(keymap_special_left_symbols_mirror_the_numpad_digits),
     cmocka_unit_test(keymap_plain_left_number_row),
     cmocka_unit_test(keymap_plain_left_top_row),
     cmocka_unit_test(keymap_plain_left_home_row),

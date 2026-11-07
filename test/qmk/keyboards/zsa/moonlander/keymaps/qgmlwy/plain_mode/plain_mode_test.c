@@ -36,6 +36,9 @@
 /** Layer state of the plain mode */
 #define PLAIN_MODE ONLY_LAYER(LAYER_PLAIN)
 
+/** Tap count that QMK gives both events of the tap of a tap-hold key */
+#define ONE_TAP 1
+
 /** Top cursor speed of the keymap, in counts per movement report */
 #define TOP_SPEED 20
 
@@ -65,6 +68,18 @@ static bool tap_key(uint16_t keycode) {
     bool push_result = send_key_event(keycode, true);
     send_key_event(keycode, false);
     return push_result;
+}
+
+/**
+ * Taps a tap-hold key. QMK gives both events of a tap a tap count of 1.
+ *
+ * @param keycode Keycode of a layer-tap or mod-tap key.
+ */
+static void tap_tap_hold_key(uint16_t keycode) {
+    keyrecord_t record = {.event = {.pressed = true}, .tap = {.count = ONE_TAP}};
+    process_record_user(keycode, &record);
+    record.event.pressed = false;
+    process_record_user(keycode, &record);
 }
 
 /**
@@ -128,7 +143,7 @@ static void plain_mode_special_mode_r10_combo_does_nothing(void **state) {
 static void plain_mode_start_ends_the_case_mode(void **state) {
     (void)state;
     start_with_layers(NORMAL_MODE);
-    tap_key(SNAKE_CASE_KEY);
+    tap_tap_hold_key(SNAKE_CASE_KEY);
     assert_true(tap_key(KC_A));
     tap_key(PLAIN_MODE_TOGGLE);
     // Back to the normal mode, which has only the base layer
@@ -165,7 +180,7 @@ static void plain_mode_r5_bracket_pairs_do_not_operate(void **state) {
 static void plain_mode_r5_case_modes_do_not_operate(void **state) {
     (void)state;
     start_with_layers(PLAIN_MODE);
-    assert_true(tap_key(SNAKE_CASE_KEY));
+    assert_true(tap_key(CONSTANT_CASE_KEY));
     assert_true(tap_key(KC_A));
     assert_true(tap_key(KC_SPACE));
     assert_recorded_calls(NULL, 0);

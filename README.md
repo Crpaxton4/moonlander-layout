@@ -110,9 +110,9 @@ writes the compile database of the debug firmware.
 
 ### Toggle key
 
-In the debug firmware, the key at (4,0) switches profiling on and off. It is the
-leftmost key of the bottom row of the left half. In the normal firmware, this key
-does nothing. Profiling is off when the keyboard starts. When profiling goes on, all
+In the debug firmware, the key at (3,0) switches profiling on and off. It is the
+leftmost key of the bottom letter row of the left half. In the normal firmware, this
+key does nothing. Profiling is off when the keyboard starts. When profiling goes on, all
 the values go back to zero.
 
 ### Profile records

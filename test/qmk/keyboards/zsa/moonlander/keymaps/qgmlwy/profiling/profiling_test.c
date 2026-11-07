@@ -38,7 +38,7 @@
 /** Shortest time step */
 #define ONE_MILLISECOND 1
 
-/** Matrix column of the toggle key in LEFT_BOTTOM_ROW */
+/** Matrix column of the toggle key (3,0) in LEFT_BOTTOM_LETTER_ROW */
 #define TOGGLE_KEY_COLUMN 0
 
 /** Layer state with one layer on */
@@ -141,11 +141,15 @@ static void scan_at_interval_end(void) {
     matrix_scan_user();
 }
 
-static void profiling_toggle_key_is_at_left_bottom_row_column_0(void **state) {
+static void profiling_toggle_key_is_at_left_bottom_letter_row_column_0(void **state) {
     (void)state;
-    uint16_t keycode =
-        keycode_at_keymap_location(LAYER_BASE, LEFT_BOTTOM_ROW, TOGGLE_KEY_COLUMN);
+    uint8_t  row     = LEFT_BOTTOM_LETTER_ROW;
+    uint16_t keycode = keycode_at_keymap_location(LAYER_BASE, row, TOGGLE_KEY_COLUMN);
     assert_int_equal(keycode, PROFILING_TOGGLE);
+    // Position (4,0) under the toggle key sends no key
+    row     = LEFT_BOTTOM_ROW;
+    keycode = keycode_at_keymap_location(LAYER_BASE, row, TOGGLE_KEY_COLUMN);
+    assert_int_equal(keycode, KC_NO);
 }
 
 static void profiling_off_writes_no_records(void **state) {
@@ -223,7 +227,7 @@ static void profiling_records_are_for_one_interval(void **state) {
 static void profiling_handled_event_skips_later_handlers(void **state) {
     (void)state;
     start_with_profiling(true);
-    assert_false(send_key_event(SNAKE_CASE_KEY, true));
+    assert_false(send_key_event(CONSTANT_CASE_KEY, true));
     scan_at_interval_end();
     case_modes_end_all();
     assert_console_text("KL,P,5000,record_user,1,40,40\n"
@@ -283,7 +287,7 @@ static void profiling_toggle_on_again_clears_statistics(void **state) {
 
 /** Cases of this program, in run order */
 static const struct CMUnitTest profiling_cases[] = {
-    cmocka_unit_test(profiling_toggle_key_is_at_left_bottom_row_column_0),
+    cmocka_unit_test(profiling_toggle_key_is_at_left_bottom_letter_row_column_0),
     cmocka_unit_test(profiling_off_writes_no_records),
     cmocka_unit_test(profiling_toggle_writes_clock_record),
     cmocka_unit_test(profiling_toggle_sends_no_key),

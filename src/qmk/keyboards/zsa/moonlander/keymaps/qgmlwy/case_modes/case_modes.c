@@ -90,6 +90,21 @@ static enum case_mode mode_of_key(uint16_t keycode) {
 }
 
 /**
+ * Gives the mode that a push starts. A hold of the snake_case or camelCase key
+ * sends its F-key, so only a tap of a tap-hold mode key starts a mode.
+ *
+ * @param keycode Keycode of the pushed key.
+ * @param record  Key event, with its tap count.
+ * @return Mode of the push, or CASE_MODE_OFF for a push that is not a mode key.
+ */
+static enum case_mode mode_of_push(uint16_t keycode, const keyrecord_t *record) {
+    if (IS_QK_LAYER_TAP(keycode) && record->tap.count == 0) {
+        return CASE_MODE_OFF;
+    }
+    return mode_of_key(keycode);
+}
+
+/**
  * Gives the key that a push sends: the tap key for the tap of a mod-tap or
  * layer-tap key, the keycode itself else.
  *
@@ -140,12 +155,13 @@ static enum case_key_class class_of_text_key(uint16_t key) {
 /**
  * Gives the key class of a pushed key.
  *
- * @param key    Sent key, from sent_key().
- * @param record Key event, with its tap count.
+ * @param keycode Keycode of the pushed key.
+ * @param record  Key event, with its tap count.
  * @return Key class, with the mode of a mode key.
  */
-static case_key_t classify_key(uint16_t key, const keyrecord_t *record) {
-    enum case_mode mode = mode_of_key(key);
+static case_key_t classify_key(uint16_t keycode, const keyrecord_t *record) {
+    uint16_t       key  = sent_key(keycode, record);
+    enum case_mode mode = mode_of_push(keycode, record);
     if (mode != CASE_MODE_OFF) {
         return (case_key_t){.key_class = CASE_KEY_MODE, .mode = mode};
     } else if (is_modifier_push(key, record)) {
@@ -232,8 +248,9 @@ bool process_case_modes(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) {
         return true;
     }
-    uint16_t         key    = sent_key(keycode, record);
-    enum case_action action = case_modes_push(&case_modes, classify_key(key, record));
+    uint16_t         key = sent_key(keycode, record);
+    enum case_action action =
+        case_modes_push(&case_modes, classify_key(keycode, record));
     return action_handlers[action](key);
 }
 

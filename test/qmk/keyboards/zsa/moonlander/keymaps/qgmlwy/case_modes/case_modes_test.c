@@ -179,6 +179,35 @@ static void assert_host_got(const char *keys) {
     assert_recorded_calls(expected, count);
 }
 
+/**
+ * Empties the call log, then holds a hold key past its tapping term and releases
+ * it. The hold sends its held key itself, so no event goes on to QMK.
+ *
+ * @param keycode Keycode of the hold key.
+ */
+static void hold_key(uint16_t keycode) {
+    reset_fake_qmk();
+    keyrecord_t push    = {.event = {.pressed = true}};
+    keyrecord_t release = {.event = {.pressed = false}};
+    assert_false(process_record_user(keycode, &push));
+    assert_false(process_record_user(keycode, &release));
+}
+
+/**
+ * Fails the test if the host did not get only a push and a release of the held
+ * key. Then empties the call log.
+ *
+ * @param held_key Key that the hold must push and release.
+ */
+static void assert_host_held(uint16_t held_key) {
+    const qmk_call_t expected[] = {
+        {CALLED_REGISTER_CODE16, held_key},
+        {CALLED_UNREGISTER_CODE16, held_key},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+    reset_fake_qmk();
+}
+
 /** Clears the fake, ends any mode and removes any pair that an earlier case left */
 static void start_case(void) {
     reset_fake_qmk();
@@ -197,7 +226,7 @@ static void case_modes_r10_no_mode_at_power_up(void **state) {
 static void case_modes_r1_r2_ac1_snake_case(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     type_text("max retry count");
     assert_host_got("max_retry_count");
 }
@@ -213,7 +242,7 @@ static void case_modes_r2_ac2_constant_case(void **state) {
 static void case_modes_r2_ac3_camel_case(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(CAMEL_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
     type_text("max retry count");
     assert_host_got("maxRetryCount");
 }
@@ -238,7 +267,7 @@ static void case_modes_r7_ac9_same_mode_key_ends_mode(void **state) {
 static void case_modes_r8_ac10_other_mode_key_changes_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     type_text("max");
     assert_false(push_key(CONSTANT_CASE_KEY, NOT_A_TAP));
     type_text(" count");
@@ -255,7 +284,7 @@ static void case_modes_ac12_no_mode_types_as_is(void **state) {
 static void case_modes_end_all_ends_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     type_text("max");
     case_modes_end_all();
     type_text(" count");
@@ -265,7 +294,7 @@ static void case_modes_end_all_ends_mode(void **state) {
 static void case_modes_r5_ac5_double_space_ends_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     type_text("max retry  x");
     // Second Space deletes the underscore, then passes; the editor shows "max_retry x"
     assert_host_got("max_retry_\b x");
@@ -274,7 +303,7 @@ static void case_modes_r5_ac5_double_space_ends_mode(void **state) {
 static void case_modes_r3_ac7_digit_passes(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     // Underscore after the digit shows that the mode is still on
     type_text("item 2 x");
     assert_host_got("item_2_x");
@@ -283,7 +312,7 @@ static void case_modes_r3_ac7_digit_passes(void **state) {
 static void case_modes_r4_ac8_backspace_keeps_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     // Editor shows "max_rex", then the underscore shows that the mode is still on
     type_text("max ret\bx y");
     assert_host_got("max_ret\bx_y");
@@ -292,7 +321,7 @@ static void case_modes_r4_ac8_backspace_keeps_mode(void **state) {
 static void case_modes_r6_ac6_symbol_hold_ends_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(CAMEL_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
     type_text("get value");
     // Hold of a bottom-row bracket ends the mode; the bracket pairs send "<>" and Left
     keyrecord_t hold = {.event = {.pressed = true}};
@@ -303,20 +332,69 @@ static void case_modes_r6_ac6_symbol_hold_ends_mode(void **state) {
     assert_recorded_calls(symbol_hold_host_calls, ARRAY_SIZE(symbol_hold_host_calls));
 }
 
-static void case_modes_r6_function_key_ends_mode(void **state) {
+static void case_modes_r6_function_key_hold_ends_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     type_text("max");
-    assert_true(push_key(KC_F1, NOT_A_TAP));
+    assert_host_got("max");
+    // Hold of L (1,4) sends F4
+    hold_key(LT(0, KC_L));
+    assert_host_held(KC_F4);
     type_text(" x");
-    assert_host_got("max x");
+    assert_host_got(" x");
+}
+
+static void case_modes_r6_escape_hold_ends_mode(void **state) {
+    (void)state;
+    start_case();
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
+    type_text("max");
+    assert_host_got("max");
+    // Hold of Tab (1,0) sends Esc
+    hold_key(LT(0, KC_TAB));
+    assert_host_held(KC_ESCAPE);
+    type_text(" x");
+    assert_host_got(" x");
+}
+
+static void case_modes_mode_key_hold_sends_its_function_key(void **state) {
+    (void)state;
+    start_case();
+    hold_key(SNAKE_CASE_KEY);
+    assert_host_held(KC_F6);
+    hold_key(CAMEL_CASE_KEY);
+    assert_host_held(KC_F7);
+    // No hold started a mode
+    type_text("a b");
+    assert_host_got("a b");
+}
+
+static void case_modes_mode_key_hold_ends_mode(void **state) {
+    (void)state;
+    start_case();
+    assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
+    type_text("max");
+    hold_key(SNAKE_CASE_KEY);
+    assert_host_held(KC_F6);
+    type_text(" count");
+    assert_host_got(" count");
+}
+
+static void case_modes_r2_tap_of_top_row_hold_key_is_letter(void **state) {
+    (void)state;
+    start_case();
+    assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
+    type_text("max ");
+    // Tap of G (1,2), whose hold sends F2, gives a capital after the Space
+    assert_false(push_key(LT(0, KC_G), A_TAP));
+    assert_host_got("maxG");
 }
 
 static void case_modes_r6_shifted_digit_ends_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(CAMEL_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
     type_text("get value");
     // Shift with 9 types "(", a symbol and not a digit
     set_fake_modifiers(MOD_BIT(KC_LEFT_SHIFT));
@@ -329,7 +407,7 @@ static void case_modes_r6_shifted_digit_ends_mode(void **state) {
 static void case_modes_r9_modifier_keeps_mode(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(CAMEL_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
     type_text("max");
     // Hold of the N home row mod, then the Shift key: modifiers alone type nothing
     assert_true(push_key(MT(MOD_LSFT, KC_N), NOT_A_TAP));
@@ -342,7 +420,7 @@ static void case_modes_r9_ac11_shortcut_ends_mode(void **state) {
     (void)state;
     for (size_t index = 0; index < ARRAY_SIZE(shortcut_mods); index++) {
         start_case();
-        assert_false(push_key(CAMEL_CASE_KEY, NOT_A_TAP));
+        assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
         assert_true(push_key(shortcut_mods[index].keycode, NOT_A_TAP));
         // QMK sets the modifier of the hold, then sends the chord with S
         set_fake_modifiers(shortcut_mods[index].modifier);
@@ -356,7 +434,7 @@ static void case_modes_r9_ac11_shortcut_ends_mode(void **state) {
 static void case_modes_r2_tap_of_tap_hold_key_is_letter(void **state) {
     (void)state;
     start_case();
-    assert_false(push_key(CAMEL_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(CAMEL_CASE_KEY, A_TAP));
     type_text("max ");
     // Taps of a home row mod and of a bottom-row symbol key give their letters
     assert_false(push_key(MT(MOD_LSFT, KC_N), A_TAP));
@@ -377,7 +455,7 @@ static void case_modes_sent_keys_count_in_bracket_pairs(void **state) {
     hold.event.pressed = false;
     assert_false(process_record_user(LT(0, KC_V), &hold));
     reset_fake_qmk();
-    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     // Pair has "ab " after the double Space, so the fourth Backspace deletes the pair
     type_text("ab  \b\b\b");
     keyrecord_t backspace = {.event = {.pressed = true}};
@@ -410,7 +488,11 @@ static const struct CMUnitTest case_modes_cases[] = {
     cmocka_unit_test(case_modes_r4_ac8_backspace_keeps_mode),
     cmocka_unit_test(case_modes_r5_ac5_double_space_ends_mode),
     cmocka_unit_test(case_modes_r6_ac6_symbol_hold_ends_mode),
-    cmocka_unit_test(case_modes_r6_function_key_ends_mode),
+    cmocka_unit_test(case_modes_r6_function_key_hold_ends_mode),
+    cmocka_unit_test(case_modes_r6_escape_hold_ends_mode),
+    cmocka_unit_test(case_modes_mode_key_hold_sends_its_function_key),
+    cmocka_unit_test(case_modes_mode_key_hold_ends_mode),
+    cmocka_unit_test(case_modes_r2_tap_of_top_row_hold_key_is_letter),
     cmocka_unit_test(case_modes_r6_shifted_digit_ends_mode),
     cmocka_unit_test(case_modes_r9_modifier_keeps_mode),
     cmocka_unit_test(case_modes_r9_ac11_shortcut_ends_mode),
