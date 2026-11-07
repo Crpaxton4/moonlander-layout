@@ -13,6 +13,7 @@
 
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
+#include "layers/layers.h"
 
 /** Logging state; all zero at power-up, so logging is off */
 static logging_t logging;
@@ -128,11 +129,14 @@ static void end_idle_logging(void) {
  * Changes logging on a push of the logging combo. The state record shows the
  * change, so the combo gets no input record.
  *
+ * Logging combo must not operate in the special mode, but QMK finds combos on each
+ * layer. Thus the special mode stops the change here.
+ *
  * @param record Event of the combo keycode.
  * @return False, so the combo sends no key.
  */
 static bool toggle_logging(const keyrecord_t *record) {
-    if (record->event.pressed) {
+    if (record->event.pressed && !layer_state_is(LAYER_SPECIAL)) {
         write_state_record(logging_toggle(&logging, timer_read32()));
     }
     return false;

@@ -56,7 +56,8 @@ target_link_libraries(fake_qmk PUBLIC qmk_headers unit_test)
 
 # Logic of the keymap modules includes no QMK header, so its tests need no fake
 add_library(keymap_logic STATIC
-    ${KEYMAP_DIR}/key_event_log/key_event_log_logic.c)
+    ${KEYMAP_DIR}/key_event_log/key_event_log_logic.c
+    ${KEYMAP_DIR}/special_mode/special_mode_logic.c)
 target_include_directories(keymap_logic PUBLIC ${KEYMAP_DIR})
 
 # Same keymap sources as rules.mk, with the logic sources in keymap_logic.
@@ -67,6 +68,7 @@ add_library(qgmlwy_keymap STATIC
     ${KEYMAP_DIR}/tap_dance/dances.c
     ${KEYMAP_DIR}/tap_hold/tap_hold.c
     ${KEYMAP_DIR}/key_event_log/key_event_log.c
+    ${KEYMAP_DIR}/special_mode/special_mode.c
     ${KEYMAP_DIR}/status_leds/status_leds.c
     ${KEYMAP_DIR}/symbol_holds/symbol_holds.c)
 target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
@@ -84,3 +86,7 @@ add_cmocka_test(${KEYMAP_TESTS}/tap_dance/tap_dance_test.c LIBRARIES qgmlwy_keym
 add_cmocka_test(${KEYMAP_TESTS}/symbol_holds/symbol_holds_test.c
     LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/tap_hold/tap_hold_test.c LIBRARIES qgmlwy_keymap)
+add_cmocka_test(${KEYMAP_TESTS}/special_mode/special_mode_logic_test.c
+    LIBRARIES keymap_logic unit_test)
+add_cmocka_test(${KEYMAP_TESTS}/special_mode/special_mode_test.c
+    LIBRARIES qgmlwy_keymap)
