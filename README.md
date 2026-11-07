@@ -9,14 +9,16 @@ build uses.
 
 ## Layout
 
-| Directory               | Contents                                       |
-| ----------------------- | ---------------------------------------------- |
-| `src/qmk/`              | The QMK userspace and the keymap               |
-| `src/check_standards/`  | The standards checker                          |
-| `src/key_log_capture/`  | The key log capture for Windows                |
-| `test/check_standards/` | The checker tests, one directory for each case |
-| `test/qmk/`             | The keymap unit tests                          |
-| `.build/`               | The build output, which git ignores            |
+| Directory                 | Contents                                         |
+| ------------------------- | ------------------------------------------------ |
+| `src/qmk/`                | The QMK userspace and the keymap                 |
+| `src/check_standards/`    | The standards checker                            |
+| `src/key_log_capture/`    | The key log capture for Windows                  |
+| `src/key_log_converter/`  | The key log converter                            |
+| `test/check_standards/`   | The checker tests, one directory for each case   |
+| `test/key_log_converter/` | The converter tests, one directory for each case |
+| `test/qmk/`               | The keymap unit tests                            |
+| `.build/`                 | The build output, which git ignores              |
 
 ## Installation
 
@@ -37,6 +39,7 @@ The script installs these items:
 - pre-commit and its git hooks
 - The check tools: shellcheck, tree-sitter, clang-tidy and Doxygen
 - The unit test tools: CMake and cmocka
+- The MinGW-w64 cross compiler, for the Windows build of the key log converter
 
 Then the script builds the firmware one time.
 
@@ -63,7 +66,8 @@ make help
 ```
 
 `make compiledb` also writes the compile databases: `.build/compile_commands.json` for
-the firmware and `.build/check_standards/compile_commands.json` for the checker.
+the firmware, `.build/check_standards/compile_commands.json` for the checker and
+`.build/key_log_converter/compile_commands.json` for the key log converter.
 
 ## Key log capture
 
@@ -128,6 +132,8 @@ To run the checks, use these commands:
 | `make checker-test`          | Tests the standards checker.              |
 | `make checker-clang-tidy`    | Runs clang-tidy on the standards checker. |
 | `make qmk-test`              | Runs the keymap unit tests.               |
+| `make converter-test`        | Tests the key log converter.              |
+| `make converter-clang-tidy`  | Runs clang-tidy on the key log converter. |
 
 The hooks are editorconfig-checker, clang-format, Prettier, shellcheck, shfmt,
 actionlint and the standards checker. Git runs these hooks at each commit.
@@ -172,6 +178,78 @@ The test code uses the same strict compiler flags as the standards checker, from
 [`strict-c-flags.txt`](strict-c-flags.txt). `make analyze` also runs clang-tidy on the
 test code (`make qmk-test-clang-tidy`).
 
+## Key log converter
+
+The key log converter makes a text corpus and key metrics from the key event logs of
+the keyboard. It merges one or more log files into one set of output files. The output
+files are the input of [carpalx][carpalx], of the `ngrams` tool of
+[keyboard_layout_optimizer][keyboard-layout-optimizer] and of the
+[QMK heatmap tool][qmk-heatmap].
+
+To build the converter, run `make converter`. To build the Windows program
+`.build/key_log_converter/key_log_converter.exe`, run `make converter-windows`.
+
+The first argument is the output folder, and the folder must exist. The other arguments
+are the log files. For example:
+
+```bash
+.build/key_log_converter/key_log_converter ~/converted keylog-2026-11-06T0900.log
+```
+
+The output files contain the text that you typed, also passwords and other private
+text. Keep the output folder outside of all git work trees.
+
+The converter writes these files into the output folder:
+
+| File              | Contents                                                       |
+| ----------------- | -------------------------------------------------------------- |
+| `corpus.txt`      | The typed characters for the Windows US English layout         |
+| `heatmap.csv`     | One `keycode,row,col,layer` line for each push, with no header |
+| `usage.csv`       | The pushes of each position and layer                          |
+| `corrections.csv` | Correction percent, then the Backspace count of each position  |
+| `shortcuts.csv`   | The count of each shortcut                                     |
+
+The converter also writes the counts of files, sessions, records, records outside
+sessions and ignored lines to standard output.
+
+### Conversion rules
+
+A session starts at the state record `on`. It stops at the state record `off` or
+`idle-off`, or at the end of the file. If the time of a record is less than the time of
+the record before it, a new session starts. Only the input and output records of a
+session go into the outputs.
+
+The converter ignores and counts each line that is not a complete record. It removes
+the [hid_listen][hid-listen] status text in front of a record, for example
+`Listening:`. It accepts LF and CR LF line breaks.
+
+A new key is a key code in an output record that the output record before it does not
+have. The corpus, the correction percent and the shortcuts use only new keys.
+
+The corpus gets a character for each new key with no Ctrl, Alt or GUI. Shift comes from
+the modifier byte. The keypad keys type characters as with Num Lock on. Each Enter and
+the end of each session give a line break.
+
+A new key with Ctrl, Alt or GUI is a shortcut, for example `Ctrl+Shift+T`. The name has
+the modifiers in the order Ctrl, Shift, Alt, GUI. Left and right modifiers have the same
+name. `shortcuts.csv` starts with the largest count.
+
+The positions are the QMK matrix coordinates of the input records. Rows 0 to 5 are the
+left half, rows 6 to 11 are the right half, and the columns are 0 to 6. QMK gives each
+combo the position (0,0).
+
+`usage.csv` and `corrections.csv` contain all 84 matrix positions, also the positions
+with no pushes. `usage.csv` contains each layer from 0 to the highest layer of the
+pushes. A position outside the matrix is in a file only if it has a count.
+
+The correction percent is the number of new Backspace and Delete keys, as a percent of
+the new keys that typed a character. The Backspace count of a position is the number of
+`KC_BACKSPACE` pushes in input records that come less than 1 s after a push of that
+position in the same session.
+
+The output files have LF line breaks on all systems, thus the corpus has the same bytes
+on Windows and on Linux. Standard output on Windows has CR LF line breaks.
+
 ## Commits and PRs
 
 All changes go into `main` through PRs. GitHub squash-merges each PR. The PR title
@@ -179,16 +257,16 @@ becomes the commit message on `main`. Thus, the PR title must be a
 [Conventional Commit](https://www.conventionalcommits.org/) with a scope from this
 table. A commit-msg hook does the same check on local commits.
 
-| Scope      | Use for                                                              |
-| ---------- | -------------------------------------------------------------------- |
-| `firmware` | the keymap in `src/qmk/keyboards/`                                   |
-| `build`    | `Makefile`, `src/qmk/qmk.json` and `src/qmk/.qmk-ref`                |
-| `ci`       | the files in `.github/`                                              |
-| `setup`    | `setup.sh` and `versions.env`                                        |
-| `tooling`  | the checks, the hooks, the standards checker and the key log capture |
-| `repo`     | README, LICENSE, `.gitignore` and the release-please files           |
-| `deps`     | the Dependabot updates of the npm, pre-commit and Actions versions   |
-| `main`     | the release PRs that release-please makes                            |
+| Scope      | Use for                                                            |
+| ---------- | ------------------------------------------------------------------ |
+| `firmware` | the keymap in `src/qmk/keyboards/`                                 |
+| `build`    | `Makefile`, `src/qmk/qmk.json` and `src/qmk/.qmk-ref`              |
+| `ci`       | the files in `.github/`                                            |
+| `setup`    | `setup.sh` and `versions.env`                                      |
+| `tooling`  | the checks, the hooks, the checker and the key log tools           |
+| `repo`     | README, LICENSE, `.gitignore` and the release-please files         |
+| `deps`     | the Dependabot updates of the npm, pre-commit and Actions versions |
+| `main`     | the release PRs that release-please makes                          |
 
 ## Releases
 
@@ -201,4 +279,7 @@ release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 [cmocka]: https://cmocka.org/
 [ctest]: https://cmake.org/cmake/help/latest/manual/ctest.1.html
 [keymapp]: https://www.zsa.io/keymapp
+[carpalx]: http://mkweb.bcgsc.ca/carpalx/
+[keyboard-layout-optimizer]: https://github.com/dariogoetz/keyboard_layout_optimizer
+[qmk-heatmap]: https://precondition.github.io/qmk-heatmap
 [hid-listen]: https://www.pjrc.com/teensy/hid_listen.html
