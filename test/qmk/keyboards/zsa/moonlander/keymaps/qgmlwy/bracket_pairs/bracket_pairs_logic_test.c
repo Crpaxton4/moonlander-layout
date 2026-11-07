@@ -44,6 +44,18 @@
 /** Time in ms between two pushes that does not clear the stack */
 #define JUST_BEFORE_IDLE_TIME (PAIR_IDLE_TIME - 1)
 
+/** Character of a test text that pushes a plain Left */
+#define LEFT_CHARACTER '\002'
+
+/** Character of a test text that pushes a plain Right */
+#define RIGHT_CHARACTER '\006'
+
+/** Number of test text characters of keys that type no character of the text */
+#define KEY_CHARACTER_COUNT (sizeof(key_characters) / sizeof(key_characters[0]))
+
+/** Hold time in ms of a released key that the host does not repeat */
+#define JUST_BEFORE_REPEAT_SAFE_TIME (PAIR_REPEAT_SAFE_TIME - 1)
+
 // #endregion
 
 // #region Types
@@ -68,6 +80,12 @@ typedef struct {
     char closer; /**< Character that closes the pair */
 } pair_characters_t;
 
+/** Character of a test text for a key that types no character of the text */
+typedef struct {
+    char                character; /**< Character in the test text */
+    enum pair_key_class key_class; /**< Key class of the pushed key */
+} key_character_t;
+
 // #endregion
 
 // #region Data
@@ -80,6 +98,16 @@ static const pair_characters_t pair_characters[] = {
     [PAIR_ANGLE_BRACKETS]  = {.opener = '<', .closer = '>'},
     [PAIR_DOUBLE_QUOTES]   = {.opener = '"', .closer = '"'},
     [PAIR_BACKTICKS]       = {.opener = '`', .closer = '`'},
+};
+
+/** Characters of the keys that type no character of the test text */
+static const key_character_t key_characters[] = {
+    {.character = '\t', .key_class = PAIR_KEY_TAB},
+    {.character = '\b', .key_class = PAIR_KEY_BACKSPACE},
+    {.character = ENTER_CHARACTER, .key_class = PAIR_KEY_CLEARING},
+    {.character = MODIFIER_CHARACTER, .key_class = PAIR_KEY_NO_CHARACTER},
+    {.character = LEFT_CHARACTER, .key_class = PAIR_KEY_LEFT},
+    {.character = RIGHT_CHARACTER, .key_class = PAIR_KEY_RIGHT},
 };
 
 // #endregion
@@ -170,6 +198,12 @@ static void apply_output(editor_t *editor, const pair_result_t *result, size_t i
 static void apply_passed_key(editor_t *editor, char character) {
     if (character == '\b') {
         delete_before_cursor(editor);
+    } else if (character == LEFT_CHARACTER) {
+        assert_true(editor->cursor > 0);
+        editor->cursor--;
+    } else if (character == RIGHT_CHARACTER) {
+        assert_true(editor->cursor < editor->length);
+        editor->cursor++;
     } else if (character != MODIFIER_CHARACTER) {
         insert_character(editor, character);
     }
@@ -200,21 +234,16 @@ static void find_pair_key(char character, pair_key_t *key) {
 /**
  * Gives the pair key of a character of a test text.
  *
- * @param character Bracket or quote, a tab character for Tab, a backspace
- *                  character for Backspace, ENTER_CHARACTER, MODIFIER_CHARACTER, or
- *                  a character that a key types.
+ * @param character Bracket or quote, a character from key_characters, or a
+ *                  character that a key types.
  * @return Pair key of the key that the operator pushes.
  */
 static pair_key_t key_of_character(char character) {
     pair_key_t key = {.key_class = PAIR_KEY_CHARACTER};
-    if (character == '\t') {
-        key.key_class = PAIR_KEY_TAB;
-    } else if (character == '\b') {
-        key.key_class = PAIR_KEY_BACKSPACE;
-    } else if (character == ENTER_CHARACTER) {
-        key.key_class = PAIR_KEY_CLEARING;
-    } else if (character == MODIFIER_CHARACTER) {
-        key.key_class = PAIR_KEY_NO_CHARACTER;
+    for (size_t index = 0; index < KEY_CHARACTER_COUNT; index++) {
+        if (key_characters[index].character == character) {
+            key.key_class = key_characters[index].key_class;
+        }
     }
     find_pair_key(character, &key);
     return key;
@@ -233,8 +262,11 @@ static pair_result_t type_key(typing_t *typing, char character) {
     if (result.passes) {
         apply_passed_key(&typing->editor, character);
     }
-    for (size_t index = 0; index < result.output_count; index++) {
-        apply_output(&typing->editor, &result, index);
+    // Outputs go one time, then one more time for each repeat
+    for (size_t send = 0; send <= result.repeat_count; send++) {
+        for (size_t index = 0; index < result.output_count; index++) {
+            apply_output(&typing->editor, &result, index);
+        }
     }
     return result;
 }
@@ -315,10 +347,12 @@ static void bracket_pairs_logic_r2_opener_puts_entry_with_count_zero(void **stat
     assert_int_equal(typing.stack.depth, 1);
     assert_int_equal(top_entry(&typing)->kind, PAIR_CURLY_BRACES);
     assert_int_equal(top_entry(&typing)->count, 0);
+    assert_int_equal(top_entry(&typing)->offset, 0);
     type_keys(&typing, "(");
     assert_int_equal(typing.stack.depth, 2);
     assert_int_equal(top_entry(&typing)->kind, PAIR_PARENTHESES);
     assert_int_equal(top_entry(&typing)->count, 0);
+    assert_int_equal(top_entry(&typing)->offset, 0);
 }
 
 static void bracket_pairs_logic_r4_character_adds_one_to_top_count(void **state) {
@@ -475,11 +509,24 @@ static void bracket_pairs_logic_r10_ac7_clearing_key_clears_stack(void **state) 
     assert_editor_shows(&typing, "{(x\n\t|)}");
 }
 
-static void bracket_pairs_logic_r11_ac8_other_closer_clears_stack(void **state) {
+static void bracket_pairs_logic_r11_ac8_other_closer_counts_as_character(void **state) {
     (void)state;
     typing_t typing = {0};
-    type_keys(&typing, "{(]");
+    type_keys(&typing, "{(");
+    pair_result_t result = type_key(&typing, ']');
+    assert_true(result.passes);
     assert_editor_shows(&typing, "{(]|)}");
+    assert_int_equal(typing.stack.depth, 2);
+    assert_int_equal(top_entry(&typing)->count, 1);
+    type_keys(&typing, "\t");
+    assert_editor_shows(&typing, "{(])|}");
+}
+
+static void bracket_pairs_logic_r11_ac20_operator_in_pair(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(p->x)");
+    assert_editor_shows(&typing, "(p->x)|");
     assert_int_equal(typing.stack.depth, 0);
 }
 
@@ -599,6 +646,207 @@ static void bracket_pairs_logic_r17_quote_adds_count_to_new_top(void **state) {
     assert_int_equal(typing.stack.depth, 0);
 }
 
+static void bracket_pairs_logic_r19_left_in_pair_adds_one_to_offset(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(abc");
+    type_key(&typing, LEFT_CHARACTER);
+    pair_result_t result = type_key(&typing, LEFT_CHARACTER);
+    assert_true(result.passes);
+    assert_editor_shows(&typing, "(a|bc)");
+    assert_int_equal(top_entry(&typing)->count, 3);
+    assert_int_equal(top_entry(&typing)->offset, 2);
+}
+
+static void bracket_pairs_logic_r20_left_at_opener_clears_stack(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "{(a");
+    type_key(&typing, LEFT_CHARACTER);
+    pair_result_t result = type_key(&typing, LEFT_CHARACTER);
+    assert_true(result.passes);
+    assert_editor_shows(&typing, "{|(a)}");
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r21_right_subtracts_one_from_offset(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(abc");
+    type_key(&typing, LEFT_CHARACTER);
+    type_key(&typing, LEFT_CHARACTER);
+    pair_result_t result = type_key(&typing, RIGHT_CHARACTER);
+    assert_true(result.passes);
+    assert_editor_shows(&typing, "(ab|c)");
+    assert_int_equal(top_entry(&typing)->offset, 1);
+}
+
+static void bracket_pairs_logic_r22_r7_right_at_closer_jumps_out(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "{(a");
+    pair_result_t result = type_key(&typing, RIGHT_CHARACTER);
+    assert_true(result.passes);
+    assert_int_equal(result.output_count, 0);
+    assert_editor_shows(&typing, "{(a)|}");
+    assert_int_equal(typing.stack.depth, 1);
+    assert_int_equal(top_entry(&typing)->count, 3);
+    assert_int_equal(top_entry(&typing)->offset, 0);
+}
+
+static void bracket_pairs_logic_r13_left_and_right_pass_with_empty_stack(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "ab");
+    type_key(&typing, LEFT_CHARACTER);
+    type_key(&typing, LEFT_CHARACTER);
+    type_key(&typing, RIGHT_CHARACTER);
+    assert_editor_shows(&typing, "a|b");
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r4_character_after_left_keeps_offset(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(ac");
+    type_key(&typing, LEFT_CHARACTER);
+    type_keys(&typing, "b");
+    assert_editor_shows(&typing, "(ab|c)");
+    assert_int_equal(top_entry(&typing)->count, 3);
+    assert_int_equal(top_entry(&typing)->offset, 1);
+}
+
+static void bracket_pairs_logic_r5_ac17_tab_after_left_jumps_out(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(abc");
+    type_key(&typing, LEFT_CHARACTER);
+    type_key(&typing, LEFT_CHARACTER);
+    pair_result_t result = type_key(&typing, '\t');
+    assert_false(result.passes);
+    assert_int_equal(result.output_count, 1);
+    assert_int_equal(result.outputs[0], PAIR_OUTPUT_RIGHT);
+    assert_int_equal(result.repeat_count, 2);
+    assert_editor_shows(&typing, "(abc)|");
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r5_ac18_tab_after_insert_jumps_out(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(ac");
+    type_key(&typing, LEFT_CHARACTER);
+    type_keys(&typing, "b\t");
+    assert_editor_shows(&typing, "(abc)|");
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r6_ac16_closer_after_left_jumps_out(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(abc");
+    type_key(&typing, LEFT_CHARACTER);
+    type_key(&typing, LEFT_CHARACTER);
+    type_keys(&typing, ")");
+    assert_editor_shows(&typing, "(abc)|");
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r17_quote_after_left_jumps_past_quote(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "\"ab");
+    type_key(&typing, LEFT_CHARACTER);
+    type_keys(&typing, "\"");
+    assert_editor_shows(&typing, "\"ab\"|");
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r7_jump_out_keeps_offset_of_new_top(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "{x");
+    type_key(&typing, LEFT_CHARACTER);
+    type_keys(&typing, "(a\t");
+    assert_editor_shows(&typing, "{(a)|x}");
+    assert_int_equal(top_entry(&typing)->count, 4);
+    assert_int_equal(top_entry(&typing)->offset, 1);
+    type_keys(&typing, "\t");
+    assert_editor_shows(&typing, "{(a)x}|");
+}
+
+static void bracket_pairs_logic_r8_backspace_after_left_subtracts_one(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(abc");
+    type_key(&typing, LEFT_CHARACTER);
+    pair_result_t result = type_key(&typing, '\b');
+    assert_true(result.passes);
+    assert_editor_shows(&typing, "(a|c)");
+    assert_int_equal(top_entry(&typing)->count, 2);
+    assert_int_equal(top_entry(&typing)->offset, 1);
+}
+
+static void bracket_pairs_logic_r23_backspace_at_opener_clears_stack(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "{(ab");
+    type_key(&typing, LEFT_CHARACTER);
+    type_key(&typing, LEFT_CHARACTER);
+    pair_result_t result = type_key(&typing, '\b');
+    assert_true(result.passes);
+    assert_int_equal(result.output_count, 0);
+    assert_editor_shows(&typing, "{|ab)}");
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r23_sent_backspace_at_opener_clears(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "{(ab");
+    type_key(&typing, LEFT_CHARACTER);
+    type_key(&typing, LEFT_CHARACTER);
+    count_sent_key(&typing, PAIR_KEY_BACKSPACE);
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r24_long_release_clears_stack(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(a");
+    pair_stack_release_passed_key(&typing.stack, PAIR_REPEAT_SAFE_TIME);
+    assert_int_equal(typing.stack.depth, 0);
+}
+
+static void bracket_pairs_logic_r24_short_release_keeps_stack(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(a");
+    pair_stack_release_passed_key(&typing.stack, JUST_BEFORE_REPEAT_SAFE_TIME);
+    assert_int_equal(typing.stack.depth, 1);
+    assert_int_equal(top_entry(&typing)->count, 1);
+}
+
+static void bracket_pairs_logic_r25_has_pairs_while_stack_is_not_empty(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    assert_false(pair_stack_has_pairs(&typing.stack, typing.now));
+    type_keys(&typing, "(");
+    assert_true(pair_stack_has_pairs(&typing.stack, typing.now));
+    type_keys(&typing, "\t");
+    assert_false(pair_stack_has_pairs(&typing.stack, typing.now));
+}
+
+static void bracket_pairs_logic_r25_r12_no_pairs_after_idle_time(void **state) {
+    (void)state;
+    typing_t typing = {0};
+    type_keys(&typing, "(");
+    typing.now += JUST_BEFORE_IDLE_TIME;
+    assert_true(pair_stack_has_pairs(&typing.stack, typing.now));
+    typing.now++;
+    assert_false(pair_stack_has_pairs(&typing.stack, typing.now));
+}
+
 // #endregion
 
 // #region Test runner
@@ -620,7 +868,8 @@ static const struct CMUnitTest bracket_pairs_logic_cases[] = {
     cmocka_unit_test(bracket_pairs_logic_r9_ac5_backspace_at_zero_deletes_pair),
     cmocka_unit_test(bracket_pairs_logic_r9_inner_pair_delete_keeps_outer_count),
     cmocka_unit_test(bracket_pairs_logic_r10_ac7_clearing_key_clears_stack),
-    cmocka_unit_test(bracket_pairs_logic_r11_ac8_other_closer_clears_stack),
+    cmocka_unit_test(bracket_pairs_logic_r11_ac8_other_closer_counts_as_character),
+    cmocka_unit_test(bracket_pairs_logic_r11_ac20_operator_in_pair),
     cmocka_unit_test(bracket_pairs_logic_r12_ac9_idle_time_clears_stack),
     cmocka_unit_test(bracket_pairs_logic_r12_push_before_idle_time_keeps_stack),
     cmocka_unit_test(bracket_pairs_logic_r12_each_push_starts_idle_time_again),
@@ -633,6 +882,24 @@ static const struct CMUnitTest bracket_pairs_logic_cases[] = {
     cmocka_unit_test(bracket_pairs_logic_r17_ac13_same_quote_jumps_out),
     cmocka_unit_test(bracket_pairs_logic_r17_ac14_backtick_jumps_out),
     cmocka_unit_test(bracket_pairs_logic_r17_quote_adds_count_to_new_top),
+    cmocka_unit_test(bracket_pairs_logic_r19_left_in_pair_adds_one_to_offset),
+    cmocka_unit_test(bracket_pairs_logic_r20_left_at_opener_clears_stack),
+    cmocka_unit_test(bracket_pairs_logic_r21_right_subtracts_one_from_offset),
+    cmocka_unit_test(bracket_pairs_logic_r22_r7_right_at_closer_jumps_out),
+    cmocka_unit_test(bracket_pairs_logic_r13_left_and_right_pass_with_empty_stack),
+    cmocka_unit_test(bracket_pairs_logic_r4_character_after_left_keeps_offset),
+    cmocka_unit_test(bracket_pairs_logic_r5_ac17_tab_after_left_jumps_out),
+    cmocka_unit_test(bracket_pairs_logic_r5_ac18_tab_after_insert_jumps_out),
+    cmocka_unit_test(bracket_pairs_logic_r6_ac16_closer_after_left_jumps_out),
+    cmocka_unit_test(bracket_pairs_logic_r17_quote_after_left_jumps_past_quote),
+    cmocka_unit_test(bracket_pairs_logic_r7_jump_out_keeps_offset_of_new_top),
+    cmocka_unit_test(bracket_pairs_logic_r8_backspace_after_left_subtracts_one),
+    cmocka_unit_test(bracket_pairs_logic_r23_backspace_at_opener_clears_stack),
+    cmocka_unit_test(bracket_pairs_logic_r23_sent_backspace_at_opener_clears),
+    cmocka_unit_test(bracket_pairs_logic_r24_long_release_clears_stack),
+    cmocka_unit_test(bracket_pairs_logic_r24_short_release_keeps_stack),
+    cmocka_unit_test(bracket_pairs_logic_r25_has_pairs_while_stack_is_not_empty),
+    cmocka_unit_test(bracket_pairs_logic_r25_r12_no_pairs_after_idle_time),
 };
 
 int main(int argc, char **argv) {

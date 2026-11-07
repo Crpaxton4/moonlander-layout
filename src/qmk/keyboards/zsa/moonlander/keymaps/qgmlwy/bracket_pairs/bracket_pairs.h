@@ -47,4 +47,11 @@ void bracket_pairs_take_back_count(void);
 /** Removes all open pairs, for a mode that must not make pairs */
 void bracket_pairs_clear(void);
 
+/**
+ * Tells if a pair is open, for the status LED.
+ *
+ * @return True while Tab and the closer jump out.
+ */
+bool bracket_pairs_are_open(void);
+
 // #endregion

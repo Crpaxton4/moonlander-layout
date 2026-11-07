@@ -10,6 +10,8 @@
 #include QMK_KEYBOARD_H
 #include "keymap_introspection.h"
 
+#include "bracket_pairs/bracket_pairs.h"
+#include "bracket_pairs/bracket_pairs_logic.h"
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
@@ -23,6 +25,12 @@
 
 /** Layer state with one layer on */
 #define ONLY_LAYER(layer) ((layer_state_t)(1U << (layer)))
+
+/** Grid column of V (3,4), the "(" hold */
+#define OPENING_PARENTHESIS_COLUMN 4
+
+/** Tap count of a hold */
+#define NO_TAP 0
 
 // #endregion
 
@@ -45,6 +53,7 @@ static void push_logging_combo(void) {
  */
 static void show_status(bool logging_on, uint8_t layer) {
     reset_fake_qmk();
+    bracket_pairs_clear();
     if (key_event_log_is_on()) {
         push_logging_combo();
     }
@@ -52,6 +61,27 @@ static void show_status(bool logging_on, uint8_t layer) {
         push_logging_combo();
     }
     layer_state = ONLY_LAYER(layer);
+    housekeeping_task_user();
+}
+
+/**
+ * Sends one key event through process_record_user().
+ *
+ * @param keycode Keycode that QMK gives the hook.
+ * @param pressed True for a push, false for a release.
+ */
+static void send_key_event(uint16_t keycode, bool pressed) {
+    keyrecord_t record = {.event = {.pressed = pressed}};
+    record.tap.count   = NO_TAP;
+    process_record_user(keycode, &record);
+}
+
+/** Holds V (3,4) for "(", which opens a pair, then runs one housekeeping pass */
+static void open_pair(void) {
+    uint16_t opening_parenthesis = keycode_at_keymap_location(
+        LAYER_BASE, LEFT_BOTTOM_LETTER_ROW, OPENING_PARENTHESIS_COLUMN);
+    send_key_event(opening_parenthesis, true);
+    send_key_event(opening_parenthesis, false);
     housekeeping_task_user();
 }
 
@@ -129,6 +159,46 @@ static void status_leds_plain_layer_lights_leds_3_and_6(void **state) {
     assert_leds(STATUS_LED_BIT(LEFT_INNER_LED) | STATUS_LED_BIT(RIGHT_OUTER_LED));
 }
 
+static void status_leds_r25_open_pair_led_is_led_3(void **state) {
+    (void)state;
+    assert_int_equal(OPEN_PAIR_LED, LEFT_INNER_LED);
+}
+
+static void status_leds_r25_ac22_open_pair_lights_led_3(void **state) {
+    (void)state;
+    show_status(false, LAYER_BASE);
+    open_pair();
+    assert_leds(STATUS_LED_BIT(OPEN_PAIR_LED));
+}
+
+static void status_leds_r25_ac22_jump_out_turns_led_3_off(void **state) {
+    (void)state;
+    show_status(false, LAYER_BASE);
+    open_pair();
+    send_key_event(KC_TAB, true);
+    send_key_event(KC_TAB, false);
+    housekeeping_task_user();
+    assert_leds(0);
+}
+
+static void status_leds_r25_ac23_led_3_goes_off_after_idle_time(void **state) {
+    (void)state;
+    show_status(false, LAYER_BASE);
+    open_pair();
+    advance_fake_clock(PAIR_IDLE_TIME);
+    housekeeping_task_user();
+    assert_leds(0);
+}
+
+static void status_leds_r26_open_pair_with_logging_and_arrows(void **state) {
+    (void)state;
+    show_status(true, LAYER_ARROWS);
+    open_pair();
+    assert_leds(STATUS_LED_BIT(LOGGING_LED) | STATUS_LED_BIT(OPEN_PAIR_LED) |
+                STATUS_LED_BIT(RIGHT_INNER_LED));
+    show_status(false, LAYER_BASE);
+}
+
 // #endregion
 
 // #region Test runner
@@ -144,6 +214,11 @@ static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_arrows_layer_and_logging),
     cmocka_unit_test(status_leds_special_layer_lights_leds_2_and_5),
     cmocka_unit_test(status_leds_plain_layer_lights_leds_3_and_6),
+    cmocka_unit_test(status_leds_r25_open_pair_led_is_led_3),
+    cmocka_unit_test(status_leds_r25_ac22_open_pair_lights_led_3),
+    cmocka_unit_test(status_leds_r25_ac22_jump_out_turns_led_3_off),
+    cmocka_unit_test(status_leds_r25_ac23_led_3_goes_off_after_idle_time),
+    cmocka_unit_test(status_leds_r26_open_pair_with_logging_and_arrows),
 };
 
 int main(int argc, char **argv) {

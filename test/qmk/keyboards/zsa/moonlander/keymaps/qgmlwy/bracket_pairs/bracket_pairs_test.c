@@ -70,6 +70,24 @@
 /** Layer state while the special mode is on */
 #define SPECIAL_MODE_ON ((layer_state_t)(1U << LAYER_SPECIAL))
 
+/** Layer state while the arrows mode is on */
+#define ARROWS_MODE_ON ((layer_state_t)(1U << LAYER_ARROWS))
+
+/** Calls of the letters "abc" */
+#define ABC_CALLS                                           \
+    {CALLED_TAP_CODE16, KC_A}, {CALLED_TAP_CODE16, KC_B}, { \
+        CALLED_TAP_CODE16, KC_C                             \
+    }
+
+/** Hold time in ms of a key that the host repeats */
+#define REPEAT_SAFE_TIME 400
+
+/** Hold time in ms of a key that the host does not repeat */
+#define JUST_BEFORE_REPEAT_SAFE_TIME (REPEAT_SAFE_TIME - 1)
+
+/** Hold time in ms of the long holds of the flash test */
+#define ONE_SECOND 1000
+
 /** Calls of a double quote with the right home row Shift held */
 #define DOUBLE_QUOTE_PAIR_CALLS                                               \
     {CALLED_DEL_MODS, RIGHT_SHIFT_BIT}, {CALLED_TAP_CODE16, KC_DOUBLE_QUOTE}, \
@@ -87,6 +105,12 @@ typedef struct {
     uint8_t row;    /**< Grid row */
     uint8_t column; /**< Grid column */
 } grid_position_t;
+
+/** Push of a key that the operator holds for a time */
+typedef struct {
+    uint16_t keycode;   /**< Keycode of a key that is not a tap-hold key */
+    uint32_t hold_time; /**< Time in ms between the push and the release */
+} held_push_t;
 
 /** Bracket hold of the spec and the symbols of its pair */
 typedef struct {
@@ -184,6 +208,41 @@ static const grid_position_t mouse_right_key = {
     .column = 12,
 };
 
+/** K (3,8), the "-" hold */
+static const grid_position_t minus_key = {
+    .layer  = LAYER_BASE,
+    .row    = 3,
+    .column = 8,
+};
+
+/** Slash (3,12), the ">" hold */
+static const grid_position_t closing_angle_bracket_key = {
+    .layer  = LAYER_BASE,
+    .row    = 3,
+    .column = 12,
+};
+
+/** Left (4,9) of the arrows mode */
+static const grid_position_t left_arrow_key = {
+    .layer  = LAYER_ARROWS,
+    .row    = 4,
+    .column = 9,
+};
+
+/** Up (4,10) of the arrows mode */
+static const grid_position_t up_arrow_key = {
+    .layer  = LAYER_ARROWS,
+    .row    = 4,
+    .column = 10,
+};
+
+/** Right (4,12) of the arrows mode */
+static const grid_position_t right_arrow_key = {
+    .layer  = LAYER_ARROWS,
+    .row    = 4,
+    .column = 12,
+};
+
 /** Backtick (1,5) of the special mode */
 static const grid_position_t backtick_key = {
     .layer  = LAYER_SPECIAL,
@@ -231,8 +290,6 @@ static const uint8_t closer_columns[] = {9, 11, 10, 12};
 
 /** Keys of spec 33 R10 that clear the pair stack, as the keymap has them */
 static const uint16_t clearing_keys[] = {
-    KC_LEFT,
-    KC_RIGHT,
     KC_UP,
     KC_DOWN,
     KC_HOME,
@@ -256,6 +313,18 @@ static const uint8_t shortcut_modifiers[] = {
     MOD_BIT(KC_LEFT_CTRL),
     MOD_BIT(KC_LEFT_ALT),
     MOD_BIT(KC_LEFT_GUI),
+};
+
+/** Modifier bits of each home row hold */
+static const uint8_t home_row_modifiers[] = {
+    MOD_BIT(KC_LEFT_SHIFT), MOD_BIT(KC_RIGHT_SHIFT), MOD_BIT(KC_LEFT_CTRL),
+    MOD_BIT(KC_LEFT_ALT),   MOD_BIT(KC_LEFT_GUI),
+};
+
+/** Left and Right, which keep the pairs only with no modifier */
+static const uint16_t left_and_right_keys[] = {
+    KC_LEFT,
+    KC_RIGHT,
 };
 
 // #endregion
@@ -689,7 +758,7 @@ static void bracket_pairs_r10_shift_tab_clears_stack(void **state) {
     assert_true(push_and_release(KC_TAB, NOT_A_TAP));
 }
 
-static void bracket_pairs_r11_ac8_other_closer_clears_stack(void **state) {
+static void bracket_pairs_r11_ac8_ht14_other_closer_is_a_character(void **state) {
     (void)state;
     start_case();
     hold_key(keycode_of(opening_parenthesis_key));
@@ -700,7 +769,7 @@ static void bracket_pairs_r11_ac8_other_closer_clears_stack(void **state) {
         PARENTHESES_PAIR_CALLS,
         {CALLED_REGISTER_CODE16, KC_RIGHT_BRACKET},
         {CALLED_UNREGISTER_CODE16, KC_RIGHT_BRACKET},
-        {CALLED_TAP_CODE16, KC_TAB},
+        {CALLED_TAP_CODE16, KC_RIGHT},
     };
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
@@ -897,6 +966,415 @@ static void bracket_pairs_clear_removes_pairs(void **state) {
     assert_true(push_and_release(KC_TAB, NOT_A_TAP));
 }
 
+/** Holds V (3,4) for "(" and types "abc", so the host has "(abc|)" */
+static void open_pair_and_type_abc(void) {
+    hold_key(keycode_of(opening_parenthesis_key));
+    type_key(KC_A);
+    type_key(KC_B);
+    type_key(KC_C);
+}
+
+/**
+ * Pushes thumb key R0. The hook lets it pass, and QMK then turns on the arrows
+ * layer, so the test turns it on.
+ */
+static void turn_on_arrows_mode(void) {
+    uint16_t arrows_mode_key =
+        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB);
+    assert_true(push_and_release(arrows_mode_key, NOT_A_TAP));
+    layer_state = ARROWS_MODE_ON;
+}
+
+/**
+ * Pushes a key that is not a tap-hold key, holds it and releases it. A key that
+ * passes goes to the call log as a tap, as QMK sends it.
+ *
+ * @param push Key and hold time.
+ */
+static void type_held_key(held_push_t push) {
+    if (send_key_event(push.keycode, true)) {
+        tap_code16(push.keycode);
+    }
+    advance_fake_clock(push.hold_time);
+    send_key_event(push.keycode, false);
+}
+
+static void bracket_pairs_flash_closer_hold_after_text_jumps_out(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    hold_key(keycode_of(closing_parenthesis_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_flash_tab_after_text_jumps_out(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_flash_quick_tap_of_closer_key_types_letter(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    // Quick tap of P is the letter, which the pair counts
+    tap_tap_hold_key(keycode_of(closing_parenthesis_key));
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_P},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_flash_arrows_mode_key_keeps_pair(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    hold_key(keycode_of(closing_parenthesis_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r19_r6_ht1_ac16_flash_left_then_closer(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(left_arrow_key));
+    hold_key(keycode_of(closing_parenthesis_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_TAP_CODE16, KC_RIGHT}, {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r19_r5_ht2_ac17_flash_left_then_tab(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_TAP_CODE16, KC_RIGHT}, {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r21_ht3_ac21_flash_left_right_then_tab(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(right_arrow_key));
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r11_r6_ht13_ac20_flash_operator_in_pair(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    tap_tap_hold_key(keycode_of(closing_parenthesis_key));
+    hold_key(keycode_of(minus_key));
+    hold_key(keycode_of(closing_angle_bracket_key));
+    type_key(KC_X);
+    hold_key(keycode_of(closing_parenthesis_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        {CALLED_TAP_CODE16, KC_P},
+        {CALLED_REGISTER_CODE16, KC_MINUS},
+        {CALLED_UNREGISTER_CODE16, KC_MINUS},
+        {CALLED_REGISTER_CODE16, KC_RIGHT_ANGLE_BRACKET},
+        {CALLED_UNREGISTER_CODE16, KC_RIGHT_ANGLE_BRACKET},
+        {CALLED_TAP_CODE16, KC_X},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r24_ac24_flash_held_backspace_forgets_pairs(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    type_held_key((held_push_t){.keycode = KC_BACKSPACE, .hold_time = ONE_SECOND});
+    assert_false(bracket_pairs_are_open());
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r19_r4_ht4_ac18_letter_after_left_then_tab(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    type_key(KC_A);
+    type_key(KC_C);
+    turn_on_arrows_mode();
+    type_key(keycode_of(left_arrow_key));
+    type_key(KC_B);
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,        {CALLED_TAP_CODE16, KC_A},
+        {CALLED_TAP_CODE16, KC_C},     {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_TAP_CODE16, KC_B},     {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r20_r13_ht5_left_past_opener_forgets_pairs(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    type_key(KC_A);
+    turn_on_arrows_mode();
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,       {CALLED_TAP_CODE16, KC_A},
+        {CALLED_TAP_CODE16, KC_LEFT}, {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r22_r7_ht6_right_at_closer_leaves_inner_pair(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_curly_brace_key));
+    hold_key(keycode_of(opening_parenthesis_key));
+    type_key(KC_A);
+    turn_on_arrows_mode();
+    type_key(keycode_of(right_arrow_key));
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        {CALLED_TAP_CODE16, KC_LEFT_CURLY_BRACE},
+        {CALLED_TAP_CODE16, KC_RIGHT_CURLY_BRACE},
+        {CALLED_TAP_CODE16, KC_LEFT},
+        PARENTHESES_PAIR_CALLS,
+        {CALLED_TAP_CODE16, KC_A},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r23_ht7_backspace_at_opener_forgets_pairs(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    type_key(KC_A);
+    type_key(KC_B);
+    turn_on_arrows_mode();
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(left_arrow_key));
+    type_key(KC_BACKSPACE);
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,       {CALLED_TAP_CODE16, KC_A},
+        {CALLED_TAP_CODE16, KC_B},    {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_TAP_CODE16, KC_LEFT}, {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r10_ht8_left_and_right_with_modifier_clear(void **state) {
+    (void)state;
+    for (size_t key = 0; key < ARRAY_SIZE(left_and_right_keys); key++) {
+        for (size_t mod = 0; mod < ARRAY_SIZE(home_row_modifiers); mod++) {
+            start_case();
+            open_pair_and_type_abc();
+            set_fake_modifiers(home_row_modifiers[mod]);
+            assert_true(push_and_release(left_and_right_keys[key], NOT_A_TAP));
+            set_fake_modifiers(0);
+            assert_true(push_and_release(KC_TAB, NOT_A_TAP));
+        }
+    }
+}
+
+static void bracket_pairs_r10_ht8_shift_left_then_tab(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    // Shift with Left selects text, which the next key can replace
+    set_fake_modifiers(LEFT_SHIFT_BIT);
+    type_key(keycode_of(left_arrow_key));
+    set_fake_modifiers(0);
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r10_ht9_up_forgets_pairs(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    type_key(keycode_of(up_arrow_key));
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_UP},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r24_ht10_left_held_for_safe_time_forgets_pairs(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    type_held_key((held_push_t){
+        .keycode   = keycode_of(left_arrow_key),
+        .hold_time = REPEAT_SAFE_TIME,
+    });
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r24_ht11_left_released_before_safe_time(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_arrows_mode();
+    type_held_key((held_push_t){
+        .keycode   = keycode_of(left_arrow_key),
+        .hold_time = JUST_BEFORE_REPEAT_SAFE_TIME,
+    });
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r24_ht12_backspace_held_for_safe_time(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    type_key(KC_A);
+    type_key(KC_B);
+    type_held_key((held_push_t){
+        .keycode   = KC_BACKSPACE,
+        .hold_time = REPEAT_SAFE_TIME,
+    });
+    type_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,      {CALLED_TAP_CODE16, KC_A},
+        {CALLED_TAP_CODE16, KC_B},   {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r24_long_symbol_hold_forgets_pairs(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    // Host repeats the "-" of a long hold of K
+    assert_false(send_key_event(keycode_of(minus_key), true));
+    advance_fake_clock(REPEAT_SAFE_TIME);
+    assert_false(send_key_event(keycode_of(minus_key), false));
+    assert_true(push_and_release(KC_TAB, NOT_A_TAP));
+}
+
+static void bracket_pairs_r24_long_modifier_hold_keeps_pairs(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    // Host does not repeat a modifier, so a long Shift hold keeps the pair
+    assert_true(send_key_event(keycode_of(left_shift_key), true));
+    advance_fake_clock(ONE_SECOND);
+    assert_true(send_key_event(keycode_of(left_shift_key), false));
+    assert_false(push_and_release(KC_TAB, NOT_A_TAP));
+}
+
+static void bracket_pairs_r24_long_hold_of_taken_key_keeps_pairs(void **state) {
+    (void)state;
+    start_case();
+    // Module sent the pair with taps, so the host repeats nothing
+    assert_false(send_key_event(keycode_of(opening_parenthesis_key), true));
+    advance_fake_clock(ONE_SECOND);
+    assert_false(send_key_event(keycode_of(opening_parenthesis_key), false));
+    assert_true(bracket_pairs_are_open());
+}
+
+static void bracket_pairs_r25_pairs_are_open_until_jump_out(void **state) {
+    (void)state;
+    start_case();
+    assert_false(bracket_pairs_are_open());
+    hold_key(keycode_of(opening_parenthesis_key));
+    assert_true(bracket_pairs_are_open());
+    type_key(KC_TAB);
+    assert_false(bracket_pairs_are_open());
+}
+
+static void bracket_pairs_r25_r12_pairs_are_not_open_after_idle_time(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    advance_fake_clock(LONGER_THAN_IDLE_TIME);
+    assert_false(bracket_pairs_are_open());
+}
+
 // #endregion
 
 // #region Test runner
@@ -920,7 +1398,7 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r10_ac7_mouse_key_then_tab),
     cmocka_unit_test(bracket_pairs_r10_shortcut_clears_stack),
     cmocka_unit_test(bracket_pairs_r10_shift_tab_clears_stack),
-    cmocka_unit_test(bracket_pairs_r11_ac8_other_closer_clears_stack),
+    cmocka_unit_test(bracket_pairs_r11_ac8_ht14_other_closer_is_a_character),
     cmocka_unit_test(bracket_pairs_r12_ac9_wait_then_tab),
     cmocka_unit_test(bracket_pairs_r13_ac11_empty_stack_tab_and_closer),
     cmocka_unit_test(bracket_pairs_r16_r18_ac12_double_quote_sends_pair),
@@ -933,6 +1411,30 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_jump_out_tab_keeps_special_mode_on),
     cmocka_unit_test(bracket_pairs_r4_space_that_ends_special_mode_types_nothing),
     cmocka_unit_test(bracket_pairs_clear_removes_pairs),
+    cmocka_unit_test(bracket_pairs_flash_closer_hold_after_text_jumps_out),
+    cmocka_unit_test(bracket_pairs_flash_tab_after_text_jumps_out),
+    cmocka_unit_test(bracket_pairs_flash_quick_tap_of_closer_key_types_letter),
+    cmocka_unit_test(bracket_pairs_flash_arrows_mode_key_keeps_pair),
+    cmocka_unit_test(bracket_pairs_r19_r6_ht1_ac16_flash_left_then_closer),
+    cmocka_unit_test(bracket_pairs_r19_r5_ht2_ac17_flash_left_then_tab),
+    cmocka_unit_test(bracket_pairs_r21_ht3_ac21_flash_left_right_then_tab),
+    cmocka_unit_test(bracket_pairs_r11_r6_ht13_ac20_flash_operator_in_pair),
+    cmocka_unit_test(bracket_pairs_r24_ac24_flash_held_backspace_forgets_pairs),
+    cmocka_unit_test(bracket_pairs_r19_r4_ht4_ac18_letter_after_left_then_tab),
+    cmocka_unit_test(bracket_pairs_r20_r13_ht5_left_past_opener_forgets_pairs),
+    cmocka_unit_test(bracket_pairs_r22_r7_ht6_right_at_closer_leaves_inner_pair),
+    cmocka_unit_test(bracket_pairs_r23_ht7_backspace_at_opener_forgets_pairs),
+    cmocka_unit_test(bracket_pairs_r10_ht8_left_and_right_with_modifier_clear),
+    cmocka_unit_test(bracket_pairs_r10_ht8_shift_left_then_tab),
+    cmocka_unit_test(bracket_pairs_r10_ht9_up_forgets_pairs),
+    cmocka_unit_test(bracket_pairs_r24_ht10_left_held_for_safe_time_forgets_pairs),
+    cmocka_unit_test(bracket_pairs_r24_ht11_left_released_before_safe_time),
+    cmocka_unit_test(bracket_pairs_r24_ht12_backspace_held_for_safe_time),
+    cmocka_unit_test(bracket_pairs_r24_long_symbol_hold_forgets_pairs),
+    cmocka_unit_test(bracket_pairs_r24_long_modifier_hold_keeps_pairs),
+    cmocka_unit_test(bracket_pairs_r24_long_hold_of_taken_key_keeps_pairs),
+    cmocka_unit_test(bracket_pairs_r25_pairs_are_open_until_jump_out),
+    cmocka_unit_test(bracket_pairs_r25_r12_pairs_are_not_open_after_idle_time),
 };
 
 int main(int argc, char **argv) {

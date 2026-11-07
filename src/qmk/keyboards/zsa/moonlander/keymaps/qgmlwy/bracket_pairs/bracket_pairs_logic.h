@@ -26,6 +26,9 @@
 /** Time in ms with no key push after which the host cursor can have moved */
 #define PAIR_IDLE_TIME 30000
 
+/** Shortest hold time in ms of a key that the host can repeat */
+#define PAIR_REPEAT_SAFE_TIME 400
+
 // #endregion
 
 // #region Enumerations
@@ -50,6 +53,8 @@ enum pair_key_class {
     PAIR_KEY_QUOTE,        /**< Double quote or backtick */
     PAIR_KEY_TAB,          /**< Tab */
     PAIR_KEY_BACKSPACE,    /**< Backspace */
+    PAIR_KEY_LEFT,         /**< Left with no modifier */
+    PAIR_KEY_RIGHT,        /**< Right with no modifier */
     PAIR_KEY_CLEARING,     /**< Key that can move the host cursor */
 };
 
@@ -78,13 +83,15 @@ typedef struct {
     bool             passes;       /**< Pushed key goes on, with no outputs */
     enum pair_kind   kind;         /**< Pair of the opener and closer outputs */
     uint8_t          output_count; /**< Number of outputs */
+    uint16_t         repeat_count; /**< Times to send all outputs again, in order */
     enum pair_output outputs[PAIR_MOST_OUTPUTS]; /**< Keys to send, in order */
 } pair_result_t;
 
 /** One open pair */
 typedef struct {
-    enum pair_kind kind;  /**< Kind of the pair */
-    uint16_t       count; /**< Characters that the host has in the pair */
+    enum pair_kind kind;   /**< Kind of the pair */
+    uint16_t       count;  /**< Characters that the host has in the pair */
+    uint16_t       offset; /**< Characters between the cursor and the closer */
 } pair_entry_t;
 
 /** Open pairs, the innermost pair on top; all zero is an empty stack */
@@ -125,5 +132,23 @@ void pair_stack_count_sent_key(pair_stack_t *stack, pair_key_t sent, uint32_t no
  * @param stack Pair stack.
  */
 void pair_stack_clear(pair_stack_t *stack);
+
+/**
+ * Clears the stack if the host can have repeated a key that passed, because each
+ * repeat changes the host text.
+ *
+ * @param stack     Pair stack.
+ * @param held_time Time in ms from the push to the release of the key.
+ */
+void pair_stack_release_passed_key(pair_stack_t *stack, uint32_t held_time);
+
+/**
+ * Tells if a pair is open, so that Tab and the closer jump out.
+ *
+ * @param stack Pair stack.
+ * @param now   Time in ms.
+ * @return False for an empty stack, or after the idle time with no key push.
+ */
+bool pair_stack_has_pairs(const pair_stack_t *stack, uint32_t now);
 
 // #endregion

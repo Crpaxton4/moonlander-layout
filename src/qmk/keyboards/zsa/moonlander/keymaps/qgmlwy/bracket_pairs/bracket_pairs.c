@@ -19,8 +19,8 @@
 /** Number of bracket kinds, which come before the quotes in pair_keys */
 #define BRACKET_KIND_COUNT PAIR_DOUBLE_QUOTES
 
-/** Most keys that the operator holds at one time with a push that this module took */
-#define TAKEN_KEY_CAPACITY 4
+/** Most keys that the operator holds at one time with a push that this module saw */
+#define HELD_KEY_CAPACITY 8
 
 /** Modifiers that make a key push a shortcut, which can move the host cursor */
 #define SHORTCUT_MODIFIERS (MOD_MASK_CTRL | MOD_MASK_ALT | MOD_MASK_GUI)
@@ -34,6 +34,13 @@ typedef struct {
     uint16_t opener; /**< Key of the opening character */
     uint16_t closer; /**< Key of the closing character */
 } pair_keys_t;
+
+/** Key that the operator holds, with a push that this module saw */
+typedef struct {
+    uint16_t keycode;   /**< Keycode of the key, KC_NO for a free place */
+    bool     is_taken;  /**< True if this module took the push, so QMK did not get it */
+    uint32_t push_time; /**< Time of the push at the hook in ms */
+} held_key_t;
 
 /** Range of keycodes with one key class */
 typedef struct {
@@ -91,8 +98,15 @@ static const uint16_t output_keys[] = {
     [PAIR_OUTPUT_DELETE]    = KC_DELETE,
 };
 
-/** Keys whose push this module took, KC_NO for a free place */
-static uint16_t taken_keys[TAKEN_KEY_CAPACITY];
+/** Held keys with a push that this module took or that can change the host text */
+static held_key_t held_keys[HELD_KEY_CAPACITY];
+
+/** Keys that move the cursor or the text with Shift held */
+static const uint16_t shift_move_keys[] = {
+    KC_TAB,
+    KC_LEFT,
+    KC_RIGHT,
+};
 
 /** Key class of each range of basic keycodes; the first range that matches wins */
 static const key_range_t key_ranges[] = {
@@ -101,7 +115,9 @@ static const key_range_t key_ranges[] = {
     {.first = KC_ENTER, .last = KC_ESCAPE, .key_class = PAIR_KEY_CLEARING},
     {.first = KC_F1, .last = KC_F12, .key_class = PAIR_KEY_CLEARING},
     {.first = KC_F13, .last = KC_F24, .key_class = PAIR_KEY_CLEARING},
-    // Insert, Home, Page Up, Delete, End, Page Down and the arrows
+    {.first = KC_RIGHT, .last = KC_RIGHT, .key_class = PAIR_KEY_RIGHT},
+    {.first = KC_LEFT, .last = KC_LEFT, .key_class = PAIR_KEY_LEFT},
+    // Insert, Home, Page Up, Delete, End, Page Down, Down and Up
     {.first = KC_INSERT, .last = KC_UP, .key_class = PAIR_KEY_CLEARING},
     {
         .first     = QK_MOUSE_CURSOR_UP,
@@ -198,6 +214,21 @@ static bool is_modifier_push(uint16_t keycode, const keyrecord_t *record) {
 }
 
 /**
+ * Tells if a key moves the cursor or the text with Shift held.
+ *
+ * @param key Sent key, from sent_key().
+ * @return True for a key in shift_move_keys.
+ */
+static bool is_shift_move_key(uint16_t key) {
+    for (size_t index = 0; index < ARRAY_SIZE(shift_move_keys); index++) {
+        if (shift_move_keys[index] == key) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * Gives the pair key of a key that QMK sends for a push.
  *
  * @param key     Sent key, from sent_key().
@@ -209,8 +240,8 @@ static pair_key_t classify_sent_key(uint16_t key, bool shifted) {
         return (pair_key_t){.key_class = PAIR_KEY_QUOTE, .kind = PAIR_DOUBLE_QUOTES};
     } else if (key == KC_GRAVE && !shifted && layer_state_is(LAYER_SPECIAL)) {
         return (pair_key_t){.key_class = PAIR_KEY_QUOTE, .kind = PAIR_BACKTICKS};
-    } else if (key == KC_TAB && shifted) {
-        // Shift with Tab moves the text, so the cursor can move
+    } else if (shifted && is_shift_move_key(key)) {
+        // Shift with Tab moves the text, and Shift with an arrow selects text
         return (pair_key_t){.key_class = PAIR_KEY_CLEARING};
     }
     return (pair_key_t){.key_class = class_of_key(key)};
@@ -263,8 +294,11 @@ static void send_outputs(const pair_result_t *result) {
     if (shift != 0) {
         del_mods(shift);
     }
-    for (uint8_t index = 0; index < result->output_count; index++) {
-        tap_code16(key_of_output(result->outputs[index], result->kind));
+    // Wider than repeat_count, so the loop ends for each value
+    for (uint32_t send = 0; send <= result->repeat_count; send++) {
+        for (uint8_t index = 0; index < result->output_count; index++) {
+            tap_code16(key_of_output(result->outputs[index], result->kind));
+        }
     }
     if (shift != 0) {
         add_mods(shift);
@@ -272,33 +306,59 @@ static void send_outputs(const pair_result_t *result) {
 }
 
 /**
- * Keeps a key whose push this module took, so that its release stops here too.
+ * Gives the place of a held key.
  *
- * @param keycode Keycode of the pushed key.
+ * @param keycode Keycode of the key, or KC_NO for a free place.
+ * @return Place in held_keys, or NULL if no place has the keycode.
  */
-static void remember_taken_key(uint16_t keycode) {
-    for (uint8_t index = 0; index < TAKEN_KEY_CAPACITY; index++) {
-        if (taken_keys[index] == KC_NO) {
-            taken_keys[index] = keycode;
-            return;
+static held_key_t *find_held_key(uint16_t keycode) {
+    for (uint8_t index = 0; index < HELD_KEY_CAPACITY; index++) {
+        if (held_keys[index].keycode == keycode) {
+            return &held_keys[index];
         }
     }
+    return NULL;
 }
 
 /**
- * Tells if a release goes on, and forgets the key if this module took its push.
+ * Keeps a pushed key until its release. With no free place, the release goes on
+ * with no check.
+ *
+ * @param keycode  Keycode of the pushed key.
+ * @param is_taken True if this module took the push.
+ */
+static void remember_held_key(uint16_t keycode, bool is_taken) {
+    held_key_t *place = find_held_key(keycode);
+    if (place == NULL) {
+        place = find_held_key(KC_NO);
+    }
+    if (place == NULL || keycode == KC_NO) {
+        return;
+    }
+    *place = (held_key_t){
+        .keycode   = keycode,
+        .is_taken  = is_taken,
+        .push_time = timer_read32(),
+    };
+}
+
+/**
+ * Forgets a released key. Clears the stack if the host can have repeated the key.
  *
  * @param keycode Keycode of the released key.
  * @return False if this module took the push of the key, because QMK did not get
  *         that push; true otherwise.
  */
 static bool release_goes_on(uint16_t keycode) {
-    for (uint8_t index = 0; index < TAKEN_KEY_CAPACITY; index++) {
-        if (keycode != KC_NO && taken_keys[index] == keycode) {
-            taken_keys[index] = KC_NO;
-            return false;
-        }
+    held_key_t *held = find_held_key(keycode);
+    if (held == NULL || keycode == KC_NO) {
+        return true;
     }
+    held->keycode = KC_NO;
+    if (held->is_taken) {
+        return false;
+    }
+    pair_stack_release_passed_key(&pair_stack, timer_elapsed32(held->push_time));
     return true;
 }
 
@@ -312,11 +372,15 @@ bool process_bracket_pairs(uint16_t keycode, keyrecord_t *record) {
     }
     pair_key_t    key    = classify_key(keycode, record);
     pair_result_t result = pair_stack_push(&pair_stack, key, timer_read32());
-    if (result.passes) {
+    if (result.passes && key.key_class == PAIR_KEY_NO_CHARACTER) {
+        // Host does not repeat a modifier or a layer key
+        return true;
+    } else if (result.passes) {
+        remember_held_key(keycode, false);
         return true;
     }
     send_outputs(&result);
-    remember_taken_key(keycode);
+    remember_held_key(keycode, true);
     // Special mode runs later, so it does not see this push
     special_mode_count_taken_push();
     return false;
@@ -324,6 +388,10 @@ bool process_bracket_pairs(uint16_t keycode, keyrecord_t *record) {
 
 void bracket_pairs_clear(void) {
     pair_stack_clear(&pair_stack);
+}
+
+bool bracket_pairs_are_open(void) {
+    return pair_stack_has_pairs(&pair_stack, timer_read32());
 }
 
 void bracket_pairs_count_sent_key(uint16_t keycode) {
