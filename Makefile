@@ -45,6 +45,7 @@ KEYMAP_C := $(CURDIR)/src/qmk/keyboards/zsa/moonlander/keymaps/qgmlwy/keymap.c
 
 # QMK has no option for the database location. The new location keeps all paths
 # valid, because the entries contain absolute directories
+compiledb: converter-compiledb
 compiledb: checker-compiledb ## Build the firmware and the compile databases
 	qmk compile -j $(QMK_JOBS) --compiledb -kb zsa/moonlander/reva -km qgmlwy
 	mkdir -p .build
@@ -233,6 +234,81 @@ qmk-test-clang-tidy: qmk-test-compiledb ## Run clang-tidy on the keymap unit tes
 
 .PHONY: qmk-test-compiledb qmk-test qmk-test-clang-tidy
 
+##@ Key log converter
+
+CONVERTER_DIR     := src/key_log_converter
+CONVERTER_TESTS   := test/key_log_converter
+CONVERTER_BUILD   := .build/key_log_converter
+CONVERTER         := $(CONVERTER_BUILD)/key_log_converter
+CONVERTER_SOURCES := $(sort $(wildcard $(CONVERTER_DIR)/*.c))
+CONVERTER_HEADERS := $(sort $(wildcard $(CONVERTER_DIR)/*.h))
+CONVERTER_OBJECTS := $(CONVERTER_SOURCES:$(CONVERTER_DIR)/%.c=$(CONVERTER_BUILD)/%.o)
+
+converter: $(CONVERTER) ## Build the key log converter
+
+$(CONVERTER_BUILD):
+	mkdir -p $@
+
+$(CONVERTER_OBJECTS): $(CONVERTER_BUILD)/%.o: $(CONVERTER_DIR)/%.c | $(CONVERTER_BUILD)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) -MMD -MP -c -o $@ $<
+
+-include $(CONVERTER_OBJECTS:.o=.d)
+
+$(CONVERTER): $(CONVERTER_OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $^
+
+converter_object = $(1:$(CONVERTER_DIR)/%.c=$(CONVERTER_BUILD)/%.o)
+converter_entry = {"directory": "$(CURDIR)", "file": "$(1)", "command": "$(CC) \
+	$(CPPFLAGS) $(CFLAGS) $(WARNINGS) -c -o $(call converter_object,$(1)) $(1)"}
+converter_entries = $(foreach file,$(CONVERTER_SOURCES),$(call converter_entry,$(file)))
+converter_database = [$(subst }$(space){,}$(comma){,$(converter_entries))]
+
+# Same method as checker-compiledb
+converter-compiledb: | $(CONVERTER_BUILD) ## Write the converter compile database
+	$(file >$(CONVERTER_BUILD)/compile_commands.json,$(converter_database))
+	jq -e 'length > 0' $(CONVERTER_BUILD)/compile_commands.json >/dev/null
+
+converter-clang-tidy: converter-compiledb ## Run clang-tidy on the key log converter
+	@time clang-tidy --quiet -p $(CONVERTER_BUILD) $(CONVERTER_SOURCES)
+
+# Empty for the system, or the directory of a `dpkg -x` extraction
+MINGW_ROOT    ?=
+MINGW_CC      := $(MINGW_ROOT)/usr/bin/x86_64-w64-mingw32-gcc-win32
+CONVERTER_EXE := $(CONVERTER_BUILD)/key_log_converter.exe
+
+converter-windows: $(CONVERTER_EXE) ## Build the key log converter for Windows
+
+# -static puts libgcc into the program, so Windows needs no MinGW DLL
+$(CONVERTER_EXE): $(CONVERTER_SOURCES) $(CONVERTER_HEADERS) | $(CONVERTER_BUILD)
+	$(MINGW_CC) $(CFLAGS) $(WARNINGS) -static -o $@ $(CONVERTER_SOURCES)
+
+# Each case directory holds its logs as <case>*.log and the expected outputs as
+# <case>.<output>. The run puts each output file and stdout and stderr in
+# .build/key_log_converter/test/<case>/
+CONVERTER_CASES      := $(sort $(basename $(notdir \
+	$(wildcard $(CONVERTER_TESTS)/*/*.stdout))))
+converter_logs        = $(sort $(wildcard $(CONVERTER_TESTS)/$(1)/$(1)*.log))
+converter_expected    = $(filter-out %.log,$(wildcard $(CONVERTER_TESTS)/$(1)/$(1).*))
+CONVERTER_CASE_TESTS := $(CONVERTER_CASES:%=$(CONVERTER_BUILD)/test/%)
+
+# Inner make continues after a failed case, so each failed case shows its diff
+converter-test: $(CONVERTER) ## Test the key log converter
+	@$(MAKE) --keep-going --no-print-directory $(CONVERTER_CASE_TESTS)
+	@echo "$(words $(CONVERTER_CASES)) converter fixtures match"
+
+# The loop compares all expected files, so one case shows each wrong output
+$(CONVERTER_CASE_TESTS): $(CONVERTER_BUILD)/test/%: $(CONVERTER)
+	@rm -rf $@
+	@mkdir -p $@
+	@{ $(CONVERTER) $@ $(call converter_logs,$*); echo "exit $$?"; } \
+		>$@/stdout 2>$@/stderr
+	@status=0; for expected in $(call converter_expected,$*); do \
+		diff -u $$expected $@/$${expected##*/$*.} || status=1; \
+	done; exit $$status
+
+.PHONY: converter converter-compiledb converter-clang-tidy converter-windows \
+	converter-test $(CONVERTER_CASE_TESTS)
+
 ##@ General
 
 clean: ## Remove .build/
@@ -241,6 +317,6 @@ clean: ## Remove .build/
 help: ## List the targets
 	@awk 'BEGIN { FS = ":.*## "; print "Usage: make [target]" } \
 		/^##@ / { printf "\n%s\n", substr($$0, 5) } \
-		/^[a-z-]+:.*## / { printf "  %-18s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+		/^[a-z-]+:.*## / { printf "  %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 .PHONY: clean help
