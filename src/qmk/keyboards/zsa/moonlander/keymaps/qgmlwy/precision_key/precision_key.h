@@ -1,5 +1,6 @@
 /** @file
- * Precision key: while it is held, the mouse cursor moves one count per report.
+ * Precision key of the nav mode, thumb key R1: while it is held, the mouse cursor
+ * moves one count per report.
  *
  * QMK's combined mouse key mode gives QK_MOUSE_ACCELERATION_0 this function, but in
  * that mode a wheel key held alone does not accelerate. Thus the keymap uses the

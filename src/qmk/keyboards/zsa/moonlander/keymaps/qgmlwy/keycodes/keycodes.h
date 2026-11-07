@@ -56,8 +56,10 @@ enum custom_keycode {
     PASCAL_CASE_KEY,                          /**< Starts or ends PascalCase */
     PLAIN_MODE_COMBO_LEFT_POSITION,           /**< Combo key at (2,6), never sent */
     PLAIN_MODE_COMBO_RIGHT_POSITION,          /**< Combo key at (2,7), never sent */
-    PLAIN_MODE_TOGGLE, /**< Plain-mode combo: plain mode on or off */
-    PROFILING_TOGGLE,  /**< (3,0) in the profiling debug build: profiling on or off */
+    PLAIN_MODE_TOGGLE,  /**< Plain-mode combo: plain mode on or off */
+    PROFILING_TOGGLE,   /**< (3,0) in the profiling debug build: profiling on or off */
+    NAV_SNAKE_CASE_KEY, /**< (1,6) in the nav mode: snake_case with no F6 hold */
+    NAV_CAMEL_CASE_KEY, /**< (1,7) in the nav mode: camelCase with no F7 hold */
 };
 
 // #endregion

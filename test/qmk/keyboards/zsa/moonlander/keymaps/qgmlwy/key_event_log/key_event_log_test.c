@@ -225,7 +225,7 @@ static void key_event_log_r6_input_record_of_a_push(void **state) {
     (void)state;
     start_with_logging(true);
     advance_fake_clock(EVENT_INTERVAL);
-    layer_state = ONLY_LAYER(LAYER_ARROWS);
+    layer_state = ONLY_LAYER(LAYER_NAV);
     set_fake_modifiers(LEFT_SHIFT_BIT);
     set_fake_one_shot_modifiers(LEFT_CTRL_BIT);
     keyrecord_t record = {
