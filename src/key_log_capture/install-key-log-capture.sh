@@ -53,7 +53,9 @@ task="$(<"$repository/src/key_log_capture/key-log-capture-task.xml")"
 task="${task//@USER_ID@/"$user_id"}"
 task="${task//@POWERSHELL_ARGUMENTS@/"$powershell_arguments"}"
 task="${task//@INSTALL_FOLDER@/"$install_folder_windows"}"
-printf '%s\n' "$task" >"$install_folder/key-log-capture-task.xml"
+# schtasks reads a task file only as UTF-16, so the file gets that encoding
+printf '%s\n' "$task" | iconv -f UTF-8 -t UTF-16 \
+    >"$install_folder/key-log-capture-task.xml"
 schtasks.exe /create /tn "$task_name" /f \
     /xml "$install_folder_windows\\key-log-capture-task.xml"
 
