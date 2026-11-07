@@ -10,21 +10,10 @@ QMK_BOOTSTRAP_COMMIT="08c662f286ddfd12a985f57b584b02eca5af0ae6"
 FNM_VERSION="v1.39.0"
 # src/qmk/.qmk-ref pins a commit on this branch, and CI builds from that commit
 QMK_BRANCH="firmware25"
-# Keep equal to PRE_COMMIT_VERSION in .github/workflows/lint.yaml
-PRE_COMMIT_VERSION="4.7.0"
-# Keep equal to SHELLCHECK_VERSION in .github/workflows/lint.yaml
-SHELLCHECK_VERSION="0.9.0-1"
-# Keep equal to TREE_SITTER_VERSION and TREE_SITTER_C_VERSION in
-# .github/workflows/lint.yaml
-TREE_SITTER_VERSION="0.20.8-2"
-TREE_SITTER_C_VERSION="0.20.5-2"
-# Keep equal to JQ_VERSION in .github/workflows/build.yaml
-JQ_VERSION="1.7.1-3ubuntu0.24.04.2"
-# Keep equal to DOXYGEN_VERSION and DOXYGEN_SHA256 in .github/workflows/build.yaml
-DOXYGEN_VERSION="1.18.0"
-DOXYGEN_SHA256="14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90"
+# shellcheck source=versions.env
+. "$REPO_DIR/versions.env"
 
-# fnm reads .node-version from the current directory
+# `pre-commit install` uses the repository in the current directory
 cd "$REPO_DIR"
 
 # fnm installer needs unzip
@@ -70,8 +59,8 @@ eval "$(fnm env --shell bash)"
 EOF
 export PATH="$HOME/.local/share/fnm:$PATH"
 eval "$(fnm env --shell bash)"
-fnm install
-fnm use
+fnm install "$NODE_VERSION"
+fnm use "$NODE_VERSION"
 npm ci --prefix "$REPO_DIR"
 
 # uv comes from the QMK bootstrap. `pre-commit install` does not run while
@@ -81,7 +70,7 @@ git -C "$REPO_DIR" config --unset core.hooksPath || true
 pre-commit install
 
 # clang-tidy uses the same LLVM release as clang-format
-uv tool install "clang-tidy==$(cat "$REPO_DIR/.llvm-version")"
+uv tool install "clang-tidy==$LLVM_VERSION"
 
 # CI runs the same official release binary, independent of the distribution
 # packages

@@ -32,7 +32,7 @@ The script installs these items:
 
 - The QMK CLI and the QMK toolchain
 - ZSA's `qmk_firmware` in `~/qmk_firmware`, with `src/qmk/` as the QMK userspace
-- Node at the version in [`.node-version`](.node-version), and the npm devDependencies
+- Node at the version in [`versions.env`](versions.env), and the npm devDependencies
 - pre-commit and its git hooks
 - The check tools: shellcheck, tree-sitter, clang-tidy and Doxygen
 
@@ -100,7 +100,7 @@ table. A commit-msg hook does the same check on local commits.
 | `firmware` | the keymap in `src/qmk/keyboards/`                                   |
 | `build`    | `Makefile`, `src/qmk/qmk.json` and `src/qmk/.qmk-ref`                |
 | `ci`       | the files in `.github/`                                              |
-| `setup`    | `setup.sh` and `.node-version`                                       |
+| `setup`    | `setup.sh` and `versions.env`                                        |
 | `tooling`  | the checks: their configuration, the hooks and the standards checker |
 | `repo`     | README, LICENSE, `.gitignore` and the release-please files           |
 | `deps`     | the Dependabot updates of the npm, pre-commit and Actions versions   |

@@ -1,0 +1,2 @@
+# setup.sh sources versions.env, so shellcheck must follow that file
+external-sources=true

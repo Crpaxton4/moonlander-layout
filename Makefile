@@ -80,7 +80,7 @@ analyze: compiledb ## Run all static analysis checks
 
 ##@ Standards checker
 
-# Checker builds need the tree-sitter package versions that setup.sh pins
+# Checker builds need the tree-sitter package versions that versions.env pins
 
 # Empty for the system, or the directory of a `dpkg -x` extraction
 TREE_SITTER_ROOT ?=
