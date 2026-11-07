@@ -11,22 +11,22 @@
 
 #include "source.h"
 
-/// Characters before the name of a preprocessor directive
+/** Characters before the name of a preprocessor directive */
 #define DIRECTIVE_LEAD "# \t"
 
-/// Wrapper that makes a file of one kind into a translation unit
+/** Wrapper that makes a file of one kind into a translation unit */
 typedef struct {
-    const char *suffix; ///< End of the file name
-    const char *before; ///< Text before the file text
-    const char *after;  ///< Text after the file text
+    const char *suffix; /**< End of the file name */
+    const char *before; /**< Text before the file text */
+    const char *after;  /**< Text after the file text */
 } file_kind_t;
 
-/// An .inc file contains only the elements of a brace initializer
+/** An .inc file contains only the elements of a brace initializer */
 static const file_kind_t file_kinds[] = {
     {".inc", "static const int inc[] = {\n", "\n};\n"},
 };
 
-/// File kind of each file that file_kinds does not match
+/** File kind of each file that file_kinds does not match */
 static const file_kind_t translation_unit = {"", "", ""};
 
 /**
@@ -38,7 +38,7 @@ static const char *const blanked_words[] = {
     "PROGMEM",
 };
 
-/// Spaces replace the lines of these directives before the parse
+/** Spaces replace the lines of these directives before the parse */
 static const char *const blanked_directives[] = {
     // tree-sitter cannot parse an include in an initializer, where the keymap
     // tables include their rows

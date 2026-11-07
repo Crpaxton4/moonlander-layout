@@ -10,14 +10,14 @@
 
 #include "support.h"
 
-/// File that the checker checks, with the text that tree-sitter parses
+/** File that the checker checks, with the text that tree-sitter parses */
 typedef struct {
-    const char *path;         ///< File as the command line gives it
-    buffer_t    parsed;       ///< File text in the wrapper of its file kind
-    size_t      text_start;   ///< Offset of the file text in parsed
-    size_t      text_length;  ///< Bytes of the file text, without the wrapper
-    uint32_t    wrapper_rows; ///< Lines of the wrapper before the file text
-    findings_t *findings;     ///< Findings of all files of the run
+    const char *path;         /**< File as the command line gives it */
+    buffer_t    parsed;       /**< File text in the wrapper of its file kind */
+    size_t      text_start;   /**< Offset of the file text in parsed */
+    size_t      text_length;  /**< Bytes of the file text, without the wrapper */
+    uint32_t    wrapper_rows; /**< Lines of the wrapper before the file text */
+    findings_t *findings;     /**< Findings of all files of the run */
 } source_t;
 
 /**
