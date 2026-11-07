@@ -18,5 +18,5 @@
  * makes the two values unique.
  */
 #define COPY_KEY LT(0, KC_C)
-/// Paste key: Ctrl+V on a tap, Ctrl+Shift+V on a hold
+/** Paste key: Ctrl+V on a tap, Ctrl+Shift+V on a hold */
 #define PASTE_KEY LT(0, KC_V)

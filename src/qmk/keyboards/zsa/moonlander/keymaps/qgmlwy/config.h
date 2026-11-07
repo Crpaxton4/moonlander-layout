@@ -7,34 +7,34 @@
  * redefinition warning.
  */
 
-/// Time in ms to wait after waking the host from USB suspend; 0 skips the wait
+/** Time in ms to wait after waking the host from USB suspend; 0 skips the wait */
 #define USB_SUSPEND_WAKEUP_DELAY 0
 
-/// Time in ms between cursor movement reports while a mouse key is held
+/** Time in ms between cursor movement reports while a mouse key is held */
 #undef MOUSEKEY_INTERVAL
 #define MOUSEKEY_INTERVAL 10
 
-/// Time in ms between the first wheel step and the start of wheel repeat
+/** Time in ms between the first wheel step and the start of wheel repeat */
 #undef MOUSEKEY_WHEEL_DELAY
 #define MOUSEKEY_WHEEL_DELAY 200
 
-/// Time in ms between the first cursor step and the start of cursor repeat
+/** Time in ms between the first cursor step and the start of cursor repeat */
 #undef MOUSEKEY_DELAY
 #define MOUSEKEY_DELAY 0
 
-/// Top cursor speed, in steps of `MOUSEKEY_MOVE_DELTA` pixels per movement report
+/** Top cursor speed, in steps of `MOUSEKEY_MOVE_DELTA` pixels per movement report */
 #undef MOUSEKEY_MAX_SPEED
 #define MOUSEKEY_MAX_SPEED 3
 
-/// Number of movement reports the cursor takes to accelerate to its top speed
+/** Number of movement reports the cursor takes to accelerate to its top speed */
 #undef MOUSEKEY_TIME_TO_MAX
 #define MOUSEKEY_TIME_TO_MAX 80
 
-/// Top wheel speed, in steps of `MOUSEKEY_WHEEL_DELTA` wheel units per wheel report
+/** Top wheel speed, in steps of `MOUSEKEY_WHEEL_DELTA` wheel units per wheel report */
 #undef MOUSEKEY_WHEEL_MAX_SPEED
 #define MOUSEKEY_WHEEL_MAX_SPEED 6
 
-/// Number of wheel reports the wheel takes to accelerate to its top speed
+/** Number of wheel reports the wheel takes to accelerate to its top speed */
 #undef MOUSEKEY_WHEEL_TIME_TO_MAX
 #define MOUSEKEY_WHEEL_TIME_TO_MAX 1
 
