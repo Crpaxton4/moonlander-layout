@@ -21,9 +21,6 @@
 /** Number of digits 1 to 0 on the numpad of the special layer */
 #define NUMPAD_DIGIT_COUNT 10
 
-/** Matrix column of each half that is farthest from the column with the same index */
-#define LAST_MATRIX_COLUMN (MATRIX_COLS - 1)
-
 // #endregion
 
 // #region Types
@@ -77,12 +74,13 @@ static uint8_t function_keys_in_row(uint8_t layer, uint8_t row) {
 
 /**
  * Fails the test if a digit of a right-hand row of the special layer does not have
- * its Shift symbol at the mirrored position of the left hand.
+ * its Shift symbol at the same place in the left-hand block. Both blocks go in the
+ * same order from left to right, so the symbols follow the order of the digits.
  *
  * @param left_row Matrix row of the left half; the right half row is the same row.
  * @return Number of digits in the right-hand row.
  */
-static uint8_t assert_mirrored_digit_symbols(uint8_t left_row) {
+static uint8_t assert_digit_symbols_in_order(uint8_t left_row) {
     uint8_t digits    = 0;
     uint8_t right_row = (uint8_t)(left_row + RIGHT_NUMBER_ROW);
     for (uint8_t column = 0; column < MATRIX_COLS; column++) {
@@ -90,9 +88,9 @@ static uint8_t assert_mirrored_digit_symbols(uint8_t left_row) {
         if (digit < KC_1 || digit > KC_0) {
             continue;
         }
-        uint8_t  mirrored_column = (uint8_t)(LAST_MATRIX_COLUMN - column);
-        uint16_t symbol =
-            keycode_at_keymap_location(LAYER_SPECIAL, left_row, mirrored_column);
+        // The matrix numbers the columns of each half from 0, so the same index
+        // is the same place in both blocks
+        uint16_t symbol = keycode_at_keymap_location(LAYER_SPECIAL, left_row, column);
         assert_int_equal(symbol, LSFT(digit));
         digits++;
     }
@@ -114,11 +112,11 @@ static void keymap_no_plain_function_key_on_any_layer(void **state) {
     }
 }
 
-static void keymap_special_left_symbols_mirror_the_numpad_digits(void **state) {
+static void keymap_special_left_symbols_follow_the_numpad_digit_order(void **state) {
     (void)state;
     uint8_t digits = 0;
     for (uint8_t row = LEFT_TOP_ROW; row <= (uint8_t)LEFT_BOTTOM_ROW; row++) {
-        digits += assert_mirrored_digit_symbols(row);
+        digits += assert_digit_symbols_in_order(row);
     }
     assert_int_equal(digits, NUMPAD_DIGIT_COUNT);
 }
@@ -741,9 +739,9 @@ static void keymap_special_left_top_row(void **state) {
             {
                 KC_TAB,
                 KC_GRAVE,
-                KC_LEFT_PAREN,
-                KC_ASTERISK,
                 KC_AMPERSAND,
+                KC_ASTERISK,
+                KC_LEFT_PAREN,
                 KC_NO,
                 KC_NO,
             },
@@ -758,9 +756,9 @@ static void keymap_special_left_home_row(void **state) {
             {
                 SPECIAL_MODE_KEY,
                 KC_TILDE,
-                KC_CIRCUMFLEX,
-                KC_PERCENT,
                 KC_DOLLAR,
+                KC_PERCENT,
+                KC_CIRCUMFLEX,
                 KC_NO,
                 KC_NO,
             },
@@ -775,9 +773,9 @@ static void keymap_special_left_bottom_letter_row(void **state) {
             {
                 KC_NO,
                 KC_NO,
-                KC_HASH,
-                KC_AT,
                 KC_EXCLAIM,
+                KC_AT,
+                KC_HASH,
                 KC_NO,
                 NO_PHYSICAL_KEY,
             },
@@ -792,9 +790,9 @@ static void keymap_special_left_bottom_row(void **state) {
             {
                 KC_NO,
                 KC_NO,
-                KC_EQUAL,
-                KC_PLUS,
                 KC_RIGHT_PAREN,
+                KC_PLUS,
+                KC_EQUAL,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -1193,7 +1191,7 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_special_right_bottom_letter_row),
     cmocka_unit_test(keymap_special_right_bottom_row),
     cmocka_unit_test(keymap_special_right_thumb_keys),
-    cmocka_unit_test(keymap_special_left_symbols_mirror_the_numpad_digits),
+    cmocka_unit_test(keymap_special_left_symbols_follow_the_numpad_digit_order),
     cmocka_unit_test(keymap_plain_left_number_row),
     cmocka_unit_test(keymap_plain_left_top_row),
     cmocka_unit_test(keymap_plain_left_home_row),

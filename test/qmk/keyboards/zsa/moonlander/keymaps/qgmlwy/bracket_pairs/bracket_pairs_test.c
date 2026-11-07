@@ -256,18 +256,18 @@ static const grid_position_t backtick_key = {
     .column = 1,
 };
 
-/** Opening parenthesis (1,2) of the special mode, a plain character */
+/** Opening parenthesis (1,4) of the special mode, a plain character */
 static const grid_position_t special_opening_parenthesis_key = {
     .layer  = LAYER_SPECIAL,
     .row    = 1,
-    .column = 2,
+    .column = 4,
 };
 
-/** Closing parenthesis (4,4) of the special mode, a plain character */
+/** Closing parenthesis (4,2) of the special mode, a plain character */
 static const grid_position_t special_closing_parenthesis_key = {
     .layer  = LAYER_SPECIAL,
     .row    = 4,
-    .column = 4,
+    .column = 2,
 };
 
 /** Digit 1 (3,9) of the special mode */
