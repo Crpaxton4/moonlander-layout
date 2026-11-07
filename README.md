@@ -13,6 +13,7 @@ build uses.
 | ----------------------- | ---------------------------------------------- |
 | `src/qmk/`              | The QMK userspace and the keymap               |
 | `src/check_standards/`  | The standards checker                          |
+| `src/key_log_capture/`  | The key log capture for Windows                |
 | `test/check_standards/` | The checker tests, one directory for each case |
 | `test/qmk/`             | The keymap tests: only a placeholder file      |
 | `.build/`               | The build output, which git ignores            |
@@ -63,6 +64,58 @@ make help
 `make compiledb` also writes the compile databases: `.build/compile_commands.json` for
 the firmware and `.build/check_standards/compile_commands.json` for the checker.
 
+## Key log capture
+
+The key log capture saves the QMK console of the keyboard in log files on a Windows
+computer. It uses [hid_listen][hid-listen] from PJRC. `versions.env` pins its version
+and the SHA-256 hash of its zip file.
+
+The log files contain all the text that you type while logging is on. Keep the log
+files only on the local computer.
+
+### Install the capture
+
+On each Windows computer, run this command one time in WSL, in the root directory of
+the repository:
+
+```bash
+src/key_log_capture/install-key-log-capture.sh
+```
+
+The script does these steps:
+
+- It downloads hid_listen from PJRC and makes sure that the hash is correct.
+- It copies `hid_listen.exe` and `start-key-log-capture.ps1` to the program folder.
+- It adds the task `moonlander-key-log-capture` to the Windows Task Scheduler.
+- It starts the task one time.
+
+The program folder is `%LOCALAPPDATA%\moonlander-key-log\`. The task is only for your
+Windows user, and it starts at each logon. The script does not need administrator
+rights.
+
+To install a new version, run the script again.
+
+### Log files
+
+The log files are in `%LOCALAPPDATA%\moonlander-key-log\logs\`. Each start of the
+task makes a new file. The name of the file contains the start time, for example
+`keylog-2026-11-06T0812.log`. The file contains the console text of the keyboard with
+no change, but hid_listen writes each line end as CR LF. hid_listen also writes its
+status lines into the file, for example `Waiting for device:`.
+
+When you disconnect the keyboard and connect it again, hid_listen continues in the
+same file.
+
+### Remove the capture
+
+To remove the task and the program files, run this command in WSL:
+
+```bash
+src/key_log_capture/uninstall-key-log-capture.sh
+```
+
+The script does not delete the log files.
+
 ## Checks
 
 To run the checks, use these commands:
@@ -107,7 +160,7 @@ table. A commit-msg hook does the same check on local commits.
 | `build`    | `Makefile`, `src/qmk/qmk.json` and `src/qmk/.qmk-ref`                |
 | `ci`       | the files in `.github/`                                              |
 | `setup`    | `setup.sh` and `versions.env`                                        |
-| `tooling`  | the checks: their configuration, the hooks and the standards checker |
+| `tooling`  | the checks, the hooks, the standards checker and the key log capture |
 | `repo`     | README, LICENSE, `.gitignore` and the release-please files           |
 | `deps`     | the Dependabot updates of the npm, pre-commit and Actions versions   |
 | `main`     | the release PRs that release-please makes                            |
@@ -121,3 +174,4 @@ name of that file ends in the release tag, for example
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 
 [keymapp]: https://www.zsa.io/keymapp
+[hid-listen]: https://www.pjrc.com/teensy/hid_listen.html
