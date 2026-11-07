@@ -13,6 +13,9 @@
 #include "tap_dance/tap_dance.h"
 #include "unit_test.h"
 
+/** Number of keys from F1 to F12 */
+#define FUNCTION_KEY_COUNT 12
+
 /** Keys of one row of a layer, as `keymaps` gives them */
 typedef struct {
     uint16_t keys[MATRIX_COLS]; /**< Key of each matrix column */
@@ -38,9 +41,41 @@ static void assert_row(uint8_t layer, uint8_t row, const keymap_row_t *expected)
     }
 }
 
+/**
+ * Gives the number of F1 to F12 keys in one row of a layer.
+ *
+ * @param layer Layer of the row.
+ * @param row   Row in the key matrix.
+ * @return Number of keys from KC_F1 to KC_F12.
+ */
+static uint8_t function_keys_in_row(uint8_t layer, uint8_t row) {
+    uint8_t function_keys = 0;
+    for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+        uint16_t keycode = keycode_at_keymap_location(layer, row, column);
+        if (keycode >= KC_F1 && keycode <= KC_F12) {
+            function_keys++;
+        }
+    }
+    return function_keys;
+}
+
 static void keymap_number_of_layers(void **state) {
     (void)state;
     assert_int_equal(keymap_layer_count(), 4);
+}
+
+static void keymap_function_keys_only_on_the_base_number_row(void **state) {
+    (void)state;
+    uint8_t function_keys = 0;
+    for (uint8_t layer = 0; layer < keymap_layer_count(); layer++) {
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+            function_keys += function_keys_in_row(layer, row);
+        }
+    }
+    assert_int_equal(function_keys, FUNCTION_KEY_COUNT);
+    uint8_t number_row_keys = function_keys_in_row(LAYER_BASE, LEFT_NUMBER_ROW);
+    number_row_keys += function_keys_in_row(LAYER_BASE, RIGHT_NUMBER_ROW);
+    assert_int_equal(number_row_keys, FUNCTION_KEY_COUNT);
 }
 
 static void keymap_base_left_number_row(void **state) {
@@ -49,12 +84,12 @@ static void keymap_base_left_number_row(void **state) {
         .keys =
             {
                 KC_ESCAPE,
-                KC_GRAVE,
-                KC_1,
-                KC_2,
-                KC_3,
-                KC_4,
-                KC_5,
+                KC_F1,
+                KC_F2,
+                KC_F3,
+                KC_F4,
+                KC_F5,
+                KC_F6,
             },
     };
     assert_row(LAYER_BASE, LEFT_NUMBER_ROW, &expected);
@@ -147,13 +182,13 @@ static void keymap_base_right_number_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_6,
-                KC_7,
-                KC_8,
-                KC_9,
-                KC_0,
-                KC_MINUS,
-                KC_EQUAL,
+                KC_F7,
+                KC_F8,
+                KC_F9,
+                KC_F10,
+                KC_F11,
+                KC_F12,
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, RIGHT_NUMBER_ROW, &expected);
@@ -838,6 +873,7 @@ static void keymap_special_right_thumb_keys(void **state) {
 /** Cases of this program, in the order of `keymaps` */
 static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_number_of_layers),
+    cmocka_unit_test(keymap_function_keys_only_on_the_base_number_row),
     cmocka_unit_test(keymap_base_left_number_row),
     cmocka_unit_test(keymap_base_left_top_row),
     cmocka_unit_test(keymap_base_left_home_row),
