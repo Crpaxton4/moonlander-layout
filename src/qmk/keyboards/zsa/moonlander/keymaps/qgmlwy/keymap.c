@@ -130,7 +130,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][RIGHT_THUMB_KEYS] =
             {
-                [RIGHT_LARGE_THUMB]  = TO(LAYER_ARROWS),
+                [RIGHT_LARGE_THUMB]  = TG(LAYER_ARROWS),
                 [RIGHT_OUTER_THUMB]  = QK_MOUSE_BUTTON_1,
                 [RIGHT_MIDDLE_THUMB] = QK_MOUSE_BUTTON_2,
                 [RIGHT_INNER_THUMB]  = QK_MOUSE_BUTTON_3,
@@ -231,7 +231,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_HOME,
             },
         [LAYER_ARROWS][RIGHT_BOTTOM_ROW] =
             {
@@ -241,11 +241,11 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_UP,
                 KC_DOWN,
                 KC_RIGHT,
-                KC_TRANSPARENT,
+                KC_END,
             },
         [LAYER_ARROWS][RIGHT_THUMB_KEYS] =
             {
-                [RIGHT_LARGE_THUMB]  = TO(LAYER_BASE),
+                [RIGHT_LARGE_THUMB]  = KC_TRANSPARENT,
                 [RIGHT_OUTER_THUMB]  = KC_TRANSPARENT,
                 [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
