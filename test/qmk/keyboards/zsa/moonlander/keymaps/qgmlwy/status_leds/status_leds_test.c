@@ -113,6 +113,12 @@ static void status_leds_special_layer_lights_leds_2_and_5(void **state) {
     assert_leds(STATUS_LED_BIT(LEFT_MIDDLE_LED) | STATUS_LED_BIT(RIGHT_MIDDLE_LED));
 }
 
+static void status_leds_plain_layer_lights_leds_3_and_6(void **state) {
+    (void)state;
+    show_status(false, LAYER_PLAIN);
+    assert_leds(STATUS_LED_BIT(LEFT_INNER_LED) | STATUS_LED_BIT(RIGHT_OUTER_LED));
+}
+
 /** Cases of this program */
 static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_r4_logging_led_on_while_logging_is_on),
@@ -123,6 +129,7 @@ static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_arrows_layer_lights_led_4),
     cmocka_unit_test(status_leds_arrows_layer_and_logging),
     cmocka_unit_test(status_leds_special_layer_lights_leds_2_and_5),
+    cmocka_unit_test(status_leds_plain_layer_lights_leds_3_and_6),
 };
 
 int main(int argc, char **argv) {

@@ -134,7 +134,7 @@ static void key_event_log_r2_combo_switches_logging_off(void **state) {
 
 static void key_event_log_r3_combo_keys(void **state) {
     (void)state;
-    assert_int_equal(combo_count(), 1);
+    assert_int_equal(combo_count(), 2);
     const combo_t *combo = combo_get(LOGGING_COMBO);
     assert_int_equal(combo->keys[0], LOGGING_COMBO_LEFT_POSITION);
     assert_int_equal(combo->keys[1], LOGGING_COMBO_RIGHT_POSITION);

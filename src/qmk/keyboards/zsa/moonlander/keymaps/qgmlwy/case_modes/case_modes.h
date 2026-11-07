@@ -14,8 +14,9 @@
  * Changes, replaces or passes a key push as the case mode requires, and starts,
  * changes or ends the mode.
  *
- * Runs right after the key event log in process_record_user(), so the log sees the
- * pushed keys and no later handler sees a key that the mode replaced.
+ * Runs after the key event log and the plain mode in process_record_user(), so
+ * the log sees the pushed keys and no later handler sees a key that the mode
+ * replaced.
  *
  * @param keycode Keycode of the key event, after layer resolution.
  * @param record  Key event, with its tap count.
