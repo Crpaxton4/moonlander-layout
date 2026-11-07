@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.31](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.30...v1.0.31) (2026-11-07)
+
+
+### Code Refactoring
+
+* **firmware:** pass the tap dance table to qmk without a const cast ([#129](https://github.com/Crpaxton4/moonlander-layout/issues/129)) ([0f840ef](https://github.com/Crpaxton4/moonlander-layout/commit/0f840efd639d2619984066ba2378c0299aa29820))
+
 ## [1.0.30](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.29...v1.0.30) (2026-11-07)
 
 
