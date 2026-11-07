@@ -1,6 +1,9 @@
 ---
-# clang-diagnostic-* entries let the ExtraArgsBefore warnings pass the -*
-# filter. bugprone-signed-bitwise reports each use of the QMK keycode macros.
+# clang-diagnostic-* lets the ExtraArgsBefore warnings pass the -* filter. QMK's
+# compile database defines the predefined gcc macros again, and clang reports
+# each one with no file, so HeaderFilterRegex cannot exclude them. QMK's gcc
+# build stops on a second definition of a macro in the keymap.
+# bugprone-signed-bitwise reports each use of the QMK keycode macros.
 # DeprecatedOrUnsafeBufferHandling asks for the C11 Annex K _s functions, which
 # glibc and newlib do not have
 Checks: >-
@@ -15,7 +18,10 @@ Checks: >-
     readability-implicit-bool-conversion,
     readability-identifier-naming,
     clang-diagnostic-documentation,
-    clang-diagnostic-documentation-unknown-command
+    clang-diagnostic-documentation-unknown-command,
+    clang-diagnostic-*,
+    -clang-diagnostic-macro-redefined,
+    -clang-diagnostic-builtin-macro-redefined
 WarningsAsErrors: "*"
 
 # Header paths are absolute for the firmware, but relative for the checker
@@ -35,6 +41,23 @@ RemovedArgs:
 ExtraArgsBefore:
     - -Wdocumentation
     - -Wdocumentation-unknown-command
+    # Strict compiler warnings start
+    - -Wextra
+    - -Wconversion
+    - -Wsign-conversion
+    - -Wshadow
+    - -Wcast-qual
+    - -Wmissing-prototypes
+    - -Wundef
+    - -Wdouble-promotion
+    - -Wformat=2
+    - -Wswitch-enum
+    - -Winitializer-overrides
+    - -Wcomma
+    - -Wunreachable-code-aggressive
+    - -Wimplicit-fallthrough
+    - -Wassign-enum
+    # Strict compiler warnings end
 
 CheckOptions:
     readability-function-size.LineThreshold: 25
