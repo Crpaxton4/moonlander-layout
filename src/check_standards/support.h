@@ -4,8 +4,14 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stddef.h>
 #include <stdio.h>
+
+// #endregion
+
+// #region Macros
 
 /** Bytes of a finding message, with its terminator. A longer message is cut */
 #define MESSAGE_SIZE 160
@@ -18,6 +24,10 @@
 
 /** Number of items in an array. A pointer gives a wrong result */
 #define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
+
+// #endregion
+
+// #region Types
 
 /** append() keeps the bytes NUL-terminated, but append_stream() does not */
 typedef struct {
@@ -42,6 +52,10 @@ typedef struct {
     size_t     count;    /**< Findings in use */
     size_t     capacity; /**< Findings that items can hold */
 } findings_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Grows an array so that it can hold one more item than count.
@@ -99,3 +113,5 @@ int compare_findings(const void *first, const void *second);
  * @param file_count Files that the run checked.
  */
 void print_findings(const findings_t *findings, int file_count);
+
+// #endregion

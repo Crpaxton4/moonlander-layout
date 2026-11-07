@@ -2,14 +2,24 @@
  * Standards checker entry point for the C rules that no established tool checks
  */
 
+// #region Includes
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <tree_sitter/api.h>
 
 #include "rules.h"
 
+// #endregion
+
+// #region Macros
+
 /** argv index of the first file. argv[0] is the program name */
 #define FIRST_FILE_ARGUMENT 1
+
+// #endregion
+
+// #region Function declarations
 
 /**
  * Gives the C grammar. tree-sitter-c installs no header that declares this
@@ -18,6 +28,10 @@
  * @return C grammar of tree-sitter-c.
  */
 const TSLanguage *tree_sitter_c(void);
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Checks one file and sorts its findings. The sort puts the findings of one file
@@ -37,6 +51,10 @@ static void check_path(TSParser *parser, findings_t *findings, const char *path)
         qsort(findings->items + first, count, sizeof(finding_t), compare_findings);
     }
 }
+
+// #endregion
+
+// #region Public functions
 
 /**
  * Checks each file of the command line and prints the findings.
@@ -60,3 +78,5 @@ int main(int argc, char *argv[]) {
     free(findings.items);
     return findings.count == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
+
+// #endregion

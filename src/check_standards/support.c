@@ -2,6 +2,8 @@
  * Buffers, findings and output of the checker
  */
 
+// #region Includes
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -9,6 +11,10 @@
 #include <string.h>
 
 #include "support.h"
+
+// #endregion
+
+// #region Macros
 
 /** Bytes that each fread() call asks for */
 #define READ_CHUNK_SIZE 4096
@@ -18,6 +24,37 @@
 
 /** Items added to each new capacity, so that small arrays do not grow often */
 #define MIN_CAPACITY 16
+
+// #endregion
+
+// #region Static functions
+
+/**
+ * Makes space for extra bytes and also for the terminator.
+ *
+ * @param buffer Buffer that grows.
+ * @param extra  Bytes after the current length.
+ */
+static void reserve_bytes(buffer_t *buffer, size_t extra) {
+    buffer->data =
+        reserve(buffer->data, sizeof(char), &buffer->capacity, buffer->length + extra);
+}
+
+/**
+ * Compares two numbers. A subtraction of size_t values can wrap, but this form
+ * cannot.
+ *
+ * @param left  First number.
+ * @param right Second number.
+ * @return -1, 0 or 1.
+ */
+static int compare_numbers(size_t left, size_t right) {
+    return (left > right) - (left < right);
+}
+
+// #endregion
+
+// #region Public functions
 
 void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     if (count < *capacity) {
@@ -30,17 +67,6 @@ void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
         abort();
     }
     return grown;
-}
-
-/**
- * Makes space for extra bytes and also for the terminator.
- *
- * @param buffer Buffer that grows.
- * @param extra  Bytes after the current length.
- */
-static void reserve_bytes(buffer_t *buffer, size_t extra) {
-    buffer->data =
-        reserve(buffer->data, sizeof(char), &buffer->capacity, buffer->length + extra);
 }
 
 void append(buffer_t *buffer, const char *text) {
@@ -72,18 +98,6 @@ void describe(finding_t *finding, const char *format, ...) {
     va_end(arguments);
 }
 
-/**
- * Compares two numbers. A subtraction of size_t values can wrap, but this form
- * cannot.
- *
- * @param left  First number.
- * @param right Second number.
- * @return -1, 0 or 1.
- */
-static int compare_numbers(size_t left, size_t right) {
-    return (left > right) - (left < right);
-}
-
 int compare_findings(const void *first, const void *second) {
     const finding_t *one   = first;
     const finding_t *other = second;
@@ -100,3 +114,5 @@ void print_findings(const findings_t *findings, int file_count) {
     }
     printf("%zu findings in %d files\n", findings->count, file_count);
 }
+
+// #endregion

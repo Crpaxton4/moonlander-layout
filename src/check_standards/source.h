@@ -4,11 +4,17 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stddef.h>
 #include <stdint.h>
 #include <tree_sitter/api.h>
 
 #include "support.h"
+
+// #endregion
+
+// #region Types
 
 /** File that the checker checks, with the text that tree-sitter parses */
 typedef struct {
@@ -19,6 +25,10 @@ typedef struct {
     uint32_t    wrapper_rows; /**< Lines of the wrapper before the file text */
     findings_t *findings;     /**< Findings of all files of the run */
 } source_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Reads the file at source->path into source->parsed.
@@ -38,3 +48,5 @@ int load_source(source_t *source);
  * @return New finding, which stays valid until the next add_finding() call.
  */
 finding_t *add_finding(source_t *source, const char *rule, TSPoint point);
+
+// #endregion
