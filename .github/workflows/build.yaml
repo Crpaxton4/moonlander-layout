@@ -191,7 +191,7 @@ jobs:
       # Firmware build uses CMake, also in a release build. The unit tests use the
       # same installation
       - name: "Install CMake and cmocka"
-        run: .github/scripts/build/install-unit-test-tools.sh
+        run: .github/scripts/shared/install-unit-test-tools.sh
 
       # Configure step of the checker part needs tree-sitter. The Lint and Analyze
       # jobs use the same cache key
@@ -419,7 +419,7 @@ jobs:
       # Analysis configures all parts, and clang-tidy reads the cmocka header of the
       # unit tests
       - name: "Install CMake and cmocka"
-        run: .github/scripts/build/install-unit-test-tools.sh
+        run: .github/scripts/shared/install-unit-test-tools.sh
 
       # Configure step of the checker part and clang-tidy on the checker need the
       # tree-sitter headers. The Build job saved the packages in the cache
