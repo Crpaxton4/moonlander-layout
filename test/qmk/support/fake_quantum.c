@@ -45,6 +45,9 @@ static size_t console_length;
 /** Active modifiers that get_mods() gives */
 static uint8_t fake_modifiers;
 
+/** Weak modifiers that get_weak_mods() gives */
+static uint8_t fake_weak_modifiers;
+
 /** One-shot modifiers that get_oneshot_mods() gives */
 static uint8_t fake_one_shot_modifiers;
 
@@ -122,6 +125,7 @@ void reset_fake_qmk(void) {
     console_text[0]         = '\0';
     fake_modifiers          = 0;
     fake_one_shot_modifiers = 0;
+    fake_weak_modifiers     = 0;
     layer_state             = 0;
     default_layer_state     = 0;
     host_driver             = &fake_host_driver;
@@ -249,6 +253,18 @@ uint8_t get_mods(void) {
 
 uint8_t get_oneshot_mods(void) {
     return fake_one_shot_modifiers;
+}
+
+uint8_t get_weak_mods(void) {
+    return fake_weak_modifiers;
+}
+
+void add_weak_mods(uint8_t mods) {
+    fake_weak_modifiers |= mods;
+}
+
+void clear_weak_mods(void) {
+    fake_weak_modifiers = 0;
 }
 
 void set_fake_modifiers(uint8_t modifiers) {

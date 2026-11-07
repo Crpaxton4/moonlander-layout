@@ -12,20 +12,6 @@
 #include "tap_dance/tap_dance.h"
 
 dance_t dances[DANCE_COUNT] = {
-    [DANCE_LEFT_BRACKETS] =
-        {
-            .tap                   = KC_LEFT_PAREN,
-            .hold                  = KC_LEFT_CURLY_BRACE,
-            .double_tap            = KC_LEFT_BRACKET,
-            .repeats_on_triple_tap = true,
-        },
-    [DANCE_RIGHT_BRACKETS] =
-        {
-            .tap                   = KC_RIGHT_PAREN,
-            .hold                  = KC_RIGHT_CURLY_BRACE,
-            .double_tap            = KC_RIGHT_BRACKET,
-            .repeats_on_triple_tap = true,
-        },
     [DANCE_MIDDLE_CLICK_OR_WHEEL] =
         {
             .tap                        = QK_MOUSE_BUTTON_3,

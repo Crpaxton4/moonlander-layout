@@ -40,16 +40,6 @@ static const dance_presses_t double_hold = {.taps = 2, .held = true};
 /** Three presses and releases, then the tapping term ends */
 static const dance_presses_t triple_tap = {.taps = 3};
 
-/** One press, held until a press of another key */
-static const dance_presses_t interrupted_hold = {
-    .taps        = 1,
-    .held        = true,
-    .interrupted = true,
-};
-
-/** Two presses and releases, then a press of another key */
-static const dance_presses_t interrupted_double_tap = {.taps = 2, .interrupted = true};
-
 /**
  * Empties the call log, then plays a dance through the callbacks of its action, in
  * the order of QMK's engine: each tap, then finished, then reset.
@@ -85,137 +75,6 @@ static void play_dance(uint16_t slot, dance_presses_t presses) {
 static void tap_dance_actions_cover_every_slot(void **state) {
     (void)state;
     assert_int_equal(tap_dance_count(), DANCE_COUNT);
-}
-
-static void tap_dance_left_brackets_tap(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_PAREN},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_PAREN},
-    };
-    play_dance(DANCE_LEFT_BRACKETS, single_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_left_brackets_hold(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_CURLY_BRACE},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_CURLY_BRACE},
-    };
-    play_dance(DANCE_LEFT_BRACKETS, single_hold);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_left_brackets_double_tap(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_BRACKET},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_BRACKET},
-    };
-    play_dance(DANCE_LEFT_BRACKETS, double_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_left_brackets_double_hold_sends_nothing(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-    };
-    play_dance(DANCE_LEFT_BRACKETS, double_hold);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_left_brackets_triple_tap_repeats(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_PAREN},
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_PAREN},
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_PAREN},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-    };
-    play_dance(DANCE_LEFT_BRACKETS, triple_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_left_brackets_interrupted_hold_taps(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_PAREN},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_PAREN},
-    };
-    play_dance(DANCE_LEFT_BRACKETS, interrupted_hold);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_left_brackets_interrupted_double_tap_taps_twice(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_PAREN},
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_PAREN},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_PAREN},
-    };
-    play_dance(DANCE_LEFT_BRACKETS, interrupted_double_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_right_brackets_tap(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_RIGHT_PAREN},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_RIGHT_PAREN},
-    };
-    play_dance(DANCE_RIGHT_BRACKETS, single_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_right_brackets_hold(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_RIGHT_CURLY_BRACE},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_RIGHT_CURLY_BRACE},
-    };
-    play_dance(DANCE_RIGHT_BRACKETS, single_hold);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_right_brackets_double_tap(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_RIGHT_BRACKET},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_RIGHT_BRACKET},
-    };
-    play_dance(DANCE_RIGHT_BRACKETS, double_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_right_brackets_double_hold_sends_nothing(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-    };
-    play_dance(DANCE_RIGHT_BRACKETS, double_hold);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_right_brackets_triple_tap_repeats(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_TAP_CODE16, .argument = KC_RIGHT_PAREN},
-        {.function = CALLED_TAP_CODE16, .argument = KC_RIGHT_PAREN},
-        {.function = CALLED_TAP_CODE16, .argument = KC_RIGHT_PAREN},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-    };
-    play_dance(DANCE_RIGHT_BRACKETS, triple_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
 static void tap_dance_middle_click_or_wheel_tap(void **state) {
@@ -335,18 +194,6 @@ static void tap_dance_right_click_or_wheel_triple_tap_repeats(void **state) {
 /** Cases of this program, in the order of the dance slots */
 static const struct CMUnitTest tap_dance_cases[] = {
     cmocka_unit_test(tap_dance_actions_cover_every_slot),
-    cmocka_unit_test(tap_dance_left_brackets_tap),
-    cmocka_unit_test(tap_dance_left_brackets_hold),
-    cmocka_unit_test(tap_dance_left_brackets_double_tap),
-    cmocka_unit_test(tap_dance_left_brackets_double_hold_sends_nothing),
-    cmocka_unit_test(tap_dance_left_brackets_triple_tap_repeats),
-    cmocka_unit_test(tap_dance_left_brackets_interrupted_hold_taps),
-    cmocka_unit_test(tap_dance_left_brackets_interrupted_double_tap_taps_twice),
-    cmocka_unit_test(tap_dance_right_brackets_tap),
-    cmocka_unit_test(tap_dance_right_brackets_hold),
-    cmocka_unit_test(tap_dance_right_brackets_double_tap),
-    cmocka_unit_test(tap_dance_right_brackets_double_hold_sends_nothing),
-    cmocka_unit_test(tap_dance_right_brackets_triple_tap_repeats),
     cmocka_unit_test(tap_dance_middle_click_or_wheel_tap),
     cmocka_unit_test(tap_dance_middle_click_or_wheel_hold),
     cmocka_unit_test(tap_dance_middle_click_or_wheel_double_tap_registers_twice),
