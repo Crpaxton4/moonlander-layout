@@ -118,6 +118,7 @@ static void key_event_log_r2_combo_switches_logging_on(void **state) {
     start_with_logging(false);
     advance_fake_clock(EVENT_INTERVAL);
     send_key_event(LOGGING_TOGGLE, true);
+    send_key_event(LOGGING_TOGGLE, false);
     assert_true(key_event_log_is_on());
     assert_console_text("KL,S,1234,on\n");
 }
@@ -128,8 +129,7 @@ static void key_event_log_r2_combo_switches_logging_off(void **state) {
     advance_fake_clock(EVENT_INTERVAL);
     send_key_event(LOGGING_TOGGLE, true);
     assert_false(key_event_log_is_on());
-    assert_console_text("KL,I,1234,d,2,3,0,7E42,00,00,0,0\n"
-                        "KL,S,1234,off\n");
+    assert_console_text("KL,S,1234,off\n");
 }
 
 static void key_event_log_r3_combo_keys(void **state) {
@@ -239,6 +239,15 @@ static void key_event_log_r9_push_starts_the_idle_time_again(void **state) {
     assert_true(key_event_log_is_on());
 }
 
+static void key_event_log_r9_idle_off_before_a_late_push(void **state) {
+    (void)state;
+    start_with_logging(true);
+    advance_fake_clock(LOGGING_IDLE_MILLISECONDS);
+    send_key_event(KC_A, true);
+    assert_false(key_event_log_is_on());
+    assert_console_text("KL,S,1800000,idle-off\n");
+}
+
 static void key_event_log_r10_no_records_while_off(void **state) {
     (void)state;
     start_with_logging(false);
@@ -286,6 +295,7 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r7_output_record_of_an_nkro_report),
     cmocka_unit_test(key_event_log_r9_idle_off_after_thirty_minutes),
     cmocka_unit_test(key_event_log_r9_push_starts_the_idle_time_again),
+    cmocka_unit_test(key_event_log_r9_idle_off_before_a_late_push),
     cmocka_unit_test(key_event_log_r10_no_records_while_off),
     cmocka_unit_test(key_event_log_r11_reports_reach_the_host_while_off),
     cmocka_unit_test(key_event_log_r11_driver_stays_in_place),

@@ -444,13 +444,13 @@ static void keymap_combo_positions_left_number_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, LEFT_NUMBER_ROW, &expected);
@@ -461,12 +461,12 @@ static void keymap_combo_positions_left_top_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
                 LOGGING_COMBO_LEFT_POSITION,
             },
     };
@@ -478,13 +478,13 @@ static void keymap_combo_positions_left_home_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, LEFT_HOME_ROW, &expected);
@@ -495,12 +495,12 @@ static void keymap_combo_positions_left_bottom_letter_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
                 NO_PHYSICAL_KEY,
             },
     };
@@ -512,11 +512,11 @@ static void keymap_combo_positions_left_bottom_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -529,10 +529,10 @@ static void keymap_combo_positions_left_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [LEFT_LARGE_THUMB]  = KC_NO,
-                [LEFT_OUTER_THUMB]  = KC_NO,
-                [LEFT_MIDDLE_THUMB] = KC_NO,
-                [LEFT_INNER_THUMB]  = KC_NO,
+                [LEFT_LARGE_THUMB]  = KC_TRANSPARENT,
+                [LEFT_OUTER_THUMB]  = KC_TRANSPARENT,
+                [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
+                [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, LEFT_THUMB_KEYS, &expected);
@@ -543,13 +543,13 @@ static void keymap_combo_positions_right_number_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, RIGHT_NUMBER_ROW, &expected);
@@ -561,12 +561,12 @@ static void keymap_combo_positions_right_top_row(void **state) {
         .keys =
             {
                 LOGGING_COMBO_RIGHT_POSITION,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, RIGHT_TOP_ROW, &expected);
@@ -577,13 +577,13 @@ static void keymap_combo_positions_right_home_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, RIGHT_HOME_ROW, &expected);
@@ -595,12 +595,12 @@ static void keymap_combo_positions_right_bottom_letter_row(void **state) {
         .keys =
             {
                 NO_PHYSICAL_KEY,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, RIGHT_BOTTOM_LETTER_ROW, &expected);
@@ -613,11 +613,11 @@ static void keymap_combo_positions_right_bottom_row(void **state) {
             {
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, RIGHT_BOTTOM_ROW, &expected);
@@ -628,10 +628,10 @@ static void keymap_combo_positions_right_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [RIGHT_LARGE_THUMB]  = KC_NO,
-                [RIGHT_OUTER_THUMB]  = KC_NO,
-                [RIGHT_MIDDLE_THUMB] = KC_NO,
-                [RIGHT_INNER_THUMB]  = KC_NO,
+                [RIGHT_LARGE_THUMB]  = KC_TRANSPARENT,
+                [RIGHT_OUTER_THUMB]  = KC_TRANSPARENT,
+                [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
+                [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, RIGHT_THUMB_KEYS, &expected);

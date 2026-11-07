@@ -114,27 +114,47 @@ static void use_logging_driver(void) {
     host_set_driver(&logging_driver);
 }
 
-bool process_key_event_log(uint16_t keycode, keyrecord_t *record) {
-    if (logging.is_on) {
-        write_input_record(keycode, record);
+/**
+ * Ends logging after the idle time. Housekeeping does not run while the host
+ * sleeps, so the first push after a sleep also checks the idle time.
+ */
+static void end_idle_logging(void) {
+    if (logging_idle_ended(&logging, timer_read32())) {
+        write_state_record(LOGGING_IDLE_OFF);
     }
-    if (record->event.pressed) {
-        logging_note_push(&logging, timer_read32());
-    }
-    if (keycode != LOGGING_TOGGLE) {
-        return true;
-    }
+}
+
+/**
+ * Changes logging on a push of the logging combo. The state record shows the
+ * change, so the combo gets no input record.
+ *
+ * @param record Event of the combo keycode.
+ * @return False, so the combo sends no key.
+ */
+static bool toggle_logging(const keyrecord_t *record) {
     if (record->event.pressed) {
         write_state_record(logging_toggle(&logging, timer_read32()));
     }
     return false;
 }
 
+bool process_key_event_log(uint16_t keycode, keyrecord_t *record) {
+    end_idle_logging();
+    if (keycode == LOGGING_TOGGLE) {
+        return toggle_logging(record);
+    }
+    if (logging.is_on) {
+        write_input_record(keycode, record);
+    }
+    if (record->event.pressed) {
+        logging_note_push(&logging, timer_read32());
+    }
+    return true;
+}
+
 void key_event_log_housekeeping(void) {
     use_logging_driver();
-    if (logging_idle_ended(&logging, timer_read32())) {
-        write_state_record(LOGGING_IDLE_OFF);
-    }
+    end_idle_logging();
 }
 
 bool key_event_log_is_on(void) {

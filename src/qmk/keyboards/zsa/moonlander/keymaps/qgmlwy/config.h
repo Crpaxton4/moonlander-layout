@@ -47,7 +47,9 @@
 /**
  * QMK finds the combo keys on this layer, LAYER_COMBO_POSITIONS, for each active
  * layer. Thus a combo is a set of key positions. process_combo.c cannot see the
- * layer names, so the value is a number.
+ * layer names, so the value is a number. Positions that are not combo keys are
+ * KC_TRANSPARENT on that layer: KC_NO is also the end marker of each combo key
+ * list, so QMK would hold back each push of a KC_NO position as a combo key.
  */
 #define COMBO_ONLY_FROM_LAYER 2
 
