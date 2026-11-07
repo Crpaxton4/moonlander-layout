@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.13.0...v1.14.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** move the f-keys and esc to holds and rework the special layer symbols ([#182](https://github.com/Crpaxton4/moonlander-layout/issues/182)) ([c4faf56](https://github.com/Crpaxton4/moonlander-layout/commit/c4faf5695448663e330cc39718efbf6c8ced5290))
+
 ## [1.13.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.12.1...v1.13.0) (2026-11-07)
 
 
