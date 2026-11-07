@@ -13,3 +13,4 @@ SRC += tap_hold/tap_hold.c
 SRC += key_event_log/key_event_log_logic.c
 SRC += key_event_log/key_event_log.c
 SRC += status_leds/status_leds.c
+SRC += symbol_holds/symbol_holds.c

@@ -15,6 +15,7 @@
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
 #include "status_leds/status_leds.h"
+#include "symbol_holds/symbol_holds.h"
 #include "tap_dance/tap_dance.h"
 
 /** Keys of each layer, indexed by layer, matrix row and matrix column */
@@ -53,11 +54,11 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_BASE][LEFT_BOTTOM_LETTER_ROW] =
             {
                 KC_NO,
-                KC_Z,
-                KC_X,
-                KC_C,
-                KC_V,
-                KC_J,
+                SYMBOL_HOLD(KC_Z),
+                SYMBOL_HOLD(KC_X),
+                SYMBOL_HOLD(KC_C),
+                SYMBOL_HOLD(KC_V),
+                SYMBOL_HOLD(KC_J),
                 NO_PHYSICAL_KEY,
             },
         [LAYER_BASE][LEFT_BOTTOM_ROW] =
@@ -110,12 +111,12 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_BASE][RIGHT_BOTTOM_LETTER_ROW] =
             {
                 NO_PHYSICAL_KEY,
-                KC_K,
-                KC_P,
-                KC_COMMA,
-                KC_DOT,
-                KC_SLASH,
-                TD(DANCE_LEFT_BRACKETS),
+                SYMBOL_HOLD(KC_K),
+                SYMBOL_HOLD(KC_P),
+                SYMBOL_HOLD(KC_COMMA),
+                SYMBOL_HOLD(KC_DOT),
+                SYMBOL_HOLD(KC_SLASH),
+                KC_NO,
             },
         [LAYER_BASE][RIGHT_BOTTOM_ROW] =
             {
@@ -125,7 +126,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 QK_MOUSE_CURSOR_UP,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
-                TD(DANCE_RIGHT_BRACKETS),
+                KC_NO,
             },
         [LAYER_BASE][RIGHT_THUMB_KEYS] =
             {
@@ -368,8 +369,6 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
 
 /** QMK actions of the tap dances, indexed by slot; each plays its `dances` row */
 tap_dance_action_t tap_dance_actions[] = {
-    [DANCE_LEFT_BRACKETS]         = ACTION_TAP_DANCE_TABLE(DANCE_LEFT_BRACKETS),
-    [DANCE_RIGHT_BRACKETS]        = ACTION_TAP_DANCE_TABLE(DANCE_RIGHT_BRACKETS),
     [DANCE_MIDDLE_CLICK_OR_WHEEL] = ACTION_TAP_DANCE_TABLE(DANCE_MIDDLE_CLICK_OR_WHEEL),
     [DANCE_RIGHT_CLICK_OR_WHEEL]  = ACTION_TAP_DANCE_TABLE(DANCE_RIGHT_CLICK_OR_WHEEL),
 };
@@ -395,6 +394,7 @@ typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
 /** Key event handlers, in call order; the log is first, so it gets each event */
 static const record_handler_t record_handlers[] = {
     process_key_event_log,
+    process_symbol_holds,
 };
 
 /** Handler for each pass of QMK's main loop */
@@ -414,6 +414,11 @@ static const housekeeping_handler_t housekeeping_handlers[] = {
  * @return False when a handler fully handled the event, true otherwise.
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    // QMK clears weak modifiers when a push arrives, but a push that waits in the
+    // tap-hold buffer comes here after a symbol hold added its weak Shift
+    if (record->event.pressed) {
+        clear_weak_mods();
+    }
     for (size_t index = 0; index < ARRAY_SIZE(record_handlers); index++) {
         if (!record_handlers[index](keycode, record)) {
             return false;
