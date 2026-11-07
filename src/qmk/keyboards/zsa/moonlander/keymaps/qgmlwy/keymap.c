@@ -7,6 +7,8 @@
  * Each feature is in its own module, which `rules.mk` compiles.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "bracket_pairs/bracket_pairs.h"
@@ -21,6 +23,29 @@
 #include "special_mode/special_mode.h"
 #include "status_leds/status_leds.h"
 #include "symbol_holds/symbol_holds.h"
+
+// #endregion
+
+// #region Types
+
+/**
+ * Key event handler: false when it fully handled the event, so no later handler and
+ * no QMK code gets the event.
+ */
+typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
+
+/** Key event handler, and if it also operates in the plain mode */
+typedef struct {
+    record_handler_t handler;    /**< Handler of the key events */
+    bool operates_in_plain_mode; /**< False if it gets no push in the plain mode */
+} record_step_t;
+
+/** Handler for each pass of QMK's main loop */
+typedef void (*housekeeping_handler_t)(void);
+
+// #endregion
+
+// #region Data
 
 /** Keys of each layer, indexed by layer, matrix row and matrix column */
 const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
@@ -622,18 +647,6 @@ combo_t key_combos[] = {
 };
 
 /**
- * Key event handler: false when it fully handled the event, so no later handler and
- * no QMK code gets the event.
- */
-typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
-
-/** Key event handler, and if it also operates in the plain mode */
-typedef struct {
-    record_handler_t handler;    /**< Handler of the key events */
-    bool operates_in_plain_mode; /**< False if it gets no push in the plain mode */
-} record_step_t;
-
-/**
  * Key event handlers, in call order. Log is first, so it gets each event. Plain
  * mode stops all handlers of the normal mode, so the keys act as on a standard
  * keyboard.
@@ -651,14 +664,15 @@ static const record_step_t record_handlers[] = {
 // Each record handler needs the name of its profile record
 _Static_assert(ARRAY_SIZE(record_handlers) == PROFILED_HANDLER_COUNT, "Profile names");
 
-/** Handler for each pass of QMK's main loop */
-typedef void (*housekeeping_handler_t)(void);
-
 /** Housekeeping handlers, in call order; the LEDs come last, so they show the result */
 static const housekeeping_handler_t housekeeping_handlers[] = {
     key_event_log_housekeeping,
     update_status_leds,
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Tells if the plain mode stops a record handler for a key event. Plain mode stops
@@ -702,6 +716,10 @@ static bool dispatch_key_event(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
+// #endregion
+
+// #region Public functions
+
 /**
  * Gives each key event to the dispatcher. The profiling debug build also measures
  * the call, and handles its toggle key.
@@ -720,3 +738,5 @@ void housekeeping_task_user(void) {
         housekeeping_handlers[index]();
     }
 }
+
+// #endregion

@@ -5,6 +5,8 @@
  * a row changes only the case of that row.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "keycodes/keycodes.h"
@@ -12,13 +14,25 @@
 #include "layers/layers.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
 /** Number of keys from F1 to F12 */
 #define FUNCTION_KEY_COUNT 12
+
+// #endregion
+
+// #region Types
 
 /** Keys of one row of a layer, as `keymaps` gives them */
 typedef struct {
     uint16_t keys[MATRIX_COLS]; /**< Key of each matrix column */
 } keymap_row_t;
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Fails the test at the first key of a keymap row that is not the expected key.
@@ -1091,6 +1105,10 @@ static void keymap_plain_r3_opaque_with_plain_keys(void **state) {
     }
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in the order of `keymaps` */
 static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_number_of_layers),
@@ -1162,3 +1180,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(keymap_cases, NULL, NULL);
 }
+
+// #endregion

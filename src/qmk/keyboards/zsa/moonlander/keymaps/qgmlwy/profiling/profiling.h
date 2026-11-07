@@ -14,12 +14,44 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "profiling/profiling_logic.h"
 
+// #endregion
+
+// #region Macros
+
+#ifdef DEBUG_PROFILE
+/** Measured call of the dispatcher of process_record_user() */
+#    define PROFILED_RECORD_USER(dispatcher, keycode, record) \
+        process_profiled_event(dispatcher, keycode, record)
+
+/** Measured call of the record handler at an index of the record handler table */
+#    define PROFILED_RECORD_HANDLER(index, handler, keycode, record) \
+        profile_record_handler(index, handler, keycode, record)
+#else
+/** Plain call of the dispatcher of process_record_user() */
+#    define PROFILED_RECORD_USER(dispatcher, keycode, record) \
+        dispatcher(keycode, record)
+
+/** Plain call of the record handler at an index of the record handler table */
+#    define PROFILED_RECORD_HANDLER(index, handler, keycode, record) \
+        handler(keycode, record)
+#endif
+
+// #endregion
+
+// #region Types
+
 /** Key event handler that profiling measures, as in the record handler table */
 typedef bool (*measured_handler_t)(uint16_t keycode, keyrecord_t *record);
+
+// #endregion
+
+// #region Functions
 
 /**
  * Switches profiling on or off for the toggle key. Gives each other key event to
@@ -53,20 +85,4 @@ bool profile_record_handler(size_t index, measured_handler_t handler, uint16_t k
  */
 bool profiling_is_on(void);
 
-#ifdef DEBUG_PROFILE
-/** Measured call of the dispatcher of process_record_user() */
-#    define PROFILED_RECORD_USER(dispatcher, keycode, record) \
-        process_profiled_event(dispatcher, keycode, record)
-
-/** Measured call of the record handler at an index of the record handler table */
-#    define PROFILED_RECORD_HANDLER(index, handler, keycode, record) \
-        profile_record_handler(index, handler, keycode, record)
-#else
-/** Plain call of the dispatcher of process_record_user() */
-#    define PROFILED_RECORD_USER(dispatcher, keycode, record) \
-        dispatcher(keycode, record)
-
-/** Plain call of the record handler at an index of the record handler table */
-#    define PROFILED_RECORD_HANDLER(index, handler, keycode, record) \
-        handler(keycode, record)
-#endif
+// #endregion

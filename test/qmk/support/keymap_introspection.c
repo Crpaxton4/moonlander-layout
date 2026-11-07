@@ -7,14 +7,24 @@
  * tables as the firmware does.
  */
 
+// #region Includes
+
 // clang-tidy reports each include of a .c file, but QMK uses the same include
 // NOLINTNEXTLINE(bugprone-suspicious-include)
 #include KEYMAP_C
 
 #include "keymap_introspection.h"
 
+// #endregion
+
+// #region Macros
+
 /** Number of layers in `keymaps` */
 #define KEYMAP_LAYER_COUNT (sizeof(keymaps) / sizeof(keymaps[0]))
+
+// #endregion
+
+// #region Public functions
 
 uint8_t keymap_layer_count(void) {
     return (uint8_t)KEYMAP_LAYER_COUNT;
@@ -39,3 +49,5 @@ combo_t *combo_get(uint16_t combo_index) {
     }
     return &key_combos[combo_index];
 }
+
+// #endregion

@@ -7,11 +7,21 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
 
+// #endregion
+
+// #region Macros
+
 /** Status LEDs of the Moonlander; QMK numbers them 1 to 6 from the left */
 #define FAKE_STATUS_LED_COUNT 6
+
+// #endregion
+
+// #region Functions
 
 /**
  * Sets the modifiers that get_mods() gives.
@@ -50,3 +60,5 @@ bool fake_status_led_is_on(uint8_t position);
  * @param expected Expected text.
  */
 void assert_console_text(const char *expected);
+
+// #endregion

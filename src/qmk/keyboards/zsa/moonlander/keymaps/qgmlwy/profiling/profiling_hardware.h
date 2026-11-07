@@ -8,10 +8,16 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "profiling/profiling.h"
+
+// #endregion
+
+// #region Functions
 
 /** Starts the core cycle counter, if it is not on */
 void start_cycle_counter(void);
@@ -41,3 +47,5 @@ uint32_t main_stack_free_bytes(void);
  * @return Core clock in Hz.
  */
 uint32_t core_clock_hz(void);
+
+// #endregion

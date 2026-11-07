@@ -5,12 +5,18 @@
 
 #pragma once
 
+// #region Includes
+
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include <cmocka.h>
+
+// #endregion
+
+// #region Functions
 
 /**
  * Makes cmocka run only the case that the first argument names.
@@ -22,3 +28,5 @@
  * @param argv Arguments of main().
  */
 void select_case(int argc, char **argv);
+
+// #endregion

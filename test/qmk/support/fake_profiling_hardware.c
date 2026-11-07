@@ -2,9 +2,15 @@
  * Host version of the profiling hardware access, with the values that a test sets.
  */
 
+// #region Includes
+
 #include "profiling/profiling_hardware.h"
 
 #include "fake_profiling_hardware.h"
+
+// #endregion
+
+// #region Data
 
 /** Cycles of each measured call */
 static uint32_t call_cycles;
@@ -14,6 +20,10 @@ static uint32_t free_stack;
 
 /** True after start_cycle_counter() */
 static bool cycle_counter_is_on;
+
+// #endregion
+
+// #region Public functions
 
 void reset_fake_profiling_hardware(void) {
     call_cycles         = 0;
@@ -50,3 +60,5 @@ uint32_t main_stack_free_bytes(void) {
 uint32_t core_clock_hz(void) {
     return FAKE_CORE_CLOCK_HZ;
 }
+
+// #endregion

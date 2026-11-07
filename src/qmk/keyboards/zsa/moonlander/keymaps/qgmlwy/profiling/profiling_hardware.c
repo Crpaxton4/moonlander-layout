@@ -8,10 +8,16 @@
  * keymap code since power-up.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "profiling/profiling_hardware.h"
 #include "profiling/profiling_logic.h"
+
+// #endregion
+
+// #region Data
 
 // Linker script of ChibiOS gives these names, which C reserves for the toolchain
 // NOLINTBEGIN(bugprone-reserved-identifier,readability-identifier-naming)
@@ -23,6 +29,10 @@ extern uint32_t __main_thread_stack_base__[];
 extern uint32_t __main_thread_stack_end__[];
 
 // NOLINTEND(bugprone-reserved-identifier,readability-identifier-naming)
+
+// #endregion
+
+// #region Public functions
 
 void start_cycle_counter(void) {
     // ChibiOS starts the counter at boot, but profiling must not depend on the
@@ -55,3 +65,5 @@ uint32_t main_stack_free_bytes(void) {
 uint32_t core_clock_hz(void) {
     return STM32_SYSCLK;
 }
+
+// #endregion

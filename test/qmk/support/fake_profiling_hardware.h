@@ -8,11 +8,21 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
 
+// #endregion
+
+// #region Macros
+
 /** Core clock that the fake gives, the clock of the Moonlander */
 #define FAKE_CORE_CLOCK_HZ 72000000
+
+// #endregion
+
+// #region Functions
 
 /** Sets all fake values to zero and the cycle counter to off */
 void reset_fake_profiling_hardware(void);
@@ -37,3 +47,5 @@ void set_fake_free_stack_bytes(uint32_t bytes);
  * @return True after start_cycle_counter().
  */
 bool fake_cycle_counter_is_on(void);
+
+// #endregion

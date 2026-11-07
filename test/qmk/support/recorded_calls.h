@@ -8,8 +8,14 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stddef.h>
 #include <stdint.h>
+
+// #endregion
+
+// #region Enumerations
 
 /** QMK functions that the fake records */
 enum qmk_function {
@@ -29,11 +35,19 @@ enum qmk_function {
     CALLED_ADD_MODS,          /**< add_mods(), argument: modifiers */
 };
 
+// #endregion
+
+// #region Types
+
 /** One QMK call: the function and its argument */
 typedef struct {
     enum qmk_function function; /**< Function that the keymap code called */
     uint32_t          argument; /**< Keycode, layer, milliseconds or report byte */
 } qmk_call_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Empties the log, sets the fake clock to 0 and clears the state in fake_state.h.
@@ -58,3 +72,5 @@ void advance_fake_clock(uint32_t milliseconds);
  * @param count    Number of expected calls.
  */
 void assert_recorded_calls(const qmk_call_t *expected, size_t count);
+
+// #endregion

@@ -2,9 +2,15 @@
  * Statistics, print interval and free stack count of the profiling debug build.
  */
 
+// #region Includes
+
 #include "profiling/profiling_logic.h"
 
 #include <string.h>
+
+// #endregion
+
+// #region Data
 
 /** Name of each measured call, as the record contract gives it */
 static const char *const profiled_call_names[] = {
@@ -17,6 +23,10 @@ static const char *const profiled_call_names[] = {
     [PROFILED_SYMBOL_HOLDS]  = "symbol_holds",
     [PROFILED_PRECISION_KEY] = "precision_key",
 };
+
+// #endregion
+
+// #region Public functions
 
 bool profile_toggle(profile_t *profile, uint32_t now) {
     if (profile->is_on) {
@@ -68,3 +78,5 @@ uint32_t free_stack_bytes(const uint32_t *stack_bottom, size_t word_count) {
     }
     return (uint32_t)(free_words * sizeof(*stack_bottom));
 }
+
+// #endregion
