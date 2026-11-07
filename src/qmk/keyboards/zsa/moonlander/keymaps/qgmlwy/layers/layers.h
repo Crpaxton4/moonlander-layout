@@ -9,8 +9,9 @@
 
 /** Keymap layers, in the order of their index in `keymaps` */
 enum layer {
-    LAYER_BASE   = 0, /**< QGMLWY alphas with mouse keys bottom right */
-    LAYER_ARROWS = 1, /**< Base layer with arrows in place of mouse movement */
+    LAYER_BASE            = 0, /**< QGMLWY alphas with mouse keys bottom right */
+    LAYER_ARROWS          = 1, /**< Base layer with arrows in place of mouse movement */
+    LAYER_COMBO_POSITIONS = 2, /**< Never on; QMK finds the combo keys on this layer */
 };
 
 /**

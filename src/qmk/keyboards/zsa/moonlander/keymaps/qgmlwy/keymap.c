@@ -1,16 +1,20 @@
 /** @file
- * Layers and tap dance actions of the qgmlwy keymap, and its key event hook.
+ * Layers, tap dance actions and combos of the qgmlwy keymap, and its key event and
+ * housekeeping hooks.
  *
  * QMK compiles this file only inside its keymap introspection, which sizes
- * `keymaps` and `tap_dance_actions` with `sizeof`, so both tables are defined
- * here. Each feature lives in its own module, compiled by `rules.mk`.
+ * `keymaps`, `tap_dance_actions` and `key_combos` with `sizeof`, so the three tables
+ * are defined here. Each feature lives in its own module, compiled by `rules.mk`.
  */
 
 #include QMK_KEYBOARD_H
 
+#include "combos/combos.h"
 #include "dual_function/dual_function.h"
+#include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
+#include "status_leds/status_leds.h"
 #include "tap_dance/tap_dance.h"
 
 /** Keys of each layer, indexed by layer, matrix row and matrix column */
@@ -246,6 +250,121 @@ const uint16_t PROGMEM
                     [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
                     [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
                 },
+
+            [LAYER_COMBO_POSITIONS][LEFT_NUMBER_ROW] =
+                {
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][LEFT_TOP_ROW] =
+                {
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    LOGGING_COMBO_LEFT_POSITION,
+                },
+            [LAYER_COMBO_POSITIONS][LEFT_HOME_ROW] =
+                {
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][LEFT_BOTTOM_LETTER_ROW] =
+                {
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    NO_PHYSICAL_KEY,
+                },
+            [LAYER_COMBO_POSITIONS][LEFT_BOTTOM_ROW] =
+                {
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    NO_PHYSICAL_KEY,
+                    NO_PHYSICAL_KEY,
+                },
+            [LAYER_COMBO_POSITIONS][LEFT_THUMB_KEYS] =
+                {
+                    [LEFT_LARGE_THUMB]  = KC_NO,
+                    [LEFT_OUTER_THUMB]  = KC_NO,
+                    [LEFT_MIDDLE_THUMB] = KC_NO,
+                    [LEFT_INNER_THUMB]  = KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][RIGHT_NUMBER_ROW] =
+                {
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][RIGHT_TOP_ROW] =
+                {
+                    LOGGING_COMBO_RIGHT_POSITION,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][RIGHT_HOME_ROW] =
+                {
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][RIGHT_BOTTOM_LETTER_ROW] =
+                {
+                    NO_PHYSICAL_KEY,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][RIGHT_BOTTOM_ROW] =
+                {
+                    NO_PHYSICAL_KEY,
+                    NO_PHYSICAL_KEY,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                    KC_NO,
+                },
+            [LAYER_COMBO_POSITIONS][RIGHT_THUMB_KEYS] =
+                {
+                    [RIGHT_LARGE_THUMB]  = KC_NO,
+                    [RIGHT_OUTER_THUMB]  = KC_NO,
+                    [RIGHT_MIDDLE_THUMB] = KC_NO,
+                    [RIGHT_INNER_THUMB]  = KC_NO,
+                },
 };
 
 /** QMK actions of the tap dances, indexed by slot; each plays its `dances` row */
@@ -257,14 +376,58 @@ tap_dance_action_t tap_dance_actions[] = {
     [DANCE_RIGHT_CLICK_OR_WHEEL]  = ACTION_TAP_DANCE_TABLE(DANCE_RIGHT_CLICK_OR_WHEEL),
 };
 
+/** Keys of the logging combo, from LAYER_COMBO_POSITIONS */
+static const uint16_t PROGMEM logging_combo_keys[] = {
+    LOGGING_COMBO_LEFT_POSITION,
+    LOGGING_COMBO_RIGHT_POSITION,
+    COMBO_END,
+};
+
+/** QMK combos, indexed by `combo`; the logging combo sends LOGGING_TOGGLE */
+combo_t key_combos[] = {
+    [LOGGING_COMBO] = COMBO(logging_combo_keys, LOGGING_TOGGLE),
+};
+
 /**
- * Hands each key event to the copy and paste keys.
+ * Key event handler: false when it fully handled the event, so no later handler and
+ * no QMK code gets the event.
+ */
+typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
+
+/** Key event handlers, in call order; the key event log is first, so it sees all */
+static const record_handler_t record_handlers[] = {
+    process_key_event_log,
+    process_dual_function,
+};
+
+/** Handler for each pass of QMK's main loop */
+typedef void (*housekeeping_handler_t)(void);
+
+/** Housekeeping handlers, in call order; the LEDs come last, so they show the result */
+static const housekeeping_handler_t housekeeping_handlers[] = {
+    key_event_log_housekeeping,
+    update_status_leds,
+};
+
+/**
+ * Hands each key event to each record handler, until one handles it fully.
  *
  * @param keycode Keycode of the key event.
  * @param record  Key event.
- * @return False when process_dual_function() fully handled the event, true
- *         otherwise.
+ * @return False when a handler fully handled the event, true otherwise.
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    return process_dual_function(keycode, record);
+    for (size_t index = 0; index < ARRAY_SIZE(record_handlers); index++) {
+        if (!record_handlers[index](keycode, record)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/** Runs each housekeeping handler, on each pass of QMK's main loop */
+void housekeeping_task_user(void) {
+    for (size_t index = 0; index < ARRAY_SIZE(housekeeping_handlers); index++) {
+        housekeeping_handlers[index]();
+    }
 }

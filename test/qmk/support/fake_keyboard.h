@@ -17,15 +17,47 @@
 
 #include <stddef.h>
 
+#include "fake_state.h"
+
+/** Number of elements of an array; QMK headers keep it, because their version needs GNU
+ * C */
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 #include "action.h"
 #include "action_layer.h"
+#include "action_util.h"
+#include "host.h"
+#include "process_combo.h"
 #include "process_tap_dance.h"
 #include "progmem.h"
 #include "quantum_keycodes.h"
 #include "timer.h"
 
-/** Number of elements of an array; QMK's version needs GNU C */
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+/** Sets status LED 1, the leftmost LED, as moonlander.h does on the keyboard */
+#define STATUS_LED_1(status) set_fake_status_led(0, (status))
+/** Sets status LED 2 */
+#define STATUS_LED_2(status) set_fake_status_led(1, (status))
+/** Sets status LED 3, the right LED of the left half */
+#define STATUS_LED_3(status) set_fake_status_led(2, (status))
+/** Sets status LED 4, the left LED of the right half */
+#define STATUS_LED_4(status) set_fake_status_led(3, (status))
+/** Sets status LED 5 */
+#define STATUS_LED_5(status) set_fake_status_led(4, (status))
+/** Sets status LED 6, the rightmost LED */
+#define STATUS_LED_6(status) set_fake_status_led(5, (status))
+
+/**
+ * Adds formatted text to the console text that the tests read, as QMK's uprintf()
+ * writes to the console.
+ *
+ * QMK makes uprintf() a macro of its printf(). A function lets the tests read the
+ * text.
+ *
+ * @param format printf() format.
+ * @param ...    Values of the format.
+ * @return Number of characters, as printf().
+ */
+int uprintf(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 /**
  * Records a press of a keycode with modifiers, as QMK's register_code16().

@@ -40,7 +40,7 @@ static void assert_row(uint8_t layer, uint8_t row, const keymap_row_t *expected)
 
 static void keymap_number_of_layers(void **state) {
     (void)state;
-    assert_int_equal(keymap_layer_count(), 2);
+    assert_int_equal(keymap_layer_count(), 3);
 }
 
 static void keymap_base_left_number_row(void **state) {
@@ -439,6 +439,204 @@ static void keymap_arrows_right_thumb_keys(void **state) {
     assert_row(LAYER_ARROWS, RIGHT_THUMB_KEYS, &expected);
 }
 
+static void keymap_combo_positions_left_number_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, LEFT_NUMBER_ROW, &expected);
+}
+
+static void keymap_combo_positions_left_top_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                LOGGING_COMBO_LEFT_POSITION,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, LEFT_TOP_ROW, &expected);
+}
+
+static void keymap_combo_positions_left_home_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, LEFT_HOME_ROW, &expected);
+}
+
+static void keymap_combo_positions_left_bottom_letter_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                NO_PHYSICAL_KEY,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, LEFT_BOTTOM_LETTER_ROW, &expected);
+}
+
+static void keymap_combo_positions_left_bottom_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, LEFT_BOTTOM_ROW, &expected);
+}
+
+static void keymap_combo_positions_left_thumb_keys(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                [LEFT_LARGE_THUMB]  = KC_NO,
+                [LEFT_OUTER_THUMB]  = KC_NO,
+                [LEFT_MIDDLE_THUMB] = KC_NO,
+                [LEFT_INNER_THUMB]  = KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, LEFT_THUMB_KEYS, &expected);
+}
+
+static void keymap_combo_positions_right_number_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, RIGHT_NUMBER_ROW, &expected);
+}
+
+static void keymap_combo_positions_right_top_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                LOGGING_COMBO_RIGHT_POSITION,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, RIGHT_TOP_ROW, &expected);
+}
+
+static void keymap_combo_positions_right_home_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, RIGHT_HOME_ROW, &expected);
+}
+
+static void keymap_combo_positions_right_bottom_letter_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                NO_PHYSICAL_KEY,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, RIGHT_BOTTOM_LETTER_ROW, &expected);
+}
+
+static void keymap_combo_positions_right_bottom_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, RIGHT_BOTTOM_ROW, &expected);
+}
+
+static void keymap_combo_positions_right_thumb_keys(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                [RIGHT_LARGE_THUMB]  = KC_NO,
+                [RIGHT_OUTER_THUMB]  = KC_NO,
+                [RIGHT_MIDDLE_THUMB] = KC_NO,
+                [RIGHT_INNER_THUMB]  = KC_NO,
+            },
+    };
+    assert_row(LAYER_COMBO_POSITIONS, RIGHT_THUMB_KEYS, &expected);
+}
+
 /** Cases of this program, in the order of `keymaps` */
 static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_number_of_layers),
@@ -466,6 +664,18 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_arrows_right_bottom_letter_row),
     cmocka_unit_test(keymap_arrows_right_bottom_row),
     cmocka_unit_test(keymap_arrows_right_thumb_keys),
+    cmocka_unit_test(keymap_combo_positions_left_number_row),
+    cmocka_unit_test(keymap_combo_positions_left_top_row),
+    cmocka_unit_test(keymap_combo_positions_left_home_row),
+    cmocka_unit_test(keymap_combo_positions_left_bottom_letter_row),
+    cmocka_unit_test(keymap_combo_positions_left_bottom_row),
+    cmocka_unit_test(keymap_combo_positions_left_thumb_keys),
+    cmocka_unit_test(keymap_combo_positions_right_number_row),
+    cmocka_unit_test(keymap_combo_positions_right_top_row),
+    cmocka_unit_test(keymap_combo_positions_right_home_row),
+    cmocka_unit_test(keymap_combo_positions_right_bottom_letter_row),
+    cmocka_unit_test(keymap_combo_positions_right_bottom_row),
+    cmocka_unit_test(keymap_combo_positions_right_thumb_keys),
 };
 
 int main(int argc, char **argv) {
