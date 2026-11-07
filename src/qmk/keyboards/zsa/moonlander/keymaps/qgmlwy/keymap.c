@@ -25,12 +25,12 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_BASE][LEFT_NUMBER_ROW] =
             {
                 KC_ESCAPE,
-                KC_GRAVE,
-                KC_1,
-                KC_2,
-                KC_3,
-                KC_4,
-                KC_5,
+                KC_F1,
+                KC_F2,
+                KC_F3,
+                KC_F4,
+                KC_F5,
+                KC_F6,
             },
         [LAYER_BASE][LEFT_TOP_ROW] =
             {
@@ -81,13 +81,13 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][RIGHT_NUMBER_ROW] =
             {
-                KC_6,
-                KC_7,
-                KC_8,
-                KC_9,
-                KC_0,
-                KC_MINUS,
-                KC_EQUAL,
+                KC_F7,
+                KC_F8,
+                KC_F9,
+                KC_F10,
+                KC_F11,
+                KC_F12,
+                KC_NO,
             },
         [LAYER_BASE][RIGHT_TOP_ROW] =
             {
