@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- install-key-log-capture.sh replaces each @NAME@ value -->
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+    <RegistrationInfo>
+        <Description>Saves the QMK console of the keyboard in log files</Description>
+    </RegistrationInfo>
+    <!-- A logon trigger for one user needs no administrator rights -->
+    <Triggers>
+        <LogonTrigger>
+            <Enabled>true</Enabled>
+            <UserId>@USER_ID@</UserId>
+        </LogonTrigger>
+    </Triggers>
+    <Principals>
+        <Principal id="Author">
+            <UserId>@USER_ID@</UserId>
+            <LogonType>InteractiveToken</LogonType>
+            <RunLevel>LeastPrivilege</RunLevel>
+        </Principal>
+    </Principals>
+    <!-- Default settings do not start the task on battery power -->
+    <Settings>
+        <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+        <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    </Settings>
+    <Actions Context="Author">
+        <Exec>
+            <Command>powershell.exe</Command>
+            <Arguments>@POWERSHELL_ARGUMENTS@</Arguments>
+            <WorkingDirectory>@INSTALL_FOLDER@</WorkingDirectory>
+        </Exec>
+    </Actions>
+</Task>
