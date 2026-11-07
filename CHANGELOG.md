@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.14.0...v1.15.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** replace the arrows mode with a nav mode and free the bottom row ([#188](https://github.com/Crpaxton4/moonlander-layout/issues/188)) ([b74dfcb](https://github.com/Crpaxton4/moonlander-layout/commit/b74dfcbb27be2532bc2c932987ca31874ca77bca))
+
 ## [1.14.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.13.0...v1.14.0) (2026-11-07)
 
 
