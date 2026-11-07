@@ -73,6 +73,9 @@ static uint8_t fake_one_shot_modifiers;
 /** Last setting of each status LED, indexed by position from the left */
 static bool status_leds[FAKE_STATUS_LED_COUNT];
 
+/** True while QMK's combos are on, as is_combo_enabled() gives it */
+static bool combos_on;
+
 layer_state_t layer_state;
 
 layer_state_t default_layer_state;
@@ -197,6 +200,7 @@ void reset_fake_qmk(void) {
     mk_max_speed            = 0;
     host_driver             = &fake_host_driver;
     memset(status_leds, 0, sizeof(status_leds));
+    combos_on = true;
 }
 
 void advance_fake_clock(uint32_t milliseconds) {
@@ -333,6 +337,26 @@ void set_fake_status_led(uint8_t position, bool is_on) {
 bool fake_status_led_is_on(uint8_t position) {
     assert_in_range(position, 0, FAKE_STATUS_LED_COUNT - 1);
     return status_leds[position];
+}
+
+void combo_enable(void) {
+    combos_on = true;
+}
+
+void combo_disable(void) {
+    combos_on = false;
+}
+
+void combo_toggle(void) {
+    if (combos_on) {
+        combo_disable();
+        return;
+    }
+    combo_enable();
+}
+
+bool is_combo_enabled(void) {
+    return combos_on;
 }
 
 host_driver_t *host_get_driver(void) {

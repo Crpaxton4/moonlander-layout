@@ -57,7 +57,7 @@ static void precision_key_r6_other_keys_keep_top_speed(void **state) {
     mk_max_speed = TOP_SPEED;
     assert_true(process_record_user(QK_MOUSE_CURSOR_RIGHT, &press));
     assert_true(process_record_user(QK_MOUSE_CURSOR_RIGHT, &release));
-    // Thumb key L1 is Space in both modes
+    // Space, thumb key L1 of the default mode
     assert_true(process_record_user(KC_SPACE, &press));
     assert_true(process_record_user(KC_SPACE, &release));
     assert_int_equal(mk_max_speed, TOP_SPEED);

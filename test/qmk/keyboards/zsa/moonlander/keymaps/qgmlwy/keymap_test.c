@@ -337,13 +337,13 @@ static void keymap_nav_left_number_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, LEFT_NUMBER_ROW, &expected);
@@ -354,13 +354,13 @@ static void keymap_nav_left_top_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TAB,
-                KC_Q,
-                KC_G,
+                KC_NO,
+                KC_NO,
                 QK_MOUSE_CURSOR_UP,
-                KC_L,
-                KC_W,
-                NAV_SNAKE_CASE_KEY,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, LEFT_TOP_ROW, &expected);
@@ -371,13 +371,13 @@ static void keymap_nav_left_home_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
-                KC_D,
+                KC_NO,
                 QK_MOUSE_CURSOR_LEFT,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
-                KC_R,
-                CONSTANT_CASE_KEY,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, LEFT_HOME_ROW, &expected);
@@ -388,12 +388,12 @@ static void keymap_nav_left_bottom_letter_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
-                KC_Z,
-                KC_X,
-                KC_C,
-                KC_V,
-                KC_J,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 NO_PHYSICAL_KEY,
             },
     };
@@ -405,11 +405,11 @@ static void keymap_nav_left_bottom_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -422,10 +422,10 @@ static void keymap_nav_left_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [LEFT_LARGE_THUMB]  = KC_TRANSPARENT,
-                [LEFT_OUTER_THUMB]  = KC_TRANSPARENT,
-                [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
-                [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
+                [LEFT_LARGE_THUMB]  = KC_NO,
+                [LEFT_OUTER_THUMB]  = KC_NO,
+                [LEFT_MIDDLE_THUMB] = KC_NO,
+                [LEFT_INNER_THUMB]  = KC_NO,
             },
     };
     assert_row(LAYER_NAV, LEFT_THUMB_KEYS, &expected);
@@ -436,13 +436,13 @@ static void keymap_nav_right_number_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, RIGHT_NUMBER_ROW, &expected);
@@ -453,13 +453,13 @@ static void keymap_nav_right_top_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                NAV_CAMEL_CASE_KEY,
+                KC_NO,
                 QK_MOUSE_WHEEL_UP,
                 QK_MOUSE_BUTTON_1,
                 KC_UP,
                 QK_MOUSE_BUTTON_2,
                 KC_HOME,
-                KC_BACKSLASH,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, RIGHT_TOP_ROW, &expected);
@@ -470,13 +470,13 @@ static void keymap_nav_right_home_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                PASCAL_CASE_KEY,
+                KC_NO,
                 QK_MOUSE_WHEEL_DOWN,
                 KC_LEFT,
                 KC_DOWN,
                 KC_RIGHT,
                 KC_END,
-                KC_QUOTE,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, RIGHT_HOME_ROW, &expected);
@@ -488,12 +488,12 @@ static void keymap_nav_right_bottom_letter_row(void **state) {
         .keys =
             {
                 NO_PHYSICAL_KEY,
-                KC_K,
+                KC_NO,
                 QK_MOUSE_BUTTON_4,
                 QK_MOUSE_BUTTON_3,
                 QK_MOUSE_BUTTON_5,
-                KC_SLASH,
-                KC_TRANSPARENT,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, RIGHT_BOTTOM_LETTER_ROW, &expected);
@@ -506,11 +506,11 @@ static void keymap_nav_right_bottom_row(void **state) {
             {
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_NAV, RIGHT_BOTTOM_ROW, &expected);
@@ -521,10 +521,10 @@ static void keymap_nav_right_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [RIGHT_LARGE_THUMB]  = KC_TRANSPARENT,
+                [RIGHT_LARGE_THUMB]  = TG(LAYER_NAV),
                 [RIGHT_OUTER_THUMB]  = QK_MOUSE_ACCELERATION_0,
-                [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
-                [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
+                [RIGHT_MIDDLE_THUMB] = KC_NO,
+                [RIGHT_INNER_THUMB]  = KC_NO,
             },
     };
     assert_row(LAYER_NAV, RIGHT_THUMB_KEYS, &expected);

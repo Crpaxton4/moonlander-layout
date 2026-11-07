@@ -476,7 +476,8 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         ${KEYMAP_DIR}/precision_key/precision_key.c
         ${KEYMAP_DIR}/case_modes/case_modes.c
         ${KEYMAP_DIR}/bracket_pairs/bracket_pairs.c
-        ${KEYMAP_DIR}/plain_mode/plain_mode.c)
+        ${KEYMAP_DIR}/plain_mode/plain_mode.c
+        ${KEYMAP_DIR}/combos/combos.c)
     target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
     target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk keymap_logic)
 
@@ -521,6 +522,7 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/plain_mode/plain_mode_test.c
         LIBRARIES qgmlwy_keymap)
+    add_cmocka_test(${KEYMAP_TESTS}/combos/combos_test.c LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/profiling/profiling_logic_test.c
         LIBRARIES keymap_logic unit_test)
     add_cmocka_test(${KEYMAP_TESTS}/profiling/profiling_test.c
