@@ -68,7 +68,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_NO,
                 KC_NO,
                 KC_NO,
-                KC_NO,
+                QK_MOUSE_ACCELERATION_0,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
