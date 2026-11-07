@@ -36,6 +36,9 @@
 /** Layer state of the plain mode */
 #define PLAIN_MODE ONLY_LAYER(LAYER_PLAIN)
 
+/** Layer state of the nav mode, which has the precision hold */
+#define NAV_MODE ONLY_LAYER(LAYER_NAV)
+
 /** Tap count that QMK gives both events of the tap of a tap-hold key */
 #define ONE_TAP 1
 
@@ -109,6 +112,19 @@ static void plain_mode_r1_r2_combo_starts_plain_mode(void **state) {
     start_with_layers(NORMAL_MODE);
     assert_false(send_key_event(PLAIN_MODE_TOGGLE, true));
     // layer_on() does not write the EEPROM, so a power-up starts the normal mode
+    static const qmk_call_t expected[] = {
+        {.function = CALLED_LAYER_OFF, .argument = LAYER_SPECIAL},
+        {.function = CALLED_LAYER_ON, .argument = LAYER_PLAIN},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void plain_mode_r1_r2_combo_starts_plain_mode_in_nav_mode(void **state) {
+    (void)state;
+    start_with_layers(NAV_MODE);
+    assert_false(send_key_event(PLAIN_MODE_TOGGLE, true));
+    // Nav layer stays on below the plain layer, so the end of the plain mode goes back
+    // to the nav mode
     static const qmk_call_t expected[] = {
         {.function = CALLED_LAYER_OFF, .argument = LAYER_SPECIAL},
         {.function = CALLED_LAYER_ON, .argument = LAYER_PLAIN},
@@ -197,7 +213,8 @@ static void plain_mode_r5_precision_key_does_not_operate(void **state) {
     (void)state;
     start_with_layers(PLAIN_MODE);
     mk_max_speed = TOP_SPEED;
-    assert_true(send_key_event(QK_MOUSE_ACCELERATION_0, true));
+    // Tap count 0 is a hold
+    assert_true(send_key_event(PRECISION_HOLD_KEY, true));
     assert_int_equal(mk_max_speed, TOP_SPEED);
 }
 
@@ -247,11 +264,12 @@ static void plain_mode_r4_symbol_hold_release_after_mode_start(void **state) {
 
 static void plain_mode_r4_precision_key_release_after_mode_start(void **state) {
     (void)state;
-    start_with_layers(NORMAL_MODE);
+    start_with_layers(NAV_MODE);
     mk_max_speed = TOP_SPEED;
-    send_key_event(QK_MOUSE_ACCELERATION_0, true);
+    // Tap count 0 is a hold, which sets the precision speed until the release
+    send_key_event(PRECISION_HOLD_KEY, true);
     layer_state = PLAIN_MODE;
-    send_key_event(QK_MOUSE_ACCELERATION_0, false);
+    send_key_event(PRECISION_HOLD_KEY, false);
     assert_int_equal(mk_max_speed, TOP_SPEED);
 }
 
@@ -263,6 +281,7 @@ static void plain_mode_r4_precision_key_release_after_mode_start(void **state) {
 static const struct CMUnitTest plain_mode_cases[] = {
     cmocka_unit_test(plain_mode_r1_combo_keys),
     cmocka_unit_test(plain_mode_r1_r2_combo_starts_plain_mode),
+    cmocka_unit_test(plain_mode_r1_r2_combo_starts_plain_mode_in_nav_mode),
     cmocka_unit_test(plain_mode_r1_ac8_combo_ends_plain_mode),
     cmocka_unit_test(plain_mode_r7_combo_release_sends_no_key),
     cmocka_unit_test(plain_mode_special_mode_r10_combo_does_nothing),

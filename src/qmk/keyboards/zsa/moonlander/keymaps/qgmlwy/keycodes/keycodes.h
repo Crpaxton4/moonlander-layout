@@ -35,6 +35,15 @@
 /** Key at (1,7): a tap starts or ends camelCase, and a hold sends F7 */
 #define CAMEL_CASE_KEY KEY_HOLD(KC_F7)
 
+/**
+ * Thumb key L1 in the nav mode: a tap sends Space, and a hold is the precision key.
+ * QMK has no tap-hold keycode with a key function as its hold action. Thus the key
+ * is a layer-tap key of the base layer, as the hold keys are, but with no entry in
+ * the hold table. process_precision_key() takes each event of a hold, so the layer
+ * action does not occur.
+ */
+#define PRECISION_HOLD_KEY LT(LAYER_BASE, KC_SPACE)
+
 // #endregion
 
 // #region Enumerations
@@ -50,7 +59,9 @@ enum custom_keycode {
     PLAIN_MODE_COMBO_LEFT_POSITION,  /**< Combo key at (2,6), never sent */
     PLAIN_MODE_COMBO_RIGHT_POSITION, /**< Combo key at (2,7), never sent */
     PLAIN_MODE_TOGGLE,               /**< Plain-mode combo: plain mode on or off */
-    PROFILING_TOGGLE, /**< (3,0) in the profiling debug build: profiling on or off */
+    PROFILING_TOGGLE,   /**< (3,0) in the profiling debug build: profiling on or off */
+    NAV_SNAKE_CASE_KEY, /**< (1,6) in the nav mode: snake_case with no F6 hold */
+    NAV_CAMEL_CASE_KEY, /**< (1,7) in the nav mode: camelCase with no F7 hold */
 };
 
 // #endregion

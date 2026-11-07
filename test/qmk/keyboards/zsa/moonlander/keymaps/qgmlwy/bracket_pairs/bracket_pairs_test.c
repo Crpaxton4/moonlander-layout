@@ -40,6 +40,9 @@
 /** First grid column of the right half */
 #define FIRST_RIGHT_COLUMN 7
 
+/** Number of grid columns of the two halves */
+#define GRID_COLUMN_COUNT 14
+
 /** Matrix rows from a left half row to the same row of the right half */
 #define RIGHT_HALF_ROW_OFFSET RIGHT_NUMBER_ROW
 
@@ -76,8 +79,8 @@
 /** Layer state while the special mode is on */
 #define SPECIAL_MODE_ON ((layer_state_t)(1U << LAYER_SPECIAL))
 
-/** Layer state while the arrows mode is on */
-#define ARROWS_MODE_ON ((layer_state_t)(1U << LAYER_ARROWS))
+/** Layer state while the nav mode is on */
+#define NAV_MODE_ON ((layer_state_t)(1U << LAYER_NAV))
 
 /** Calls of the letters "abc" */
 #define ABC_CALLS                                           \
@@ -207,11 +210,11 @@ static const grid_position_t closing_square_bracket_key = {
     .column = 11,
 };
 
-/** Mouse right key (4,12) */
+/** Mouse right key N (2,4) of the nav mode */
 static const grid_position_t mouse_right_key = {
-    .layer  = LAYER_BASE,
-    .row    = 4,
-    .column = 12,
+    .layer  = LAYER_NAV,
+    .row    = 2,
+    .column = 4,
 };
 
 /** B (1,11), a plain letter key */
@@ -235,25 +238,43 @@ static const grid_position_t closing_angle_bracket_key = {
     .column = 12,
 };
 
-/** Left (4,9) of the arrows mode */
+/** Left A (2,9) of the nav mode */
 static const grid_position_t left_arrow_key = {
-    .layer  = LAYER_ARROWS,
-    .row    = 4,
+    .layer  = LAYER_NAV,
+    .row    = 2,
     .column = 9,
 };
 
-/** Up (4,10) of the arrows mode */
+/** Up U (1,10) of the nav mode */
 static const grid_position_t up_arrow_key = {
-    .layer  = LAYER_ARROWS,
-    .row    = 4,
+    .layer  = LAYER_NAV,
+    .row    = 1,
     .column = 10,
 };
 
-/** Right (4,12) of the arrows mode */
+/** Right O (2,11) of the nav mode */
 static const grid_position_t right_arrow_key = {
-    .layer  = LAYER_ARROWS,
-    .row    = 4,
-    .column = 12,
+    .layer  = LAYER_NAV,
+    .row    = 2,
+    .column = 11,
+};
+
+/** Tab (1,0) of the nav mode, with no Esc hold */
+static const grid_position_t nav_tab_key = {
+    .layer  = LAYER_NAV,
+    .row    = 1,
+    .column = 0,
+};
+
+/**
+ * Thumb key L1 of the nav mode: Space on a tap, the precision key on a hold. The
+ * thumb keys have no grid row, so the row and column are the matrix row and column.
+ * key_at() reads a left half position as a matrix position.
+ */
+static const grid_position_t precision_hold_key = {
+    .layer  = LAYER_NAV,
+    .row    = LEFT_THUMB_KEYS,
+    .column = LEFT_OUTER_THUMB,
 };
 
 /** Backtick (1,1) of the special mode */
@@ -310,6 +331,28 @@ static const bracket_pair_t bracket_pairs[] = {
         .opener = KC_LEFT_ANGLE_BRACKET,
         .closer = KC_RIGHT_ANGLE_BRACKET,
     },
+};
+
+/**
+ * Keys of the nav mode that move the text cursor to a place that the pairs do not
+ * know: mouse keys, mouse buttons, wheel keys, Up, Down, Home and End.
+ */
+static const grid_position_t nav_clearing_keys[] = {
+    {.layer = LAYER_NAV, .row = 1, .column = 9},
+    {.layer = LAYER_NAV, .row = 1, .column = 11},
+    {.layer = LAYER_NAV, .row = 3, .column = 9},
+    {.layer = LAYER_NAV, .row = 3, .column = 10},
+    {.layer = LAYER_NAV, .row = 3, .column = 11},
+    {.layer = LAYER_NAV, .row = 1, .column = 3},
+    {.layer = LAYER_NAV, .row = 2, .column = 2},
+    {.layer = LAYER_NAV, .row = 2, .column = 3},
+    {.layer = LAYER_NAV, .row = 2, .column = 4},
+    {.layer = LAYER_NAV, .row = 1, .column = 8},
+    {.layer = LAYER_NAV, .row = 2, .column = 8},
+    {.layer = LAYER_NAV, .row = 1, .column = 10},
+    {.layer = LAYER_NAV, .row = 2, .column = 10},
+    {.layer = LAYER_NAV, .row = 1, .column = 12},
+    {.layer = LAYER_NAV, .row = 2, .column = 12},
 };
 
 /** Closer holds of the spec, in the order of bracket_pairs */
@@ -486,6 +529,32 @@ static void start_case(void) {
     reset_fake_qmk();
     bracket_pairs_clear();
     case_modes_end_all();
+}
+
+/**
+ * Pushes thumb key R0 of the default mode. The hook lets it pass, and QMK then
+ * turns on the nav layer, so the test turns it on.
+ */
+static void turn_on_nav_mode(void) {
+    uint16_t nav_mode_key =
+        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB);
+    assert_true(push_and_release(nav_mode_key, NOT_A_TAP));
+    layer_state = NAV_MODE_ON;
+}
+
+/**
+ * Pushes thumb key R0 of the nav mode, which is the key of the default mode below
+ * it. The hook lets it pass, and QMK then turns off the nav layer, so the test turns
+ * it off.
+ */
+static void turn_off_nav_mode(void) {
+    uint16_t nav_mode_key =
+        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB);
+    assert_int_equal(
+        keycode_at_keymap_location(LAYER_NAV, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB),
+        KC_TRANSPARENT);
+    assert_true(push_and_release(nav_mode_key, NOT_A_TAP));
+    layer_state = 0;
 }
 
 static void bracket_pairs_r1_ac1_ac10_opener_hold_sends_pair(void **state) {
@@ -749,7 +818,6 @@ static void bracket_pairs_r10_clearing_key_clears_stack(void **state) {
     for (size_t index = 0; index < ARRAY_SIZE(clearing_keys); index++) {
         start_case();
         hold_key(keycode_of(opening_parenthesis_key));
-        // Precision key handler takes its key, so only the Tab result counts
         push_and_release(clearing_keys[index], NOT_A_TAP);
         assert_true(push_and_release(KC_TAB, NOT_A_TAP));
     }
@@ -771,9 +839,10 @@ static void bracket_pairs_r10_ac7_mouse_key_then_tab(void **state) {
     start_case();
     hold_key(keycode_of(opening_parenthesis_key));
     type_key(KC_X);
+    turn_on_nav_mode();
     // Mouse right key; QMK moves the cursor and sends no key
     assert_true(push_and_release(keycode_of(mouse_right_key), NOT_A_TAP));
-    type_key(KC_TAB);
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,
         {CALLED_TAP_CODE16, KC_X},
@@ -1042,22 +1111,6 @@ static void open_pair_and_type_abc(void) {
 }
 
 /**
- * Pushes thumb key R0, the layer toggle of the arrows mode. The hook lets it pass,
- * because R0 types nothing and does not move the cursor.
- */
-static void push_arrows_mode_key(void) {
-    uint16_t arrows_mode_key =
-        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB);
-    assert_true(push_and_release(arrows_mode_key, NOT_A_TAP));
-}
-
-/** Pushes thumb key R0. QMK then turns on the arrows layer, so the test turns it on */
-static void turn_on_arrows_mode(void) {
-    push_arrows_mode_key();
-    layer_state = ARROWS_MODE_ON;
-}
-
-/**
  * Pushes a key that is not a tap-hold key, holds it and releases it. A key that
  * passes goes to the call log as a tap, as QMK sends it.
  *
@@ -1113,11 +1166,12 @@ static void bracket_pairs_flash_quick_tap_of_closer_key_types_letter(void **stat
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
-static void bracket_pairs_flash_arrows_mode_key_keeps_pair(void **state) {
+static void bracket_pairs_flash_nav_mode_key_keeps_pair(void **state) {
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
+    turn_off_nav_mode();
     hold_key(keycode_of(closing_parenthesis_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,
@@ -1131,9 +1185,10 @@ static void bracket_pairs_r19_r6_ht1_ac16_flash_left_then_closer(void **state) {
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(left_arrow_key));
     type_key(keycode_of(left_arrow_key));
+    turn_off_nav_mode();
     hold_key(keycode_of(closing_parenthesis_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,        ABC_CALLS,
@@ -1148,10 +1203,10 @@ static void bracket_pairs_r19_r5_ht2_ac17_flash_left_then_tab(void **state) {
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(left_arrow_key));
     type_key(keycode_of(left_arrow_key));
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,        ABC_CALLS,
         {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_LEFT},
@@ -1165,10 +1220,10 @@ static void bracket_pairs_r21_ht3_ac21_flash_left_right_then_tab(void **state) {
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(left_arrow_key));
     type_key(keycode_of(right_arrow_key));
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,        ABC_CALLS,
         {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_RIGHT},
@@ -1265,8 +1320,10 @@ static void bracket_pairs_r19_r4_ht4_ac18_letter_after_left_then_tab(void **stat
     hold_key(keycode_of(opening_parenthesis_key));
     type_key(KC_A);
     type_key(KC_C);
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(left_arrow_key));
+    // B (1,11) is the right click in the nav mode, so the letter needs the default mode
+    turn_off_nav_mode();
     type_key(KC_B);
     tap_tap_hold_key(keycode_of(tab_key));
     static const qmk_call_t expected[] = {
@@ -1283,10 +1340,10 @@ static void bracket_pairs_r20_r13_ht5_left_past_opener_forgets_pairs(void **stat
     start_case();
     hold_key(keycode_of(opening_parenthesis_key));
     type_key(KC_A);
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(left_arrow_key));
     type_key(keycode_of(left_arrow_key));
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,       {CALLED_TAP_CODE16, KC_A},
         {CALLED_TAP_CODE16, KC_LEFT}, {CALLED_TAP_CODE16, KC_LEFT},
@@ -1301,9 +1358,9 @@ static void bracket_pairs_r22_r7_ht6_right_at_closer_leaves_inner_pair(void **st
     hold_key(keycode_of(opening_curly_brace_key));
     hold_key(keycode_of(opening_parenthesis_key));
     type_key(KC_A);
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(right_arrow_key));
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         {CALLED_TAP_CODE16, KC_LEFT_CURLY_BRACE},
         {CALLED_TAP_CODE16, KC_RIGHT_CURLY_BRACE},
@@ -1322,11 +1379,11 @@ static void bracket_pairs_r23_ht7_backspace_at_opener_forgets_pairs(void **state
     hold_key(keycode_of(opening_parenthesis_key));
     type_key(KC_A);
     type_key(KC_B);
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(left_arrow_key));
     type_key(keycode_of(left_arrow_key));
     type_key(KC_BACKSPACE);
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,       {CALLED_TAP_CODE16, KC_A},
         {CALLED_TAP_CODE16, KC_B},    {CALLED_TAP_CODE16, KC_LEFT},
@@ -1354,12 +1411,12 @@ static void bracket_pairs_r10_ht8_shift_left_then_tab(void **state) {
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     // Shift with Left selects text, which the next key can replace
     set_fake_modifiers(LEFT_SHIFT_BIT);
     type_key(keycode_of(left_arrow_key));
     set_fake_modifiers(0);
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,
         ABC_CALLS,
@@ -1373,9 +1430,9 @@ static void bracket_pairs_r10_ht9_up_forgets_pairs(void **state) {
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_key(keycode_of(up_arrow_key));
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,
         ABC_CALLS,
@@ -1389,12 +1446,12 @@ static void bracket_pairs_r24_ht10_left_held_for_safe_time_forgets_pairs(void **
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_held_key((held_push_t){
         .keycode   = keycode_of(left_arrow_key),
         .hold_time = REPEAT_SAFE_TIME,
     });
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,
         ABC_CALLS,
@@ -1408,12 +1465,12 @@ static void bracket_pairs_r24_ht11_left_released_before_safe_time(void **state) 
     (void)state;
     start_case();
     open_pair_and_type_abc();
-    turn_on_arrows_mode();
+    turn_on_nav_mode();
     type_held_key((held_push_t){
         .keycode   = keycode_of(left_arrow_key),
         .hold_time = JUST_BEFORE_REPEAT_SAFE_TIME,
     });
-    tap_tap_hold_key(keycode_of(tab_key));
+    type_key(keycode_of(nav_tab_key));
     static const qmk_call_t expected[] = {
         PARENTHESES_PAIR_CALLS,        ABC_CALLS,
         {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_RIGHT},
@@ -1491,6 +1548,81 @@ static void bracket_pairs_r25_r12_pairs_are_not_open_after_idle_time(void **stat
     assert_false(bracket_pairs_are_open());
 }
 
+static void bracket_pairs_r10_nav_mode_keys_clear_stack(void **state) {
+    (void)state;
+    for (size_t index = 0; index < ARRAY_SIZE(nav_clearing_keys); index++) {
+        start_case();
+        hold_key(keycode_of(opening_parenthesis_key));
+        turn_on_nav_mode();
+        uint16_t keycode = keycode_of(nav_clearing_keys[index]);
+        assert_true(push_and_release(keycode, NOT_A_TAP));
+        assert_false(bracket_pairs_are_open());
+    }
+}
+
+static void bracket_pairs_nav_mode_precision_hold_keeps_pair(void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    turn_on_nav_mode();
+    // Hold of the precision key moves no cursor, so the pair stays
+    assert_false(push_and_release(keycode_of(precision_hold_key), NOT_A_TAP));
+    assert_true(bracket_pairs_are_open());
+    type_key(keycode_of(nav_tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r4_nav_mode_space_tap_counts(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    turn_on_nav_mode();
+    tap_tap_hold_key(keycode_of(precision_hold_key));
+    type_key(keycode_of(left_arrow_key));
+    type_key(keycode_of(nav_tab_key));
+    // Space and Left are in the pair, so the jump-out sends Right two times
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,        {CALLED_TAP_CODE16, KC_SPACE},
+        {CALLED_TAP_CODE16, KC_LEFT},  {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_TAP_CODE16, KC_RIGHT},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+/**
+ * Fails the test if a long push in the nav mode of a bottom letter row key opens a
+ * pair, or does not pass to QMK. A column with no hold in the default mode has no
+ * check.
+ *
+ * @param column Grid column of the key.
+ */
+static void assert_nav_key_opens_no_pair(uint8_t column) {
+    if (!IS_QK_LAYER_TAP(base_key_at(BRACKET_ROW, column))) {
+        return;
+    }
+    uint16_t nav_key = key_at(LAYER_NAV, BRACKET_ROW, column);
+    start_case();
+    turn_on_nav_mode();
+    type_key(nav_key);
+    assert_false(bracket_pairs_are_open());
+    const qmk_call_t expected[] = {
+        {CALLED_TAP_CODE16, nav_key},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_nav_mode_bottom_letter_row_has_no_opener(void **state) {
+    (void)state;
+    for (uint8_t column = 0; column < GRID_COLUMN_COUNT; column++) {
+        assert_nav_key_opens_no_pair(column);
+    }
+}
+
 // #endregion
 
 // #region Test runner
@@ -1513,6 +1645,10 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r10_clearing_key_clears_stack),
     cmocka_unit_test(bracket_pairs_r10_top_row_hold_clears_stack),
     cmocka_unit_test(bracket_pairs_r10_ac7_mouse_key_then_tab),
+    cmocka_unit_test(bracket_pairs_r10_nav_mode_keys_clear_stack),
+    cmocka_unit_test(bracket_pairs_nav_mode_precision_hold_keeps_pair),
+    cmocka_unit_test(bracket_pairs_r4_nav_mode_space_tap_counts),
+    cmocka_unit_test(bracket_pairs_nav_mode_bottom_letter_row_has_no_opener),
     cmocka_unit_test(bracket_pairs_r10_shortcut_clears_stack),
     cmocka_unit_test(bracket_pairs_r10_shift_tab_clears_stack),
     cmocka_unit_test(bracket_pairs_r11_ac8_ht14_other_closer_is_a_character),
@@ -1532,7 +1668,7 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_flash_closer_hold_after_text_jumps_out),
     cmocka_unit_test(bracket_pairs_flash_tab_after_text_jumps_out),
     cmocka_unit_test(bracket_pairs_flash_quick_tap_of_closer_key_types_letter),
-    cmocka_unit_test(bracket_pairs_flash_arrows_mode_key_keeps_pair),
+    cmocka_unit_test(bracket_pairs_flash_nav_mode_key_keeps_pair),
     cmocka_unit_test(bracket_pairs_r19_r6_ht1_ac16_flash_left_then_closer),
     cmocka_unit_test(bracket_pairs_r19_r5_ht2_ac17_flash_left_then_tab),
     cmocka_unit_test(bracket_pairs_r21_ht3_ac21_flash_left_right_then_tab),

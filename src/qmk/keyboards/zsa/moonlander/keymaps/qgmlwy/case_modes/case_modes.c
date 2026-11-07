@@ -53,12 +53,14 @@ static bool send_backspace_then_space(uint16_t keycode);
 /** Case mode state; all zero at power-up, so no mode is on */
 static case_modes_t case_modes;
 
-/** Mode of each mode key */
+/** Mode of each mode key; the nav mode has its own snake_case and camelCase keys */
 static const mode_key_t mode_keys[] = {
-    {SNAKE_CASE_KEY, CASE_MODE_SNAKE},
-    {CONSTANT_CASE_KEY, CASE_MODE_CONSTANT},
-    {CAMEL_CASE_KEY, CASE_MODE_CAMEL},
-    {PASCAL_CASE_KEY, CASE_MODE_PASCAL},
+    {.keycode = SNAKE_CASE_KEY, .mode = CASE_MODE_SNAKE},
+    {.keycode = NAV_SNAKE_CASE_KEY, .mode = CASE_MODE_SNAKE},
+    {.keycode = CONSTANT_CASE_KEY, .mode = CASE_MODE_CONSTANT},
+    {.keycode = CAMEL_CASE_KEY, .mode = CASE_MODE_CAMEL},
+    {.keycode = NAV_CAMEL_CASE_KEY, .mode = CASE_MODE_CAMEL},
+    {.keycode = PASCAL_CASE_KEY, .mode = CASE_MODE_PASCAL},
 };
 
 /** Handler of each action, indexed by action */

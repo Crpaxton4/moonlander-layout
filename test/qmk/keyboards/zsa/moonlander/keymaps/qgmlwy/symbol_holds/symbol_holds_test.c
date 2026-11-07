@@ -321,7 +321,7 @@ static void symbol_holds_other_keys_have_no_symbol(void **state) {
     (void)state;
     assert_int_equal(symbol_of_hold_key(KC_Z), KC_NO);
     assert_int_equal(symbol_of_hold_key(LCTL_T(KC_D)), KC_NO);
-    assert_int_equal(symbol_of_hold_key(LT(LAYER_ARROWS, KC_Z)), KC_NO);
+    assert_int_equal(symbol_of_hold_key(LT(LAYER_NAV, KC_Z)), KC_NO);
 }
 
 static void symbol_holds_other_keys_pass_on(void **state) {

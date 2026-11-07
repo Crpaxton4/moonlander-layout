@@ -21,6 +21,9 @@
 /** Number of digits 1 to 0 on the numpad of the special layer */
 #define NUMPAD_DIGIT_COUNT 10
 
+/** Matrix column of the last key of a right half row, for example (3,13) */
+#define LAST_RIGHT_HALF_COLUMN (MATRIX_COLS - 1)
+
 // #endregion
 
 // #region Types
@@ -29,6 +32,17 @@
 typedef struct {
     uint16_t keys[MATRIX_COLS]; /**< Key of each matrix column */
 } keymap_row_t;
+
+// #endregion
+
+// #region Data
+
+/** Small right thumb keys R1 to R3, which send no key in each mode */
+static const uint8_t small_right_thumb_keys[] = {
+    RIGHT_OUTER_THUMB,
+    RIGHT_MIDDLE_THUMB,
+    RIGHT_INNER_THUMB,
+};
 
 // #endregion
 
@@ -198,7 +212,7 @@ static void keymap_base_left_bottom_row(void **state) {
                 KC_NO,
                 KC_NO,
                 KC_NO,
-                QK_MOUSE_ACCELERATION_0,
+                KC_NO,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -282,7 +296,7 @@ static void keymap_base_right_bottom_letter_row(void **state) {
                 LT(0, KC_COMMA),
                 LT(0, KC_DOT),
                 LT(0, KC_SLASH),
-                QK_MOUSE_WHEEL_UP,
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, RIGHT_BOTTOM_LETTER_ROW, &expected);
@@ -295,11 +309,11 @@ static void keymap_base_right_bottom_row(void **state) {
             {
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
-                QK_MOUSE_CURSOR_LEFT,
-                QK_MOUSE_CURSOR_UP,
-                QK_MOUSE_CURSOR_DOWN,
-                QK_MOUSE_CURSOR_RIGHT,
-                QK_MOUSE_WHEEL_DOWN,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, RIGHT_BOTTOM_ROW, &expected);
@@ -310,16 +324,16 @@ static void keymap_base_right_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [RIGHT_LARGE_THUMB]  = TG(LAYER_ARROWS),
-                [RIGHT_OUTER_THUMB]  = QK_MOUSE_BUTTON_1,
-                [RIGHT_MIDDLE_THUMB] = QK_MOUSE_BUTTON_2,
-                [RIGHT_INNER_THUMB]  = QK_MOUSE_BUTTON_3,
+                [RIGHT_LARGE_THUMB]  = TG(LAYER_NAV),
+                [RIGHT_OUTER_THUMB]  = KC_NO,
+                [RIGHT_MIDDLE_THUMB] = KC_NO,
+                [RIGHT_INNER_THUMB]  = KC_NO,
             },
     };
     assert_row(LAYER_BASE, RIGHT_THUMB_KEYS, &expected);
 }
 
-static void keymap_arrows_left_number_row(void **state) {
+static void keymap_nav_left_number_row(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
@@ -333,92 +347,92 @@ static void keymap_arrows_left_number_row(void **state) {
                 KC_TRANSPARENT,
             },
     };
-    assert_row(LAYER_ARROWS, LEFT_NUMBER_ROW, &expected);
+    assert_row(LAYER_NAV, LEFT_NUMBER_ROW, &expected);
 }
 
-static void keymap_arrows_left_top_row(void **state) {
+static void keymap_nav_left_top_row(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_TAB,
+                KC_Q,
+                KC_G,
+                QK_MOUSE_CURSOR_UP,
+                KC_L,
+                KC_W,
+                NAV_SNAKE_CASE_KEY,
             },
     };
-    assert_row(LAYER_ARROWS, LEFT_TOP_ROW, &expected);
+    assert_row(LAYER_NAV, LEFT_TOP_ROW, &expected);
 }
 
-static void keymap_arrows_left_home_row(void **state) {
+static void keymap_nav_left_home_row(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
             {
                 KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_D,
+                QK_MOUSE_CURSOR_LEFT,
+                QK_MOUSE_CURSOR_DOWN,
+                QK_MOUSE_CURSOR_RIGHT,
+                KC_R,
+                CONSTANT_CASE_KEY,
             },
     };
-    assert_row(LAYER_ARROWS, LEFT_HOME_ROW, &expected);
+    assert_row(LAYER_NAV, LEFT_HOME_ROW, &expected);
 }
 
-static void keymap_arrows_left_bottom_letter_row(void **state) {
+static void keymap_nav_left_bottom_letter_row(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
             {
                 KC_TRANSPARENT,
+                KC_Z,
+                KC_X,
+                KC_C,
+                KC_V,
+                KC_J,
+                NO_PHYSICAL_KEY,
+            },
+    };
+    assert_row(LAYER_NAV, LEFT_BOTTOM_LETTER_ROW, &expected);
+}
+
+static void keymap_nav_left_bottom_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 NO_PHYSICAL_KEY,
-            },
-    };
-    assert_row(LAYER_ARROWS, LEFT_BOTTOM_LETTER_ROW, &expected);
-}
-
-static void keymap_arrows_left_bottom_row(void **state) {
-    (void)state;
-    static const keymap_row_t expected = {
-        .keys =
-            {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
     };
-    assert_row(LAYER_ARROWS, LEFT_BOTTOM_ROW, &expected);
+    assert_row(LAYER_NAV, LEFT_BOTTOM_ROW, &expected);
 }
 
-static void keymap_arrows_left_thumb_keys(void **state) {
+static void keymap_nav_left_thumb_keys(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
             {
                 [LEFT_LARGE_THUMB]  = KC_TRANSPARENT,
-                [LEFT_OUTER_THUMB]  = KC_TRANSPARENT,
+                [LEFT_OUTER_THUMB]  = PRECISION_HOLD_KEY,
                 [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },
     };
-    assert_row(LAYER_ARROWS, LEFT_THUMB_KEYS, &expected);
+    assert_row(LAYER_NAV, LEFT_THUMB_KEYS, &expected);
 }
 
-static void keymap_arrows_right_number_row(void **state) {
+static void keymap_nav_right_number_row(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
@@ -432,78 +446,78 @@ static void keymap_arrows_right_number_row(void **state) {
                 KC_TRANSPARENT,
             },
     };
-    assert_row(LAYER_ARROWS, RIGHT_NUMBER_ROW, &expected);
+    assert_row(LAYER_NAV, RIGHT_NUMBER_ROW, &expected);
 }
 
-static void keymap_arrows_right_top_row(void **state) {
+static void keymap_nav_right_top_row(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-            },
-    };
-    assert_row(LAYER_ARROWS, RIGHT_TOP_ROW, &expected);
-}
-
-static void keymap_arrows_right_home_row(void **state) {
-    (void)state;
-    static const keymap_row_t expected = {
-        .keys =
-            {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-            },
-    };
-    assert_row(LAYER_ARROWS, RIGHT_HOME_ROW, &expected);
-}
-
-static void keymap_arrows_right_bottom_letter_row(void **state) {
-    (void)state;
-    static const keymap_row_t expected = {
-        .keys =
-            {
-                NO_PHYSICAL_KEY,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_HOME,
-            },
-    };
-    assert_row(LAYER_ARROWS, RIGHT_BOTTOM_LETTER_ROW, &expected);
-}
-
-static void keymap_arrows_right_bottom_row(void **state) {
-    (void)state;
-    static const keymap_row_t expected = {
-        .keys =
-            {
-                NO_PHYSICAL_KEY,
-                NO_PHYSICAL_KEY,
-                KC_LEFT,
+                NAV_CAMEL_CASE_KEY,
+                QK_MOUSE_WHEEL_UP,
+                QK_MOUSE_BUTTON_1,
                 KC_UP,
+                QK_MOUSE_BUTTON_2,
+                KC_HOME,
+                KC_BACKSLASH,
+            },
+    };
+    assert_row(LAYER_NAV, RIGHT_TOP_ROW, &expected);
+}
+
+static void keymap_nav_right_home_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                PASCAL_CASE_KEY,
+                QK_MOUSE_WHEEL_DOWN,
+                KC_LEFT,
                 KC_DOWN,
                 KC_RIGHT,
                 KC_END,
+                KC_QUOTE,
             },
     };
-    assert_row(LAYER_ARROWS, RIGHT_BOTTOM_ROW, &expected);
+    assert_row(LAYER_NAV, RIGHT_HOME_ROW, &expected);
 }
 
-static void keymap_arrows_right_thumb_keys(void **state) {
+static void keymap_nav_right_bottom_letter_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                NO_PHYSICAL_KEY,
+                KC_K,
+                QK_MOUSE_BUTTON_4,
+                QK_MOUSE_BUTTON_3,
+                QK_MOUSE_BUTTON_5,
+                KC_SLASH,
+                KC_TRANSPARENT,
+            },
+    };
+    assert_row(LAYER_NAV, RIGHT_BOTTOM_LETTER_ROW, &expected);
+}
+
+static void keymap_nav_right_bottom_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+            },
+    };
+    assert_row(LAYER_NAV, RIGHT_BOTTOM_ROW, &expected);
+}
+
+static void keymap_nav_right_thumb_keys(void **state) {
     (void)state;
     static const keymap_row_t expected = {
         .keys =
@@ -514,7 +528,112 @@ static void keymap_arrows_right_thumb_keys(void **state) {
                 [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
             },
     };
-    assert_row(LAYER_ARROWS, RIGHT_THUMB_KEYS, &expected);
+    assert_row(LAYER_NAV, RIGHT_THUMB_KEYS, &expected);
+}
+
+/**
+ * Gives the key of a position in the nav mode: the key of the nav layer, or the key
+ * of the base layer below a transparent key.
+ *
+ * @param row    Row in the key matrix.
+ * @param column Column in the key matrix.
+ * @return Keycode in the nav mode.
+ */
+static uint16_t nav_mode_key(uint8_t row, uint8_t column) {
+    uint16_t keycode = keycode_at_keymap_location(LAYER_NAV, row, column);
+    if (keycode != KC_TRANSPARENT) {
+        return keycode;
+    }
+    return keycode_at_keymap_location(LAYER_BASE, row, column);
+}
+
+/**
+ * Fails the test if a key sends a key in the default mode or in the nav mode.
+ *
+ * @param row    Row in the key matrix.
+ * @param column Column in the key matrix.
+ */
+static void assert_key_sends_nothing_in_both_modes(uint8_t row, uint8_t column) {
+    uint16_t default_key = keycode_at_keymap_location(LAYER_BASE, row, column);
+    uint16_t nav_key     = nav_mode_key(row, column);
+    if (default_key != KC_NO || nav_key != KC_NO) {
+        print_error("Row %d, column %d\n", row, column);
+        fail_msg("Default key 0x%04X, nav key 0x%04X", default_key, nav_key);
+    }
+}
+
+/**
+ * Fails the test at the first key of a row that sends a key in the default mode or
+ * in the nav mode.
+ *
+ * @param row Row in the key matrix.
+ */
+static void assert_row_sends_nothing_in_both_modes(uint8_t row) {
+    for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+        assert_key_sends_nothing_in_both_modes(row, column);
+    }
+}
+
+static void keymap_free_positions_send_nothing_in_both_modes(void **state) {
+    (void)state;
+    assert_row_sends_nothing_in_both_modes(LEFT_NUMBER_ROW);
+    assert_row_sends_nothing_in_both_modes(RIGHT_NUMBER_ROW);
+    assert_row_sends_nothing_in_both_modes(LEFT_BOTTOM_ROW);
+    assert_row_sends_nothing_in_both_modes(RIGHT_BOTTOM_ROW);
+    // Old wheel up position (3,13)
+    uint8_t letter_row = RIGHT_BOTTOM_LETTER_ROW;
+    assert_key_sends_nothing_in_both_modes(letter_row, LAST_RIGHT_HALF_COLUMN);
+    for (size_t index = 0; index < ARRAY_SIZE(small_right_thumb_keys); index++) {
+        uint8_t thumb = small_right_thumb_keys[index];
+        assert_key_sends_nothing_in_both_modes(RIGHT_THUMB_KEYS, thumb);
+    }
+}
+
+/**
+ * Gives the number of mouse keys in one row of the base layer.
+ *
+ * @param row Row in the key matrix.
+ * @return Number of mouse cursor, button, wheel and speed keys.
+ */
+static uint8_t mouse_keys_in_base_row(uint8_t row) {
+    uint8_t mouse_keys = 0;
+    for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+        if (IS_MOUSE_KEYCODE(keycode_at_keymap_location(LAYER_BASE, row, column))) {
+            mouse_keys++;
+        }
+    }
+    return mouse_keys;
+}
+
+static void keymap_default_mode_has_no_mouse_key(void **state) {
+    (void)state;
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        assert_int_equal(mouse_keys_in_base_row(row), 0);
+    }
+}
+
+/**
+ * Fails the test at the first key of a nav layer row that is a tap-hold key, other
+ * than the precision hold.
+ *
+ * @param row Row in the key matrix.
+ */
+static void assert_no_hold_key_in_nav_row(uint8_t row) {
+    for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+        uint16_t keycode     = keycode_at_keymap_location(LAYER_NAV, row, column);
+        bool     is_hold_key = IS_QK_MOD_TAP(keycode) || IS_QK_LAYER_TAP(keycode);
+        if (is_hold_key && keycode != PRECISION_HOLD_KEY) {
+            print_error("Row %d, column %d\n", row, column);
+            fail_msg("Keycode 0x%04X is a tap-hold key", keycode);
+        }
+    }
+}
+
+static void keymap_nav_keys_have_no_hold_but_the_precision_hold(void **state) {
+    (void)state;
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        assert_no_hold_key_in_nav_row(row);
+    }
 }
 
 static void keymap_combo_positions_left_number_row(void **state) {
@@ -1155,18 +1274,21 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_base_right_bottom_letter_row),
     cmocka_unit_test(keymap_base_right_bottom_row),
     cmocka_unit_test(keymap_base_right_thumb_keys),
-    cmocka_unit_test(keymap_arrows_left_number_row),
-    cmocka_unit_test(keymap_arrows_left_top_row),
-    cmocka_unit_test(keymap_arrows_left_home_row),
-    cmocka_unit_test(keymap_arrows_left_bottom_letter_row),
-    cmocka_unit_test(keymap_arrows_left_bottom_row),
-    cmocka_unit_test(keymap_arrows_left_thumb_keys),
-    cmocka_unit_test(keymap_arrows_right_number_row),
-    cmocka_unit_test(keymap_arrows_right_top_row),
-    cmocka_unit_test(keymap_arrows_right_home_row),
-    cmocka_unit_test(keymap_arrows_right_bottom_letter_row),
-    cmocka_unit_test(keymap_arrows_right_bottom_row),
-    cmocka_unit_test(keymap_arrows_right_thumb_keys),
+    cmocka_unit_test(keymap_nav_left_number_row),
+    cmocka_unit_test(keymap_nav_left_top_row),
+    cmocka_unit_test(keymap_nav_left_home_row),
+    cmocka_unit_test(keymap_nav_left_bottom_letter_row),
+    cmocka_unit_test(keymap_nav_left_bottom_row),
+    cmocka_unit_test(keymap_nav_left_thumb_keys),
+    cmocka_unit_test(keymap_nav_right_number_row),
+    cmocka_unit_test(keymap_nav_right_top_row),
+    cmocka_unit_test(keymap_nav_right_home_row),
+    cmocka_unit_test(keymap_nav_right_bottom_letter_row),
+    cmocka_unit_test(keymap_nav_right_bottom_row),
+    cmocka_unit_test(keymap_nav_right_thumb_keys),
+    cmocka_unit_test(keymap_free_positions_send_nothing_in_both_modes),
+    cmocka_unit_test(keymap_default_mode_has_no_mouse_key),
+    cmocka_unit_test(keymap_nav_keys_have_no_hold_but_the_precision_hold),
     cmocka_unit_test(keymap_combo_positions_left_number_row),
     cmocka_unit_test(keymap_combo_positions_left_top_row),
     cmocka_unit_test(keymap_combo_positions_left_home_row),

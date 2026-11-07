@@ -96,7 +96,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_NO,
                 KC_NO,
                 KC_NO,
-                QK_MOUSE_ACCELERATION_0,
+                KC_NO,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -145,27 +145,27 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 SYMBOL_HOLD(KC_COMMA),
                 SYMBOL_HOLD(KC_DOT),
                 SYMBOL_HOLD(KC_SLASH),
-                QK_MOUSE_WHEEL_UP,
+                KC_NO,
             },
         [LAYER_BASE][RIGHT_BOTTOM_ROW] =
             {
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
-                QK_MOUSE_CURSOR_LEFT,
-                QK_MOUSE_CURSOR_UP,
-                QK_MOUSE_CURSOR_DOWN,
-                QK_MOUSE_CURSOR_RIGHT,
-                QK_MOUSE_WHEEL_DOWN,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
             },
         [LAYER_BASE][RIGHT_THUMB_KEYS] =
             {
-                [RIGHT_LARGE_THUMB]  = TG(LAYER_ARROWS),
-                [RIGHT_OUTER_THUMB]  = QK_MOUSE_BUTTON_1,
-                [RIGHT_MIDDLE_THUMB] = QK_MOUSE_BUTTON_2,
-                [RIGHT_INNER_THUMB]  = QK_MOUSE_BUTTON_3,
+                [RIGHT_LARGE_THUMB]  = TG(LAYER_NAV),
+                [RIGHT_OUTER_THUMB]  = KC_NO,
+                [RIGHT_MIDDLE_THUMB] = KC_NO,
+                [RIGHT_INNER_THUMB]  = KC_NO,
             },
 
-        [LAYER_ARROWS][LEFT_NUMBER_ROW] =
+        [LAYER_NAV][LEFT_NUMBER_ROW] =
             {
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
@@ -175,54 +175,54 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
             },
-        [LAYER_ARROWS][LEFT_TOP_ROW] =
+        [LAYER_NAV][LEFT_TOP_ROW] =
             {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_TAB,
+                KC_Q,
+                KC_G,
+                QK_MOUSE_CURSOR_UP,
+                KC_L,
+                KC_W,
+                NAV_SNAKE_CASE_KEY,
             },
-        [LAYER_ARROWS][LEFT_HOME_ROW] =
+        [LAYER_NAV][LEFT_HOME_ROW] =
             {
                 KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_D,
+                QK_MOUSE_CURSOR_LEFT,
+                QK_MOUSE_CURSOR_DOWN,
+                QK_MOUSE_CURSOR_RIGHT,
+                KC_R,
+                CONSTANT_CASE_KEY,
             },
-        [LAYER_ARROWS][LEFT_BOTTOM_LETTER_ROW] =
+        [LAYER_NAV][LEFT_BOTTOM_LETTER_ROW] =
             {
                 KC_TRANSPARENT,
+                KC_Z,
+                KC_X,
+                KC_C,
+                KC_V,
+                KC_J,
+                NO_PHYSICAL_KEY,
+            },
+        [LAYER_NAV][LEFT_BOTTOM_ROW] =
+            {
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 NO_PHYSICAL_KEY,
-            },
-        [LAYER_ARROWS][LEFT_BOTTOM_ROW] =
-            {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
-        [LAYER_ARROWS][LEFT_THUMB_KEYS] =
+        [LAYER_NAV][LEFT_THUMB_KEYS] =
             {
                 [LEFT_LARGE_THUMB]  = KC_TRANSPARENT,
-                [LEFT_OUTER_THUMB]  = KC_TRANSPARENT,
+                [LEFT_OUTER_THUMB]  = PRECISION_HOLD_KEY,
                 [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },
-        [LAYER_ARROWS][RIGHT_NUMBER_ROW] =
+        [LAYER_NAV][RIGHT_NUMBER_ROW] =
             {
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
@@ -232,47 +232,47 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
             },
-        [LAYER_ARROWS][RIGHT_TOP_ROW] =
+        [LAYER_NAV][RIGHT_TOP_ROW] =
             {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-            },
-        [LAYER_ARROWS][RIGHT_HOME_ROW] =
-            {
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-            },
-        [LAYER_ARROWS][RIGHT_BOTTOM_LETTER_ROW] =
-            {
-                NO_PHYSICAL_KEY,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_TRANSPARENT,
-                KC_HOME,
-            },
-        [LAYER_ARROWS][RIGHT_BOTTOM_ROW] =
-            {
-                NO_PHYSICAL_KEY,
-                NO_PHYSICAL_KEY,
-                KC_LEFT,
+                NAV_CAMEL_CASE_KEY,
+                QK_MOUSE_WHEEL_UP,
+                QK_MOUSE_BUTTON_1,
                 KC_UP,
+                QK_MOUSE_BUTTON_2,
+                KC_HOME,
+                KC_BACKSLASH,
+            },
+        [LAYER_NAV][RIGHT_HOME_ROW] =
+            {
+                PASCAL_CASE_KEY,
+                QK_MOUSE_WHEEL_DOWN,
+                KC_LEFT,
                 KC_DOWN,
                 KC_RIGHT,
                 KC_END,
+                KC_QUOTE,
             },
-        [LAYER_ARROWS][RIGHT_THUMB_KEYS] =
+        [LAYER_NAV][RIGHT_BOTTOM_LETTER_ROW] =
+            {
+                NO_PHYSICAL_KEY,
+                KC_K,
+                QK_MOUSE_BUTTON_4,
+                QK_MOUSE_BUTTON_3,
+                QK_MOUSE_BUTTON_5,
+                KC_SLASH,
+                KC_TRANSPARENT,
+            },
+        [LAYER_NAV][RIGHT_BOTTOM_ROW] =
+            {
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+                KC_TRANSPARENT,
+            },
+        [LAYER_NAV][RIGHT_THUMB_KEYS] =
             {
                 [RIGHT_LARGE_THUMB]  = KC_TRANSPARENT,
                 [RIGHT_OUTER_THUMB]  = KC_TRANSPARENT,

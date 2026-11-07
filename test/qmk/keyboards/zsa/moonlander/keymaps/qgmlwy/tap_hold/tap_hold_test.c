@@ -10,6 +10,7 @@
 
 #include QMK_KEYBOARD_H
 
+#include "keycodes/keycodes.h"
 #include "layers/layers.h"
 #include "unit_test.h"
 
@@ -183,6 +184,23 @@ static void tap_hold_r12_no_flow_tap_on_a_push_of_the_same_key(void **state) {
     }
 }
 
+static void tap_hold_precision_hold_has_the_usual_tapping_term(void **state) {
+    (void)state;
+    assert_int_equal(get_tapping_term(PRECISION_HOLD_KEY, &push), TAPPING_TERM);
+}
+
+static void tap_hold_no_flow_tap_on_precision_hold_after_nav_keys(void **state) {
+    (void)state;
+    // Mouse keys and arrows are not letters, so a hold of L1 after them is a hold
+    static const uint16_t nav_keys[] = {
+        QK_MOUSE_CURSOR_UP, QK_MOUSE_WHEEL_DOWN, KC_LEFT, KC_HOME, QK_MOUSE_BUTTON_1,
+    };
+    for (size_t index = 0; index < ARRAY_SIZE(nav_keys); index++) {
+        uint16_t prior_key = nav_keys[index];
+        assert_int_equal(get_flow_tap_term(PRECISION_HOLD_KEY, &push, prior_key), 0);
+    }
+}
+
 // #endregion
 
 // #region Test runner
@@ -198,6 +216,8 @@ static const struct CMUnitTest tap_hold_cases[] = {
     cmocka_unit_test(tap_hold_r6_flow_tap_term_after_a_tapped_home_row_key),
     cmocka_unit_test(tap_hold_r6_no_flow_tap_after_other_keys),
     cmocka_unit_test(tap_hold_r12_no_flow_tap_on_a_push_of_the_same_key),
+    cmocka_unit_test(tap_hold_precision_hold_has_the_usual_tapping_term),
+    cmocka_unit_test(tap_hold_no_flow_tap_on_precision_hold_after_nav_keys),
 };
 
 int main(int argc, char **argv) {

@@ -49,7 +49,7 @@ enum profiled_call {
     PROFILED_BRACKET_PAIRS, /**< Record handler of the bracket pairs */
     PROFILED_SPECIAL_MODE,  /**< Record handler of the special mode */
     PROFILED_SYMBOL_HOLDS,  /**< Record handler of the symbol holds */
-    PROFILED_PRECISION_KEY, /**< Record handler of the precision key */
+    PROFILED_PRECISION_KEY, /**< Record handler of the precision hold */
     PROFILED_CALL_COUNT,    /**< Number of measured calls */
 };
 
