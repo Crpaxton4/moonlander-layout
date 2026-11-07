@@ -10,13 +10,15 @@
 
 #include "support.h"
 
+/// Bytes that each fread() call asks for
 #define READ_CHUNK_SIZE 4096
 
+/// Capacity multiplier for a full array, so that appends stay fast on average
 #define GROWTH_FACTOR 2
 
+/// Items added to each new capacity, so that small arrays do not grow often
 #define MIN_CAPACITY 16
 
-/** Array can move, so use the return value. Without memory, the program stops */
 void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     if (count < *capacity) {
         return items;
@@ -30,7 +32,12 @@ void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     return grown;
 }
 
-/** Makes space for extra bytes and also for the terminator */
+/**
+ * Makes space for extra bytes and also for the terminator.
+ *
+ * @param buffer Buffer that grows.
+ * @param extra  Bytes after the current length.
+ */
 static void reserve_bytes(buffer_t *buffer, size_t extra) {
     buffer->data =
         reserve(buffer->data, sizeof(char), &buffer->capacity, buffer->length + extra);
@@ -44,7 +51,6 @@ void append(buffer_t *buffer, const char *text) {
     buffer->data[buffer->length] = '\0';
 }
 
-/** Returns 0, or the errno value of a read error. It adds no terminator */
 int append_stream(buffer_t *buffer, FILE *stream) {
     size_t read_size = 0;
     do {
@@ -66,7 +72,14 @@ void describe(finding_t *finding, const char *format, ...) {
     va_end(arguments);
 }
 
-/** A subtraction of size_t values can wrap, but this form cannot */
+/**
+ * Compares two numbers. A subtraction of size_t values can wrap, but this form
+ * cannot.
+ *
+ * @param left  First number.
+ * @param right Second number.
+ * @return -1, 0 or 1.
+ */
 static int compare_numbers(size_t left, size_t right) {
     return (left > right) - (left < right);
 }

@@ -1,9 +1,14 @@
 # `make analyze` runs Doxygen from the repository root, so the paths start there
-INPUT = src/qmk/keyboards
+INPUT = src/qmk/keyboards src/check_standards
 RECURSIVE = YES
 FILE_PATTERNS = *.c *.h *.inc
 EXTENSION_MAPPING = inc=C
 OPTIMIZE_OUTPUT_FOR_C = YES
+
+# Doxygen does not match a declaration with an attribute to its definition
+MACRO_EXPANSION = YES
+EXPAND_ONLY_PREDEF = YES
+PREDEFINED = __attribute__(x)=
 
 EXTRACT_ALL = NO
 EXTRACT_STATIC = YES
@@ -19,7 +24,7 @@ WARN_FORMAT = "$file:$line: $text"
 WARN_AS_ERROR = FAIL_ON_WARNINGS
 
 # Doxygen gives a warning without an output format, so it writes only XML
-OUTPUT_DIRECTORY = doxygen
+OUTPUT_DIRECTORY = .build/doxygen
 GENERATE_HTML = NO
 GENERATE_LATEX = NO
 GENERATE_XML = YES
