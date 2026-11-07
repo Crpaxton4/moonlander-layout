@@ -214,6 +214,13 @@ static const grid_position_t mouse_right_key = {
     .column = 12,
 };
 
+/** B (1,11), a plain letter key */
+static const grid_position_t letter_b_key = {
+    .layer  = LAYER_BASE,
+    .row    = 1,
+    .column = 11,
+};
+
 /** K (3,8), the "-" hold */
 static const grid_position_t minus_key = {
     .layer  = LAYER_BASE,
@@ -387,6 +394,15 @@ static uint16_t keycode_of(grid_position_t position) {
  */
 static uint16_t base_key_at(uint8_t row, uint8_t column) {
     return key_at(LAYER_BASE, row, column);
+}
+
+/**
+ * Gives the keycode of thumb key L2, Backspace, of the base layer.
+ *
+ * @return Keycode of L2.
+ */
+static uint16_t backspace_key(void) {
+    return keycode_at_keymap_location(LAYER_BASE, LEFT_THUMB_KEYS, LEFT_MIDDLE_THUMB);
 }
 
 /**
@@ -1026,13 +1042,18 @@ static void open_pair_and_type_abc(void) {
 }
 
 /**
- * Pushes thumb key R0. The hook lets it pass, and QMK then turns on the arrows
- * layer, so the test turns it on.
+ * Pushes thumb key R0, the layer toggle of the arrows mode. The hook lets it pass,
+ * because R0 types nothing and does not move the cursor.
  */
-static void turn_on_arrows_mode(void) {
+static void push_arrows_mode_key(void) {
     uint16_t arrows_mode_key =
         keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB);
     assert_true(push_and_release(arrows_mode_key, NOT_A_TAP));
+}
+
+/** Pushes thumb key R0. QMK then turns on the arrows layer, so the test turns it on */
+static void turn_on_arrows_mode(void) {
+    push_arrows_mode_key();
     layer_state = ARROWS_MODE_ON;
 }
 
@@ -1190,6 +1211,50 @@ static void bracket_pairs_r24_ac24_flash_held_backspace_forgets_pairs(void **sta
         ABC_CALLS,
         {CALLED_TAP_CODE16, KC_BACKSPACE},
         {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r24_ac24_flash_keymap_keys_then_held_backspace(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    // Keymap keys of "abc": the A mod-tap, the B F-key hold and the C symbol hold
+    tap_tap_hold_key(keycode_of(right_shift_key));
+    tap_tap_hold_key(keycode_of(letter_b_key));
+    tap_tap_hold_key(keycode_of(opening_curly_brace_key));
+    type_held_key((held_push_t){
+        .keycode   = backspace_key(),
+        .hold_time = ONE_SECOND,
+    });
+    assert_false(bracket_pairs_are_open());
+    tap_tap_hold_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_TAB},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_r24_backspace_released_before_safe_time_keeps_pair(
+    void **state) {
+    (void)state;
+    start_case();
+    open_pair_and_type_abc();
+    // Host repeats Backspace after its own delay; a shorter hold keeps the pair
+    type_held_key((held_push_t){
+        .keycode   = backspace_key(),
+        .hold_time = JUST_BEFORE_REPEAT_SAFE_TIME,
+    });
+    assert_true(bracket_pairs_are_open());
+    tap_tap_hold_key(keycode_of(tab_key));
+    static const qmk_call_t expected[] = {
+        PARENTHESES_PAIR_CALLS,
+        ABC_CALLS,
+        {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_RIGHT},
     };
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
@@ -1473,6 +1538,8 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r21_ht3_ac21_flash_left_right_then_tab),
     cmocka_unit_test(bracket_pairs_r11_r6_ht13_ac20_flash_operator_in_pair),
     cmocka_unit_test(bracket_pairs_r24_ac24_flash_held_backspace_forgets_pairs),
+    cmocka_unit_test(bracket_pairs_r24_ac24_flash_keymap_keys_then_held_backspace),
+    cmocka_unit_test(bracket_pairs_r24_backspace_released_before_safe_time_keeps_pair),
     cmocka_unit_test(bracket_pairs_r19_r4_ht4_ac18_letter_after_left_then_tab),
     cmocka_unit_test(bracket_pairs_r20_r13_ht5_left_past_opener_forgets_pairs),
     cmocka_unit_test(bracket_pairs_r22_r7_ht6_right_at_closer_leaves_inner_pair),
