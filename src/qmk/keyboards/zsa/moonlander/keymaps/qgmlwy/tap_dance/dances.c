@@ -13,7 +13,7 @@
 
 const dance_t dances[DANCE_COUNT] = {
     /** Tap or hold: Left Ctrl; double tap or double hold: Left GUI. */
-    [DANCE_0] =
+    [DANCE_CTRL_OR_GUI] =
         {
             .tap                   = KC_LEFT_CTRL,
             .hold                  = KC_LEFT_CTRL,
@@ -22,7 +22,7 @@ const dance_t dances[DANCE_COUNT] = {
             .repeats_on_triple_tap = true,
         },
     /** Tap: left paren; hold: left brace; double tap: left bracket. */
-    [DANCE_1] =
+    [DANCE_LEFT_BRACKETS] =
         {
             .tap                   = KC_LPRN,
             .hold                  = KC_LCBR,
@@ -30,7 +30,7 @@ const dance_t dances[DANCE_COUNT] = {
             .repeats_on_triple_tap = true,
         },
     /** Tap: right paren; hold: right brace; double tap: right bracket. */
-    [DANCE_2] =
+    [DANCE_RIGHT_BRACKETS] =
         {
             .tap                   = KC_RPRN,
             .hold                  = KC_RCBR,
@@ -41,7 +41,7 @@ const dance_t dances[DANCE_COUNT] = {
      * Tap: middle click; hold: wheel down; double tap: middle click, registered
      * twice; double hold: wheel left.
      */
-    [DANCE_3] =
+    [DANCE_MIDDLE_CLICK_OR_WHEEL] =
         {
             .tap                        = KC_MS_BTN3,
             .hold                       = KC_MS_WH_DOWN,
@@ -54,7 +54,7 @@ const dance_t dances[DANCE_COUNT] = {
      * Tap: right click; hold: wheel up; double tap: right click, registered twice;
      * double hold: wheel right.
      */
-    [DANCE_4] =
+    [DANCE_RIGHT_CLICK_OR_WHEEL] =
         {
             .tap                        = KC_MS_BTN2,
             .hold                       = KC_MS_WH_UP,

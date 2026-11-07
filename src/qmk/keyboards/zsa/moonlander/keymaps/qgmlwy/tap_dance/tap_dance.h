@@ -16,11 +16,11 @@
  * definition in `dances`.
  */
 enum tap_dance_codes {
-    DANCE_0,
-    DANCE_1,
-    DANCE_2,
-    DANCE_3,
-    DANCE_4,
+    DANCE_CTRL_OR_GUI,
+    DANCE_LEFT_BRACKETS,
+    DANCE_RIGHT_BRACKETS,
+    DANCE_MIDDLE_CLICK_OR_WHEEL,
+    DANCE_RIGHT_CLICK_OR_WHEEL,
     /** Number of tap dance slots; sizes `dances`. */
     DANCE_COUNT,
 };

@@ -10,7 +10,7 @@
 #include "tap_dance/tap_dance.h"
 
 /** Milliseconds every dance reset waits before releasing its key. */
-#define RESET_WAIT_MS 10
+#define RESET_WAIT_MILLISECONDS 10
 
 /** Tap count of a dance tapped or held once. */
 #define SINGLE_TAP_COUNT 1
@@ -95,7 +95,7 @@ void dance_finished(tap_dance_state_t *state, void *user_data) {
 void dance_reset(tap_dance_state_t *state, void *user_data) {
     const dance_t *dance = user_data;
     size_t         slot  = (size_t)(dance - dances);
-    wait_ms(RESET_WAIT_MS);
+    wait_ms(RESET_WAIT_MILLISECONDS);
     if (held_keycodes[slot] != KC_NO) {
         unregister_code16(held_keycodes[slot]);
     }
