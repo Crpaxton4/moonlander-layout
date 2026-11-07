@@ -41,12 +41,17 @@ firmware: ## Build the firmware (default target)
 	mv -f src/qmk/*.bin .build/
 	$(name_firmware)
 
-# QMK has no option for the database location. The move keeps all paths valid,
-# because the entries contain absolute directories
-compiledb: ## Build the firmware and the compile database
+KEYMAP_C := $(CURDIR)/src/qmk/keyboards/zsa/moonlander/keymaps/qgmlwy/keymap.c
+
+# QMK has no option for the database location. The new location keeps all paths
+# valid, because the entries contain absolute directories
+compiledb: checker-compiledb ## Build the firmware and the compile databases
 	qmk compile -j $(QMK_JOBS) --compiledb -kb zsa/moonlander/reva -km qgmlwy
 	mkdir -p .build
-	mv -f src/qmk/*.bin src/qmk/compile_commands.json .build/
+	mv -f src/qmk/*.bin .build/
+	jq --arg keymap $(KEYMAP_C) -f src/ci/add-keymap-compile-entry.jq \
+		src/qmk/compile_commands.json >.build/compile_commands.json
+	rm -f src/qmk/compile_commands.json
 	$(name_firmware)
 
 .PHONY: firmware compiledb
@@ -57,13 +62,8 @@ C_SOURCES := $(shell find src/qmk/keyboards -name '*.c' | LC_ALL=C sort)
 
 ANALYZE_CHECKS := clang-tidy
 
-# QMK compiles keymap.c only in quantum/keymap_introspection.c, after
-# community_modules_introspection.h. This include gives the inferred keymap.c
-# command that prelude
 clang-tidy: ## Run clang-tidy (needs the compile database)
-	@time clang-tidy --quiet -p .build \
-		--extra-arg=-include --extra-arg=community_modules_introspection.h \
-		$(C_SOURCES)
+	@time clang-tidy --quiet -p .build $(C_SOURCES)
 
 ANALYZE_CHECKS += doxygen
 
@@ -119,6 +119,22 @@ $(CHECKER_OBJECTS): $(CHECKER_BUILD)/%.o: $(CHECKER_DIR)/%.c | $(CHECKER_BUILD)
 
 -include $(CHECKER_OBJECTS:.o=.d)
 
+comma := ,
+empty :=
+space := $(empty) $(empty)
+checker_object = $(1:$(CHECKER_DIR)/%.c=$(CHECKER_BUILD)/%.o)
+checker_entry = {"directory": "$(CURDIR)", "file": "$(1)", "command": "$(CC) \
+	$(CPPFLAGS) $(TREE_SITTER_INC) $(CFLAGS) $(WARNINGS) -c \
+	-o $(call checker_object,$(1)) $(1)"}
+checker_entries = $(foreach source,$(CHECKER_SOURCES),$(call checker_entry,$(source)))
+checker_database = [$(subst }$(space){,}$(comma){,$(checker_entries))]
+
+# No tool records the checker build, so make writes its database from the same
+# flags as the object rule above. jq fails on a malformed result
+checker-compiledb: | $(CHECKER_BUILD) ## Write the checker compile database
+	$(file >$(CHECKER_BUILD)/compile_commands.json,$(checker_database))
+	jq -e 'length > 0' $(CHECKER_BUILD)/compile_commands.json >/dev/null
+
 # Generated code, so the build ignores its warnings
 $(CHECKER_BUILD)/grammar.o: $(GRAMMAR) | $(CHECKER_BUILD)
 	$(require_grammar)
@@ -145,7 +161,7 @@ $(CASE_TESTS): $(CHECKER_BUILD)/test/%: $(CHECKER)
 	@{ $(CHECKER) $(call arguments,$*); echo "exit $$?"; } >$@.out
 	@diff -u $(CHECKER_TESTS)/$*/$*.expected $@.out
 
-.PHONY: checker checker-test $(CASE_TESTS)
+.PHONY: checker checker-compiledb checker-test $(CASE_TESTS)
 
 ##@ General
 
@@ -155,6 +171,6 @@ clean: ## Remove .build/
 help: ## List the targets
 	@awk 'BEGIN { FS = ":.*## "; print "Usage: make [target]" } \
 		/^##@ / { printf "\n%s\n", substr($$0, 5) } \
-		/^[a-z-]+:.*## / { printf "  %-14s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+		/^[a-z-]+:.*## / { printf "  %-18s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 .PHONY: clean help
