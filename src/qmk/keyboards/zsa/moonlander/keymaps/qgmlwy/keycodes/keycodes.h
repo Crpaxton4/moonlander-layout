@@ -22,4 +22,13 @@ enum custom_keycode {
     PLAIN_MODE_COMBO_LEFT_POSITION,  /**< Combo key at (2,6), never sent */
     PLAIN_MODE_COMBO_RIGHT_POSITION, /**< Combo key at (2,7), never sent */
     PLAIN_MODE_TOGGLE,               /**< Plain-mode combo: plain mode on or off */
+    PROFILING_TOGGLE, /**< (4,0) in the profiling debug build: profiling on or off */
 };
+
+#ifdef DEBUG_PROFILE
+/** Key at (4,0): the profiling toggle in the profiling debug build */
+#    define PROFILING_TOGGLE_KEY PROFILING_TOGGLE
+#else
+/** Key at (4,0): no key, so the normal firmware has no profiling code */
+#    define PROFILING_TOGGLE_KEY KC_NO
+#endif

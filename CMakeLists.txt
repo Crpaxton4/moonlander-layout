@@ -401,7 +401,8 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         ${KEYMAP_DIR}/key_event_log/key_event_log_logic.c
         ${KEYMAP_DIR}/special_mode/special_mode_logic.c
         ${KEYMAP_DIR}/case_modes/case_modes_logic.c
-        ${KEYMAP_DIR}/bracket_pairs/bracket_pairs_logic.c)
+        ${KEYMAP_DIR}/bracket_pairs/bracket_pairs_logic.c
+        ${KEYMAP_DIR}/profiling/profiling_logic.c)
     target_include_directories(keymap_logic PUBLIC ${KEYMAP_DIR})
 
     # Same keymap sources as rules.mk, with the logic sources in keymap_logic.
@@ -420,7 +421,17 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
     target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
     target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk keymap_logic)
 
+    # Profiling debug build of the same keymap, as rules.mk builds it for
+    # DEBUG_PROFILE=yes. The host has no cycle counter, so a fake gives the cycles
+    add_library(qgmlwy_keymap_profiling STATIC $<TARGET_PROPERTY:qgmlwy_keymap,SOURCES>
+        ${KEYMAP_DIR}/profiling/profiling.c
+        ${UNIT_TESTS_DIR}/support/fake_profiling_hardware.c)
+    target_compile_definitions(qgmlwy_keymap_profiling PUBLIC DEBUG_PROFILE
+        PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
+    target_link_libraries(qgmlwy_keymap_profiling PUBLIC fake_qmk keymap_logic)
+
     set_property(TARGET unit_test fake_qmk keymap_logic qgmlwy_keymap
+        qgmlwy_keymap_profiling
         PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${UNIT_TESTS_BINARY_DIR})
 
     set(KEYMAP_TESTS ${UNIT_TESTS_DIR}/keyboards/zsa/moonlander/keymaps/qgmlwy)
@@ -451,6 +462,10 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/plain_mode/plain_mode_test.c
         LIBRARIES qgmlwy_keymap)
+    add_cmocka_test(${KEYMAP_TESTS}/profiling/profiling_logic_test.c
+        LIBRARIES keymap_logic unit_test)
+    add_cmocka_test(${KEYMAP_TESTS}/profiling/profiling_test.c
+        LIBRARIES qgmlwy_keymap_profiling)
 
     # CMake writes the compile database at the configure step, so clang-tidy does not
     # need a build of the tests

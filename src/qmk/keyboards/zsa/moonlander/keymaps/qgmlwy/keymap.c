@@ -17,6 +17,7 @@
 #include "layers/layers.h"
 #include "plain_mode/plain_mode.h"
 #include "precision_key/precision_key.h"
+#include "profiling/profiling.h"
 #include "special_mode/special_mode.h"
 #include "status_leds/status_leds.h"
 #include "symbol_holds/symbol_holds.h"
@@ -66,7 +67,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][LEFT_BOTTOM_ROW] =
             {
-                KC_NO,
+                PROFILING_TOGGLE_KEY,
                 KC_NO,
                 KC_NO,
                 KC_NO,
@@ -647,6 +648,9 @@ static const record_step_t record_handlers[] = {
     {.handler = process_precision_key, .operates_in_plain_mode = false},
 };
 
+// Each record handler needs the name of its profile record
+_Static_assert(ARRAY_SIZE(record_handlers) == PROFILED_HANDLER_COUNT, "Profile names");
+
 /** Handler for each pass of QMK's main loop */
 typedef void (*housekeeping_handler_t)(void);
 
@@ -680,7 +684,7 @@ static bool plain_mode_stops(const record_step_t *step, const keyrecord_t *recor
  * @param record  Key event.
  * @return False when a handler fully handled the event, true otherwise.
  */
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+static bool dispatch_key_event(uint16_t keycode, keyrecord_t *record) {
     // QMK clears weak modifiers when a push arrives, but a push that waits in the
     // tap-hold buffer comes here after a symbol hold added its weak Shift
     if (record->event.pressed) {
@@ -691,11 +695,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (plain_mode_stops(step, record)) {
             continue;
         }
-        if (!step->handler(keycode, record)) {
+        if (!PROFILED_RECORD_HANDLER(index, step->handler, keycode, record)) {
             return false;
         }
     }
     return true;
+}
+
+/**
+ * Gives each key event to the dispatcher. The profiling debug build also measures
+ * the call, and handles its toggle key.
+ *
+ * @param keycode Keycode of the key event.
+ * @param record  Key event.
+ * @return False when the keymap fully handled the event, true otherwise.
+ */
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    return PROFILED_RECORD_USER(dispatch_key_event, keycode, record);
 }
 
 /** Runs each housekeeping handler, on each pass of QMK's main loop */
