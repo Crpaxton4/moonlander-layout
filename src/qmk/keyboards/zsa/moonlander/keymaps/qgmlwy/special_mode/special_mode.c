@@ -4,6 +4,7 @@
 
 #include QMK_KEYBOARD_H
 
+#include "bracket_pairs/bracket_pairs.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
 #include "special_mode/special_mode.h"
@@ -70,5 +71,11 @@ bool process_special_mode(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
     layer_off(LAYER_SPECIAL);
+    // Bracket pairs ran first and counted the Space, which the host does not get
+    bracket_pairs_take_back_count();
     return false;
+}
+
+void special_mode_count_taken_push(void) {
+    (void)special_mode_push_ends_mode(&mode, SPECIAL_MODE_OTHER_KEY);
 }

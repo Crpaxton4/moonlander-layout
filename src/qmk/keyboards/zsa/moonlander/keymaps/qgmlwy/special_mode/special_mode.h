@@ -20,3 +20,9 @@
  *         key; true otherwise.
  */
 bool process_special_mode(uint16_t keycode, keyrecord_t *record);
+
+/**
+ * Counts a push that an earlier handler took as a key that is not whitespace, so
+ * that the push separates two whitespace keys.
+ */
+void special_mode_count_taken_push(void);

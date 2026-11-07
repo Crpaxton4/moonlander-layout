@@ -11,6 +11,7 @@
 
 #include <ctype.h>
 
+#include "bracket_pairs/bracket_pairs.h"
 #include "case_modes/case_modes.h"
 #include "keycodes/keycodes.h"
 #include "recorded_calls.h"
@@ -143,10 +144,11 @@ static const home_row_mod_t shortcut_mods[] = {
     {MT(MOD_RGUI, KC_E), MOD_BIT(KC_RIGHT_GUI)},
 };
 
-/** Clears the fake and ends any mode that an earlier case left on */
+/** Clears the fake, ends any mode and removes any pair that an earlier case left */
 static void start_case(void) {
     reset_fake_qmk();
     case_modes_end_all();
+    bracket_pairs_clear();
 }
 
 static void case_modes_r10_no_mode_at_power_up(void **state) {
@@ -262,8 +264,9 @@ static const qmk_call_t symbol_hold_host_calls[] = {
     {CALLED_TAP_CODE16, KC_L},
     {CALLED_TAP_CODE16, KC_U},
     {CALLED_TAP_CODE16, KC_E},
-    {CALLED_REGISTER_CODE16, KC_LEFT_ANGLE_BRACKET},
-    {CALLED_UNREGISTER_CODE16, KC_LEFT_ANGLE_BRACKET},
+    {CALLED_TAP_CODE16, KC_LEFT_ANGLE_BRACKET},
+    {CALLED_TAP_CODE16, KC_RIGHT_ANGLE_BRACKET},
+    {CALLED_TAP_CODE16, KC_LEFT},
     {CALLED_TAP_CODE16, KC_SPACE},
     {CALLED_TAP_CODE16, KC_X},
 };
@@ -273,7 +276,7 @@ static void case_modes_r6_ac6_symbol_hold_ends_mode(void **state) {
     start_case();
     assert_false(push_key(CAMEL_CASE_KEY, NOT_A_TAP));
     type_text("get value");
-    // Hold of a bottom-row symbol key ends the mode; the symbol holds send "<"
+    // Hold of a bottom-row bracket ends the mode; the bracket pairs send "<>" and Left
     keyrecord_t hold = {.event = {.pressed = true}};
     assert_false(process_record_user(LT(0, KC_Z), &hold));
     hold.event.pressed = false;
@@ -347,6 +350,32 @@ static void case_modes_r2_tap_of_tap_hold_key_is_letter(void **state) {
     assert_host_got("maxNXd");
 }
 
+static void case_modes_sent_keys_count_in_bracket_pairs(void **state) {
+    (void)state;
+    start_case();
+    // Hold of the "(" key, then snake_case with a double Space in the pair
+    keyrecord_t hold = {.event = {.pressed = true}};
+    assert_false(process_record_user(LT(0, KC_V), &hold));
+    hold.event.pressed = false;
+    assert_false(process_record_user(LT(0, KC_V), &hold));
+    reset_fake_qmk();
+    assert_false(push_key(SNAKE_CASE_KEY, NOT_A_TAP));
+    // Pair has "ab " after the double Space, so the fourth Backspace deletes the pair
+    type_text("ab  \b\b\b");
+    keyrecord_t backspace = {.event = {.pressed = true}};
+    assert_false(process_record_user(KC_BACKSPACE, &backspace));
+    backspace.event.pressed = false;
+    assert_false(process_record_user(KC_BACKSPACE, &backspace));
+    static const qmk_call_t expected[] = {
+        {CALLED_TAP_CODE16, KC_A},          {CALLED_TAP_CODE16, KC_B},
+        {CALLED_TAP_CODE16, KC_UNDERSCORE}, {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_SPACE},      {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_BACKSPACE},  {CALLED_TAP_CODE16, KC_BACKSPACE},
+        {CALLED_TAP_CODE16, KC_BACKSPACE},  {CALLED_TAP_CODE16, KC_DELETE},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
 /** Cases of this program; the power-up case must run first */
 static const struct CMUnitTest case_modes_cases[] = {
     cmocka_unit_test(case_modes_r10_no_mode_at_power_up),
@@ -367,6 +396,7 @@ static const struct CMUnitTest case_modes_cases[] = {
     cmocka_unit_test(case_modes_r8_ac10_other_mode_key_changes_mode),
     cmocka_unit_test(case_modes_ac12_no_mode_types_as_is),
     cmocka_unit_test(case_modes_end_all_ends_mode),
+    cmocka_unit_test(case_modes_sent_keys_count_in_bracket_pairs),
 };
 
 int main(int argc, char **argv) {
