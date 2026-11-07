@@ -39,19 +39,19 @@ typedef struct {
     bool     repeats_on_triple_tap;      ///< Third tap: tap key 3 times, then 1 per tap
 } dance_t;
 
-/// Definitions of the tap dances, indexed by their slot
-extern const dance_t dances[DANCE_COUNT];
-
 /**
- * QMK tap dance action that plays the definition in `dances` at a slot.
+ * Definitions of the tap dances, indexed by their slot.
  *
- * QMK hands the definition back to each callback as its `user_data`, which QMK
- * types as mutable; the callbacks only read it.
+ * Not const, because QMK types each action's `user_data` as mutable. The callbacks
+ * only read the definitions.
  */
+extern dance_t dances[DANCE_COUNT];
+
+/// QMK tap dance action that plays the definition in `dances` at a slot
 #define ACTION_TAP_DANCE_TABLE(slot)                                         \
     {                                                                        \
         .fn        = {dance_on_each_tap, dance_finished, dance_reset, NULL}, \
-        .user_data = (void *)&dances[(slot)],                                \
+        .user_data = &dances[(slot)],                                        \
     }
 
 /**
