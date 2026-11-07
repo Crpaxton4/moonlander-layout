@@ -18,5 +18,5 @@
  * keymap.
  */
 #define COPY_KEY LT(6, KC_H)
-/** Paste key: Ctrl+V on a tap, Ctrl+Shift+V on a hold. */
+/// Paste key: Ctrl+V on a tap, Ctrl+Shift+V on a hold
 #define PASTE_KEY LT(12, KC_T)

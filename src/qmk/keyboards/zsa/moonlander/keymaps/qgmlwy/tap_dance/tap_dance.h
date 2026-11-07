@@ -21,8 +21,7 @@ enum tap_dance_codes {
     DANCE_RIGHT_BRACKETS,
     DANCE_MIDDLE_CLICK_OR_WHEEL,
     DANCE_RIGHT_CLICK_OR_WHEEL,
-    /** Number of tap dance slots; sizes `dances`. */
-    DANCE_COUNT,
+    DANCE_COUNT, ///< Number of tap dance slots; sizes `dances`
 };
 
 /**
@@ -32,21 +31,15 @@ enum tap_dance_codes {
  * tap key once, then hold it.
  */
 typedef struct {
-    /** Held on a single tap; tapped, then held, on an interrupted double tap. */
-    uint16_t tap;
-    /** Held while the dance key is held. */
-    uint16_t hold;
-    /** Held on a double tap. */
-    uint16_t double_tap;
-    /** Held on a tap followed by a hold. */
-    uint16_t double_hold;
-    /** Registers the double-tap key twice on a double tap; one release follows. */
-    bool registers_double_tap_twice;
-    /** Taps the tap key three times on a third tap, then once per further tap. */
-    bool repeats_on_triple_tap;
+    uint16_t tap;                        ///< Held on a single tap
+    uint16_t hold;                       ///< Held while the dance key is held
+    uint16_t double_tap;                 ///< Held on a double tap
+    uint16_t double_hold;                ///< Held on a tap followed by a hold
+    bool     registers_double_tap_twice; ///< Double tap: registers twice, releases once
+    bool     repeats_on_triple_tap;      ///< Third tap: tap key 3 times, then 1 per tap
 } dance_t;
 
-/** Definitions of the tap dances, indexed by their slot. */
+/// Definitions of the tap dances, indexed by their slot
 extern const dance_t dances[DANCE_COUNT];
 
 /**
