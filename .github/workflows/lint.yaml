@@ -189,6 +189,11 @@ jobs:
           path: ${{ runner.temp }}/tree-sitter-debs
           key: ${{ steps.tree-sitter-key.outputs.key }}
 
+      # check-standards hook builds the checker with CMake. cmocka comes with the
+      # same script as in the firmware job
+      - name: "Install CMake and cmocka"
+        run: .github/scripts/shared/install-unit-test-tools.sh
+
       - name: "Run pre-commit"
         run: .github/scripts/lint/run-pre-commit.sh
 
@@ -200,14 +205,14 @@ jobs:
       # Only this job has the tree-sitter headers that the checker includes
       - name: "Run clang-tidy on check-standards"
         if: ${{ !cancelled() }}
-        run: make checker-clang-tidy
+        run: cmake --build --preset checker --target clang-tidy-checker
 
       - name: "Test key log converter"
         if: ${{ !cancelled() }}
-        run: make converter-test
+        run: cmake --workflow --preset converter-test
       - name: "Run clang-tidy on key log converter"
         if: ${{ !cancelled() }}
-        run: make converter-clang-tidy
+        run: cmake --build --preset converter --target clang-tidy-converter
 
       # Runner image does not contain MinGW-w64
       - name: "Install MinGW-w64"
@@ -215,7 +220,7 @@ jobs:
         run: .github/scripts/lint/install-mingw.sh
       - name: "Build key log converter for Windows"
         if: ${{ !cancelled() }}
-        run: make converter-windows
+        run: cmake --workflow --preset windows
 
       - name: "Summarize timings"
         if: ${{ !cancelled() }}

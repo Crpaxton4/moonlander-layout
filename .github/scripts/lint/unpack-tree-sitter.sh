@@ -11,4 +11,5 @@ root="$RUNNER_TEMP/tree-sitter-root"
 for package in libtree-sitter0 libtree-sitter-dev tree-sitter-c-src; do
     dpkg-deb -x "$DEB_DIR/$package"_*.deb "$root"
 done
-echo "TREE_SITTER_ROOT=$root" >>"$GITHUB_ENV"
+# CMake finds the headers, the library and the grammar below this prefix
+echo "CMAKE_PREFIX_PATH=$root/usr" >>"$GITHUB_ENV"

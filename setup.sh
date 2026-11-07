@@ -25,14 +25,14 @@ sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
 # make compiledb adds the keymap.c entry with jq
 sudo apt-get install -y "jq=$JQ_VERSION"
 
-# make converter-windows builds the key log converter with this cross compiler
+# windows CMake preset builds the key log converter with this cross compiler
 sudo apt-get install -y "gcc-mingw-w64-x86-64-win32=$MINGW_VERSION"
 
 # check-standards hook builds against these packages
 sudo apt-get install -y build-essential "libtree-sitter-dev=$TREE_SITTER_VERSION" \
     "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
 
-# make qmk-test builds and runs the unit tests with these packages
+# CMake builds the host programs and the unit tests. The unit tests use cmocka
 sudo apt-get install -y "cmake=$CMAKE_VERSION" "libcmocka-dev=$CMOCKA_VERSION"
 
 QMK_COMMITS_URL="https://api.github.com/repos/qmk/qmk_firmware/commits\
