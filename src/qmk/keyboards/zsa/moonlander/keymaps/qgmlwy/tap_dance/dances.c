@@ -11,7 +11,7 @@
 
 #include "tap_dance/tap_dance.h"
 
-const dance_t dances[DANCE_COUNT] = {
+dance_t dances[DANCE_COUNT] = {
     [DANCE_CTRL_OR_GUI] =
         {
             .tap                   = KC_LEFT_CTRL,

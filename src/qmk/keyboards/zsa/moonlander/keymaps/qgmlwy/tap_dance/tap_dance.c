@@ -88,6 +88,7 @@ void dance_finished(tap_dance_state_t *state, void *user_data) {
 }
 
 void dance_reset(tap_dance_state_t *state, void *user_data) {
+    (void)state;
     const dance_t *dance = user_data;
     size_t         slot  = (size_t)(dance - dances);
     wait_ms(RESET_WAIT_MILLISECONDS);
