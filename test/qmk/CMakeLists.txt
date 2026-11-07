@@ -57,7 +57,8 @@ target_link_libraries(fake_qmk PUBLIC qmk_headers unit_test)
 # Logic of the keymap modules includes no QMK header, so its tests need no fake
 add_library(keymap_logic STATIC
     ${KEYMAP_DIR}/key_event_log/key_event_log_logic.c
-    ${KEYMAP_DIR}/special_mode/special_mode_logic.c)
+    ${KEYMAP_DIR}/special_mode/special_mode_logic.c
+    ${KEYMAP_DIR}/case_modes/case_modes_logic.c)
 target_include_directories(keymap_logic PUBLIC ${KEYMAP_DIR})
 
 # Same keymap sources as rules.mk, with the logic sources in keymap_logic.
@@ -69,7 +70,8 @@ add_library(qgmlwy_keymap STATIC
     ${KEYMAP_DIR}/special_mode/special_mode.c
     ${KEYMAP_DIR}/status_leds/status_leds.c
     ${KEYMAP_DIR}/symbol_holds/symbol_holds.c
-    ${KEYMAP_DIR}/precision_key/precision_key.c)
+    ${KEYMAP_DIR}/precision_key/precision_key.c
+    ${KEYMAP_DIR}/case_modes/case_modes.c)
 target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
 target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk keymap_logic)
 
@@ -78,6 +80,9 @@ add_cmocka_test(${KEYMAP_TESTS}/config_test.c LIBRARIES fake_qmk)
 add_cmocka_test(${KEYMAP_TESTS}/keymap_test.c LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_logic_test.c
     LIBRARIES keymap_logic unit_test)
+add_cmocka_test(${KEYMAP_TESTS}/case_modes/case_modes_logic_test.c
+    LIBRARIES keymap_logic unit_test)
+add_cmocka_test(${KEYMAP_TESTS}/case_modes/case_modes_test.c LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_test.c
     LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/status_leds/status_leds_test.c LIBRARIES qgmlwy_keymap)
