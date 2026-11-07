@@ -271,10 +271,9 @@ static void push_mode_key(uint16_t keycode) {
     assert_true(process_record_user(keycode, &release));
 }
 
-/** Clears the fake, a pause, the pair stack and any case mode of an earlier case */
+/** Clears the fake, the pair stack and any case mode of an earlier case */
 static void start_case(void) {
     reset_fake_qmk();
-    bracket_pairs_set_paused(false);
     bracket_pairs_clear();
     case_modes_end_all();
 }
@@ -807,34 +806,6 @@ static void bracket_pairs_single_quote_is_one_character(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
-static void bracket_pairs_r15_paused_makes_no_pairs(void **state) {
-    (void)state;
-    start_case();
-    bracket_pairs_set_paused(true);
-    hold_key(keycode_of(opening_parenthesis_key));
-    type_double_quote();
-    type_key(KC_TAB);
-    bracket_pairs_set_paused(false);
-    hold_key(keycode_of(opening_parenthesis_key));
-    static const qmk_call_t expected[] = {
-        {CALLED_REGISTER_CODE16, KC_LEFT_PAREN},
-        {CALLED_UNREGISTER_CODE16, KC_LEFT_PAREN},
-        {CALLED_TAP_CODE16, KC_QUOTE},
-        {CALLED_TAP_CODE16, KC_TAB},
-        PARENTHESES_PAIR_CALLS,
-    };
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void bracket_pairs_r15_pause_clears_stack(void **state) {
-    (void)state;
-    start_case();
-    hold_key(keycode_of(opening_parenthesis_key));
-    bracket_pairs_set_paused(true);
-    bracket_pairs_set_paused(false);
-    assert_true(push_and_release(KC_TAB, NOT_A_TAP));
-}
-
 /** Starts the special mode with its mode key, then empties the call log */
 static void start_special_mode(void) {
     start_case();
@@ -930,8 +901,6 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r11_ac8_other_closer_clears_stack),
     cmocka_unit_test(bracket_pairs_r12_ac9_wait_then_tab),
     cmocka_unit_test(bracket_pairs_r13_ac11_empty_stack_tab_and_closer),
-    cmocka_unit_test(bracket_pairs_r15_paused_makes_no_pairs),
-    cmocka_unit_test(bracket_pairs_r15_pause_clears_stack),
     cmocka_unit_test(bracket_pairs_r16_r18_ac12_double_quote_sends_pair),
     cmocka_unit_test(bracket_pairs_r16_ac15_double_quote_in_parentheses),
     cmocka_unit_test(bracket_pairs_r17_ac13_second_double_quote_sends_right),

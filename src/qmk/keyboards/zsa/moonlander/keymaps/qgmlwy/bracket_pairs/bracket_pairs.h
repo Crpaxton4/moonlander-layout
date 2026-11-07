@@ -40,11 +40,3 @@ void bracket_pairs_take_back_count(void);
 
 /** Removes all open pairs, for a mode that must not make pairs */
 void bracket_pairs_clear(void);
-
-/**
- * Stops or starts the pairs, for the plain mode. A pause also removes all open
- * pairs, so no old pair stays after the pause.
- *
- * @param is_paused True to stop the pairs, false to start them again.
- */
-void bracket_pairs_set_paused(bool is_paused);

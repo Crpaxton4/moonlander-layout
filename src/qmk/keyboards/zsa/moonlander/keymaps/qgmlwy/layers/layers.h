@@ -13,6 +13,7 @@ enum layer {
     LAYER_ARROWS          = 1, /**< Arrows, Home and End on the mouse keys */
     LAYER_COMBO_POSITIONS = 2, /**< Never on; QMK finds the combo keys on this layer */
     LAYER_SPECIAL         = 3, /**< Digits and symbols; KC_NO stops lower layers */
+    LAYER_PLAIN           = 4, /**< Plain QWERTY keys; KC_NO stops all lower layers */
 };
 
 /**
