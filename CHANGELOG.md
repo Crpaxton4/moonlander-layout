@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.10.0...v1.11.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add a plain qwerty mode ([#153](https://github.com/Crpaxton4/moonlander-layout/issues/153)) ([4a566f9](https://github.com/Crpaxton4/moonlander-layout/commit/4a566f9704df2333fce703445af76759a76ecec1))
+
 ## [1.10.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.9.0...v1.10.0) (2026-11-07)
 
 
