@@ -9,6 +9,7 @@
 
 #include QMK_KEYBOARD_H
 
+#include "bracket_pairs/bracket_pairs.h"
 #include "case_modes/case_modes.h"
 #include "combos/combos.h"
 #include "key_event_log/key_event_log.h"
@@ -503,8 +504,8 @@ typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
 
 /** Key event handlers, in call order; the log is first, so it gets each event */
 static const record_handler_t record_handlers[] = {
-    process_key_event_log, process_case_modes,    process_special_mode,
-    process_symbol_holds,  process_precision_key,
+    process_key_event_log, process_case_modes,   process_bracket_pairs,
+    process_special_mode,  process_symbol_holds, process_precision_key,
 };
 
 /** Handler for each pass of QMK's main loop */

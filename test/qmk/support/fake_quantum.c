@@ -76,6 +76,8 @@ static const char *const function_names[] = {
     [CALLED_WAIT_MS]           = "wait_ms",
     [CALLED_SEND_KEYBOARD]     = "send_keyboard",
     [CALLED_SEND_NKRO]         = "send_nkro",
+    [CALLED_DEL_MODS]          = "del_mods",
+    [CALLED_ADD_MODS]          = "add_mods",
 };
 
 /**
@@ -278,6 +280,16 @@ void add_weak_mods(uint8_t mods) {
 
 void clear_weak_mods(void) {
     fake_weak_modifiers = 0;
+}
+
+void del_mods(uint8_t mods) {
+    record_call(CALLED_DEL_MODS, mods);
+    fake_modifiers &= (uint8_t)~mods;
+}
+
+void add_mods(uint8_t mods) {
+    record_call(CALLED_ADD_MODS, mods);
+    fake_modifiers |= mods;
 }
 
 void set_fake_modifiers(uint8_t modifiers) {

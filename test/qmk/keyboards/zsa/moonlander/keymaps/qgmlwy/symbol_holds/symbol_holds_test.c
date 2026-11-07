@@ -1,9 +1,12 @@
 /** @file
- * Tests of the symbol hold keys on the bottom letter row, through the keymap's key
- * event hook and the tap-hold callbacks.
+ * Tests of the symbol hold keys on the bottom letter row, through the symbol hold
+ * handler and the tap-hold callbacks.
  *
- * QMK's layer-tap code gives a tap count of 1 to both events of a tap and 0 to both
- * events of a hold. Each case sends one push and one release in that way.
+ * Bracket pairs replace the hold of a bracket before this handler in the keymap's
+ * key event hook, so the cases call the handler itself. bracket_pairs_test.c covers
+ * the brackets through the hook. QMK's layer-tap code gives a tap count of 1 to
+ * both events of a tap and 0 to both events of a hold. Each case sends one push and
+ * one release in that way.
  */
 
 #include QMK_KEYBOARD_H
@@ -116,17 +119,17 @@ static uint16_t keycode_of(const symbol_hold_case_t *key) {
 
 /**
  * Empties the call log, then sends a push and a release of a key to
- * process_record_user().
+ * process_symbol_holds().
  *
  * @param keycode Keycode of the key.
  * @param events  Push and release events.
- * @return Result of process_record_user() for the push; the release must give the
+ * @return Result of process_symbol_holds() for the push; the release must give the
  *         same result.
  */
 static bool send_key(uint16_t keycode, key_events_t events) {
     reset_fake_qmk();
-    bool push_result    = process_record_user(keycode, &events.push);
-    bool release_result = process_record_user(keycode, &events.release);
+    bool push_result    = process_symbol_holds(keycode, &events.push);
+    bool release_result = process_symbol_holds(keycode, &events.release);
     assert_int_equal(push_result, release_result);
     return push_result;
 }

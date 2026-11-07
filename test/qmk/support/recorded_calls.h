@@ -25,6 +25,8 @@ enum qmk_function {
     CALLED_WAIT_MS,           /**< wait_ms(), argument: milliseconds */
     CALLED_SEND_KEYBOARD,     /**< Host driver send_keyboard(), argument: first key */
     CALLED_SEND_NKRO,         /**< Host driver send_nkro(), argument: modifiers */
+    CALLED_DEL_MODS,          /**< del_mods(), argument: modifiers */
+    CALLED_ADD_MODS,          /**< add_mods(), argument: modifiers */
 };
 
 /** One QMK call: the function and its argument */
