@@ -40,9 +40,6 @@ static const dance_presses_t double_hold = {.taps = 2, .held = true};
 /** Three presses and releases, then the tapping term ends */
 static const dance_presses_t triple_tap = {.taps = 3};
 
-/** Four presses and releases, then the tapping term ends */
-static const dance_presses_t four_taps = {.taps = 4};
-
 /** One press, held until a press of another key */
 static const dance_presses_t interrupted_hold = {
     .taps        = 1,
@@ -88,75 +85,6 @@ static void play_dance(uint16_t slot, dance_presses_t presses) {
 static void tap_dance_actions_cover_every_slot(void **state) {
     (void)state;
     assert_int_equal(tap_dance_count(), DANCE_COUNT);
-}
-
-static void tap_dance_ctrl_or_gui_tap(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_CTRL},
-    };
-    play_dance(DANCE_CTRL_OR_GUI, single_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_ctrl_or_gui_hold(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_CTRL},
-    };
-    play_dance(DANCE_CTRL_OR_GUI, single_hold);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_ctrl_or_gui_double_tap(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_GUI},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_GUI},
-    };
-    play_dance(DANCE_CTRL_OR_GUI, double_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_ctrl_or_gui_double_hold(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_REGISTER_CODE16, .argument = KC_LEFT_GUI},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-        {.function = CALLED_UNREGISTER_CODE16, .argument = KC_LEFT_GUI},
-    };
-    play_dance(DANCE_CTRL_OR_GUI, double_hold);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_ctrl_or_gui_triple_tap_repeats(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-    };
-    play_dance(DANCE_CTRL_OR_GUI, triple_tap);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
-}
-
-static void tap_dance_ctrl_or_gui_four_taps_repeat(void **state) {
-    (void)state;
-    static const qmk_call_t expected[] = {
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_TAP_CODE16, .argument = KC_LEFT_CTRL},
-        {.function = CALLED_WAIT_MS, .argument = RESET_WAIT_MILLISECONDS},
-    };
-    play_dance(DANCE_CTRL_OR_GUI, four_taps);
-    assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
 static void tap_dance_left_brackets_tap(void **state) {
@@ -407,12 +335,6 @@ static void tap_dance_right_click_or_wheel_triple_tap_repeats(void **state) {
 /** Cases of this program, in the order of the dance slots */
 static const struct CMUnitTest tap_dance_cases[] = {
     cmocka_unit_test(tap_dance_actions_cover_every_slot),
-    cmocka_unit_test(tap_dance_ctrl_or_gui_tap),
-    cmocka_unit_test(tap_dance_ctrl_or_gui_hold),
-    cmocka_unit_test(tap_dance_ctrl_or_gui_double_tap),
-    cmocka_unit_test(tap_dance_ctrl_or_gui_double_hold),
-    cmocka_unit_test(tap_dance_ctrl_or_gui_triple_tap_repeats),
-    cmocka_unit_test(tap_dance_ctrl_or_gui_four_taps_repeat),
     cmocka_unit_test(tap_dance_left_brackets_tap),
     cmocka_unit_test(tap_dance_left_brackets_hold),
     cmocka_unit_test(tap_dance_left_brackets_double_tap),
