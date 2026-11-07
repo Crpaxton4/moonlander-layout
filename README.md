@@ -164,10 +164,10 @@ To use a different directory, set the `QMK_HOME` environment variable.
 
 `make qmk-test` builds the tests in `.build/cmake/` and runs them. To give more
 arguments to ctest, set `QMK_TEST_ARGS`. For example, this command runs only the
-tests with `tap_dance` in their name:
+tests with `keymap_base` in their name:
 
 ```bash
-make qmk-test QMK_TEST_ARGS='-R tap_dance'
+make qmk-test QMK_TEST_ARGS='-R keymap_base'
 ```
 
 Each cmocka case is one CTest test. The CMake presets in `CMakePresets.json` give the

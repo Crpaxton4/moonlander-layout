@@ -10,7 +10,6 @@
 #include "keycodes/keycodes.h"
 #include "keymap_introspection.h"
 #include "layers/layers.h"
-#include "tap_dance/tap_dance.h"
 #include "unit_test.h"
 
 /** Number of keys from F1 to F12 */
@@ -239,7 +238,7 @@ static void keymap_base_right_bottom_letter_row(void **state) {
                 LT(0, KC_COMMA),
                 LT(0, KC_DOT),
                 LT(0, KC_SLASH),
-                KC_NO,
+                QK_MOUSE_WHEEL_UP,
             },
     };
     assert_row(LAYER_BASE, RIGHT_BOTTOM_LETTER_ROW, &expected);
@@ -256,7 +255,7 @@ static void keymap_base_right_bottom_row(void **state) {
                 QK_MOUSE_CURSOR_UP,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
-                KC_NO,
+                QK_MOUSE_WHEEL_DOWN,
             },
     };
     assert_row(LAYER_BASE, RIGHT_BOTTOM_ROW, &expected);
@@ -269,8 +268,8 @@ static void keymap_base_right_thumb_keys(void **state) {
             {
                 [RIGHT_LARGE_THUMB]  = TO(LAYER_ARROWS),
                 [RIGHT_OUTER_THUMB]  = QK_MOUSE_BUTTON_1,
-                [RIGHT_MIDDLE_THUMB] = TD(DANCE_RIGHT_CLICK_OR_WHEEL),
-                [RIGHT_INNER_THUMB]  = TD(DANCE_MIDDLE_CLICK_OR_WHEEL),
+                [RIGHT_MIDDLE_THUMB] = QK_MOUSE_BUTTON_2,
+                [RIGHT_INNER_THUMB]  = QK_MOUSE_BUTTON_3,
             },
     };
     assert_row(LAYER_BASE, RIGHT_THUMB_KEYS, &expected);

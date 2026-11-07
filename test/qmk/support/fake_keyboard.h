@@ -29,7 +29,6 @@
 #include "action_util.h"
 #include "host.h"
 #include "process_combo.h"
-#include "process_tap_dance.h"
 #include "progmem.h"
 #include "quantum_keycodes.h"
 #include "timer.h"
