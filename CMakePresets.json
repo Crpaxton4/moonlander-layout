@@ -18,11 +18,22 @@
         {
             "name": "dev",
             "displayName": "Development",
-            "description": "Host programs and unit tests, built in .build/cmake/",
+            "description": "Firmware, host programs and unit tests, built in .build/cmake/",
             "inherits": "base",
             "binaryDir": "${sourceDir}/.build/cmake",
             "cacheVariables": {
                 "MOONLANDER_PARTS": "firmware;checker;converter;unit-tests"
+            }
+        },
+        {
+            "name": "firmware",
+            "displayName": "Firmware",
+            "description": "Firmware and keymap compile database only, built in .build/firmware/",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/.build/firmware",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": null,
+                "MOONLANDER_PARTS": "firmware"
             }
         },
         {
@@ -73,10 +84,25 @@
             "configurePreset": "dev"
         },
         {
+            "name": "build",
+            "configurePreset": "dev",
+            "targets": ["all", "compile-databases"]
+        },
+        {
+            "name": "compile-databases",
+            "configurePreset": "dev",
+            "targets": ["compile-databases"]
+        },
+        {
             "name": "analyze",
             "configurePreset": "dev",
             "targets": ["analyze"],
             "nativeToolOptions": ["--keep-going"]
+        },
+        {
+            "name": "firmware",
+            "configurePreset": "firmware",
+            "targets": ["firmware"]
         },
         {
             "name": "checker",
@@ -128,6 +154,39 @@
         }
     ],
     "workflowPresets": [
+        {
+            "name": "firmware",
+            "displayName": "Firmware",
+            "steps": [
+                { "type": "configure", "name": "firmware" },
+                { "type": "build", "name": "firmware" }
+            ]
+        },
+        {
+            "name": "build",
+            "displayName": "Firmware, compile databases, host programs and unit tests",
+            "steps": [
+                { "type": "configure", "name": "dev" },
+                { "type": "build", "name": "build" }
+            ]
+        },
+        {
+            "name": "compile-databases",
+            "displayName": "Firmware and compile databases",
+            "steps": [
+                { "type": "configure", "name": "dev" },
+                { "type": "build", "name": "compile-databases" }
+            ]
+        },
+        {
+            "name": "all",
+            "displayName": "Build, then static analysis",
+            "steps": [
+                { "type": "configure", "name": "dev" },
+                { "type": "build", "name": "build" },
+                { "type": "build", "name": "analyze" }
+            ]
+        },
         {
             "name": "analyze",
             "displayName": "Static analysis",

@@ -30,7 +30,7 @@ concurrency:
 # check pending. The analysis also covers src/check_standards/ and
 # src/key_log_converter/
 env:
-  FIRMWARE_PATHS: '^src/(qmk|ci|check_standards|key_log_converter)/|^test/|^Makefile$|^CMakeLists\.txt$|^CMakePresets\.json$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
+  FIRMWARE_PATHS: '^src/(qmk|ci|check_standards|key_log_converter)/|^test/|^CMakeLists\.txt$|^CMakePresets\.json$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
 
 jobs:
   changes:
@@ -182,8 +182,10 @@ jobs:
         if: ${{ !inputs.skip-analysis && (github.event_name == 'push' || steps.ccache-cache.outputs.cache-matched-key != '') }}
         run: .github/scripts/build/install-ccache.sh
 
-      - name: "Install jq"
-        run: .github/scripts/build/install-jq.sh
+      # Firmware build uses CMake, also in a release build. The unit tests use the
+      # same installation
+      - name: "Install CMake and cmocka"
+        run: .github/scripts/shared/install-unit-test-tools.sh
 
       - name: "Build firmware and compile databases"
         # PR values are empty outside a PR, and the tag is empty outside a release
@@ -207,10 +209,6 @@ jobs:
 
       # Steps from here run also after a failed step, so a failed build still runs
       # the unit tests and the analysis
-      - name: "Install unit test tools"
-        if: ${{ !cancelled() && !inputs.skip-analysis }}
-        run: .github/scripts/shared/install-unit-test-tools.sh
-
       - name: "Run unit tests"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         run: cmake --workflow --preset qmk-test

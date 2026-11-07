@@ -7,5 +7,5 @@ if("${COMPILE_DATABASE}" STREQUAL "")
 endif()
 if(NOT EXISTS "${COMPILE_DATABASE}")
     message(FATAL_ERROR "Keymap compile database ${COMPILE_DATABASE} is missing. "
-        "Run `make compiledb` first")
+        "Build the compile-databases target first")
 endif()
