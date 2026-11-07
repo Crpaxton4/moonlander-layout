@@ -12,11 +12,11 @@
 /**
  * Copy key: Ctrl+C on a tap, Ctrl+Shift+C on a hold.
  *
- * Copy and paste keys are layer-tap keycodes, so QMK tells a tap from a hold. Their
- * layers never activate, because process_dual_function() handles every event. The
- * layer numbers only make the two values unique, and they name no layer of the
- * keymap.
+ * Copy and paste keys are LT(0, key) keycodes, so QMK tells a tap from a hold.
+ * Layer 0 is always on, so the layer action has no effect, and
+ * process_dual_function() handles every event. The basic key names the key and
+ * makes the two values unique.
  */
-#define COPY_KEY LT(6, KC_H)
+#define COPY_KEY LT(0, KC_C)
 /// Paste key: Ctrl+V on a tap, Ctrl+Shift+V on a hold
-#define PASTE_KEY LT(12, KC_T)
+#define PASTE_KEY LT(0, KC_V)
