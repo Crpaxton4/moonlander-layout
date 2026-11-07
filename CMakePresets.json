@@ -86,12 +86,12 @@
         {
             "name": "build",
             "configurePreset": "dev",
-            "targets": ["all", "compile-databases"]
+            "targets": ["all", "compile-databases", "debug-firmware", "memory-report"]
         },
         {
             "name": "compile-databases",
             "configurePreset": "dev",
-            "targets": ["compile-databases"]
+            "targets": ["compile-databases", "debug-firmware"]
         },
         {
             "name": "analyze",
@@ -103,6 +103,16 @@
             "name": "firmware",
             "configurePreset": "firmware",
             "targets": ["firmware"]
+        },
+        {
+            "name": "debug-firmware",
+            "configurePreset": "firmware",
+            "targets": ["debug-firmware"]
+        },
+        {
+            "name": "memory-report",
+            "configurePreset": "firmware",
+            "targets": ["memory-report"]
         },
         {
             "name": "checker",
@@ -163,8 +173,26 @@
             ]
         },
         {
+            "name": "debug-firmware",
+            "displayName": "Profiling debug firmware and its compile database",
+            "steps": [
+                { "type": "configure", "name": "firmware" },
+                { "type": "build", "name": "debug-firmware" }
+            ]
+        },
+        {
+            "name": "memory-report",
+            "displayName": "Firmware, debug firmware, then the memory report",
+            "steps": [
+                { "type": "configure", "name": "firmware" },
+                { "type": "build", "name": "firmware" },
+                { "type": "build", "name": "debug-firmware" },
+                { "type": "build", "name": "memory-report" }
+            ]
+        },
+        {
             "name": "build",
-            "displayName": "Firmware, compile databases, host programs and unit tests",
+            "displayName": "Firmware, debug firmware, compile databases, host programs, unit tests and memory report",
             "steps": [
                 { "type": "configure", "name": "dev" },
                 { "type": "build", "name": "build" }
@@ -172,7 +200,7 @@
         },
         {
             "name": "compile-databases",
-            "displayName": "Firmware and compile databases",
+            "displayName": "Firmware, debug firmware and compile databases",
             "steps": [
                 { "type": "configure", "name": "dev" },
                 { "type": "build", "name": "compile-databases" }

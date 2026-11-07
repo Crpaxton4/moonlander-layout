@@ -65,7 +65,14 @@ CMake starts the QMK CLI, and QMK builds the firmware with its own build. The
 QMK uses one job for each processor. To use a different number of jobs, set the CMake
 cache variable `QMK_JOBS`, for example `cmake --preset firmware -DQMK_JOBS=4`.
 
-This command builds the firmware and writes the compile databases:
+QMK writes the object files of the firmware into `.build/qmk/normal/`, and the object
+files of the debug firmware into `.build/qmk/debug/`. Thus, the two builds do not
+share object files, and the builds of different work trees do not use the same
+directory in `qmk_firmware`. A QMK build that writes a compile database also deletes
+`qmk_firmware/.build/`, but no build of this repository uses that directory.
+
+This command builds the firmware and the debug firmware, and writes the compile
+databases:
 
 ```bash
 cmake --workflow --preset compile-databases
@@ -75,6 +82,8 @@ cmake --workflow --preset compile-databases
 for `keymap.c`. `.build/cmake/compile_commands.json` is the compile database of the
 host programs and the unit tests. For IntelliSense in VS Code, set the
 `C_Cpp.default.compileCommands` setting to these two files.
+`.build/debug/compile_commands.json` is the compile database of the debug firmware,
+for the static analysis.
 
 ## Profiling debug build
 
@@ -82,19 +91,22 @@ The profiling debug build measures the time that the keymap code takes on the
 keyboard. It writes the results on the QMK console, as the key event log does. The
 normal firmware does not contain the profiling code.
 
-No CMake preset builds the debug firmware. To build it, run these commands in the
-root directory of the repository:
+To build the debug firmware, run this command:
 
 ```bash
-QMK_USERSPACE="$PWD/src/qmk" qmk compile -kb zsa/moonlander/reva -km qgmlwy \
-    -e DEBUG_PROFILE=yes
-mv -f src/qmk/zsa_moonlander_reva_qgmlwy.bin .build/zsa_moonlander_reva_qgmlwy-debug.bin
+cmake --workflow --preset debug-firmware
 ```
 
-QMK copies the firmware file into `src/qmk/`, and the second command moves it into
-`.build/`. Flash `.build/zsa_moonlander_reva_qgmlwy-debug.bin` with
-[Keymapp][keymapp]. To go back to the normal firmware, run
-`cmake --workflow --preset firmware` and flash its file.
+The name of the debug firmware file is the name of the normal firmware file with
+`-debug` at the end, for example `zsa_moonlander_reva_qgmlwy-2bcdfa9-debug.bin`.
+Flash that file from `.build/` with [Keymapp][keymapp]. To go back to the normal
+firmware, run `cmake --workflow --preset firmware` and flash its file.
+
+The debug build is a CMake target and a workflow preset, not a make variable. The
+`Makefile` contains only aliases, with no variables. The target gives the debug
+firmware its own file name and its own build directory, and CI builds the target
+with the other targets. The debug build always compiles all files, because it also
+writes the compile database of the debug firmware.
 
 ### Toggle key
 
@@ -132,6 +144,41 @@ the cost of the measurement. A call of an empty handler gives 7 to 15 cycles. Th
 cycles of `record_user` also contain the measurement of each record handler that it
 calls, about 100 cycles for each handler.
 
+## Memory report
+
+At the link step, each firmware build shows the use of each memory region. QMK shows
+each output of the linker as a warning, thus the link step shows `[WARNINGS]`. The
+ChibiOS linker script gives all free RAM to the heap, thus the linker shows `ram0` at
+100%.
+
+gcc writes the stack use of each function into a `.su` file. The build copies these
+files into `.build/stack-usage/normal/` and `.build/stack-usage/debug/`.
+
+This command builds the firmware and the debug firmware, and then shows the memory
+report:
+
+```bash
+cmake --workflow --preset memory-report
+```
+
+The `memory-report` target only reads the output of the last builds, and writes the
+report into `.build/memory-report.txt`. For each build, the report shows these items:
+
+| Item                 | Source                                                 |
+| -------------------- | ------------------------------------------------------ |
+| Flash and RAM use    | The symbols of the ChibiOS linker script in the `.elf` |
+| Largest symbols      | The first 20 lines of `arm-none-eabi-nm --size-sort`   |
+| Largest stack frames | The 20 largest stack frames in the `.su` files         |
+
+The RAM use does not include the heap. The type of a symbol tells its contents. Type
+`T` or `t` is code, `R` or `r` is constant data, `D` or `d` is data with an initial
+value, and `B` or `b` is data that starts at zero. The kind of a stack frame tells if
+its size changes. Kind `static` is a fixed size. Kind `dynamic` changes at run time,
+and `dynamic,bounded` has a maximum.
+
+A stack frame is the stack use of one function. It does not include the functions
+that the function calls.
+
 ## Host programs
 
 [CMake][cmake] builds the standards checker, the key log converter and the keymap unit
@@ -156,8 +203,8 @@ all parts in `.build/cmake/` and runs all the tests:
 cmake --workflow --preset test
 ```
 
-This command builds the firmware, the compile databases, the host programs and the
-unit tests in `.build/cmake/`, and then runs the static analysis:
+This command builds the firmware, the debug firmware, the compile databases, the host
+programs and the unit tests in `.build/cmake/`, and then runs the static analysis:
 
 ```bash
 cmake --workflow --preset all
@@ -185,6 +232,8 @@ runs one command:
 | Alias                   | Command                                       |
 | ----------------------- | --------------------------------------------- |
 | `make`, `make firmware` | `cmake --workflow --preset firmware`          |
+| `make debug-firmware`   | `cmake --workflow --preset debug-firmware`    |
+| `make memory-report`    | `cmake --workflow --preset memory-report`     |
 | `make build`            | `cmake --workflow --preset build`             |
 | `make analyze`          | `cmake --workflow --preset analyze`           |
 | `make all`              | `cmake --workflow --preset all`               |
@@ -197,9 +246,10 @@ runs one command:
 | `make clean`            | `cmake --build --preset dev --target clean`   |
 | `make help`             | `cmake --list-presets=all`                    |
 
-The `build` workflow builds the firmware, the compile databases, the host programs and
-the unit tests, and runs no check. The `clean` target of the `dev` preset removes the
-build output of `dev` and the compile database of the firmware.
+The `build` workflow builds the firmware, the debug firmware, the compile databases,
+the host programs and the unit tests, writes the memory report, and runs no check.
+The `clean` target of the `dev` preset removes the build output of `dev` and the
+compile databases of the firmware and the debug firmware.
 
 ## Key log capture
 
@@ -267,19 +317,21 @@ To run the checks, use these commands:
 | `cmake --workflow --preset converter-test` | Tests the key log converter.          |
 
 The static analysis reads the compile databases and builds no program. The keymap
-checks read the compile database of the firmware, so run the `compile-databases` or
-the `build` workflow before the `analyze` workflow. The `all` workflow does the build
-and then the analysis. The analysis runs these checks, and each check
-is a CMake target:
+checks read the compile databases of the firmware and of the debug firmware, so run
+the `compile-databases` or the `build` workflow before the `analyze` workflow. The
+`all` workflow does the build and then the analysis. The analysis runs these checks,
+and each check is a CMake target:
 
-| Target                  | Check                                                |
-| ----------------------- | ---------------------------------------------------- |
-| `clang-tidy-keymap`     | clang-tidy on the keymap                             |
-| `clang-tidy-checker`    | clang-tidy on the standards checker                  |
-| `clang-tidy-converter`  | clang-tidy on the key log converter                  |
-| `clang-tidy-unit-tests` | clang-tidy on the keymap unit tests                  |
-| `doxygen`               | Doxygen on the keymap, the checker and the converter |
-| `gcc-strict`            | gcc with more warnings on the keymap                 |
+| Target                    | Check                                                   |
+| ------------------------- | ------------------------------------------------------- |
+| `clang-tidy-keymap`       | clang-tidy on the keymap                                |
+| `clang-tidy-keymap-debug` | clang-tidy on the keymap of the debug build             |
+| `clang-tidy-checker`      | clang-tidy on the standards checker                     |
+| `clang-tidy-converter`    | clang-tidy on the key log converter                     |
+| `clang-tidy-unit-tests`   | clang-tidy on the keymap unit tests                     |
+| `doxygen`                 | Doxygen on the keymap, the checker and the converter    |
+| `gcc-strict`              | gcc with more warnings on the keymap                    |
+| `gcc-strict-debug`        | gcc with more warnings on the keymap of the debug build |
 
 The analysis continues after a failed check and shows each failed check. Each check
 prints its duration in a line that starts with `timing`. To run one check, run its
@@ -298,7 +350,9 @@ standards checker hook builds the checker with the `checker` preset.
 The QMK build uses `-Wall -Werror`. clang-tidy and the `gcc-strict` check add more
 compiler warnings for the keymap files, but not for the QMK files. The `gcc-strict`
 check compiles the keymap files again with the QMK gcc. In that compilation, the QMK
-headers are system headers, thus gcc shows no findings in them.
+headers are system headers, thus gcc shows no findings in them. The checks that end
+in `-debug` read the compile database of the debug firmware. Only that database has
+the profiling sources, and only in that database `DEBUG_PROFILE` is set.
 
 The standards checker has two rules for the `.c`, `.h` and `.inc` files:
 
@@ -312,15 +366,17 @@ The standards checker has two rules for the `.c`, `.h` and `.inc` files:
 CI runs all the checks on each PR and on each push to `main`. A PR can merge only if
 these CI checks pass:
 
-- `Build` builds the firmware, the compile databases, all host programs and the tests.
+- `Build` builds the firmware files, the compile databases, the programs and the tests.
 - `Test` runs all the CTest tests on the programs from the `Build` job.
 - `Analyze` runs the static analysis on the compile databases from the `Build` job.
 - `Lint` runs the hooks.
 - `Validate PR title` checks the PR title.
 
 The `Build` job runs one time in each CI run. It also builds the key log converter for
-Windows. The `Test` and `Analyze` jobs start when the `Build` job is complete, and they
-run at the same time. If a PR changes no file that the build, the tests or the analysis
+Windows, and shows the memory report in its job summary. The artifact `firmware`
+contains the firmware, and the artifact `debug-firmware` contains the debug firmware.
+The `Test` and `Analyze` jobs start when the `Build` job is complete, and they run at
+the same time. If a PR changes no file that the build, the tests or the analysis
 use, CI skips these three jobs. A skipped job passes its check.
 
 ## Unit tests
@@ -521,9 +577,9 @@ table. A commit-msg hook does the same check on local commits.
 ## Releases
 
 When a merge changes `src/qmk/`, release-please makes a release PR. The release PR
-merges automatically. CI then builds only the firmware, with no test and no analysis,
-and attaches the firmware file to the GitHub release. The name of that file ends in the
-release tag, for example
+merges automatically. CI then builds only the firmware, with no debug firmware, no
+test and no analysis, and attaches the firmware file to the GitHub release. The name
+of that file ends in the release tag, for example
 `zsa_moonlander_reva_qgmlwy-v1.0.29.bin`.
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 

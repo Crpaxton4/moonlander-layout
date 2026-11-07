@@ -3,11 +3,17 @@
 # CMakeLists.txt, CMakePresets.json and src/ci/*.cmake. CI, the hooks and scripts
 # must not call make. Put new tooling in CMake, not in this file
 
-.PHONY: firmware build analyze all test checker-test converter-test qmk-test \
-	windows compiledb clean help
+.PHONY: firmware debug-firmware memory-report build analyze all test checker-test \
+	converter-test qmk-test windows compiledb clean help
 
 firmware:
 	cmake --workflow --preset firmware
+
+debug-firmware:
+	cmake --workflow --preset debug-firmware
+
+memory-report:
+	cmake --workflow --preset memory-report
 
 build:
 	cmake --workflow --preset build

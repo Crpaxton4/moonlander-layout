@@ -15,7 +15,8 @@ elif [ -n "$PR_NUMBER" ]; then
     export FIRMWARE_SUFFIX="-pr$PR_NUMBER-${PR_HEAD_SHA:0:7}"
 fi
 # Firmware preset configures only the firmware part, so a release build needs no
-# tree-sitter and no cmocka. The compile database build also builds the firmware
+# tree-sitter and no cmocka. The compile database build also builds the firmware.
+# That target builds no debug firmware, so a release does not contain it
 if [ "$FIRMWARE_ONLY" = true ]; then
     cmake --preset firmware
     cmake --build --preset firmware --target compile-databases
