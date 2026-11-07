@@ -9,6 +9,7 @@
 
 #include QMK_KEYBOARD_H
 
+#include "case_modes/case_modes.h"
 #include "combos/combos.h"
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
@@ -39,7 +40,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_M,
                 KC_L,
                 KC_W,
-                KC_NO,
+                SNAKE_CASE_KEY,
             },
         [LAYER_BASE][LEFT_HOME_ROW] =
             {
@@ -49,7 +50,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 LGUI_T(KC_T),
                 LSFT_T(KC_N),
                 KC_R,
-                KC_NO,
+                CONSTANT_CASE_KEY,
             },
         [LAYER_BASE][LEFT_BOTTOM_LETTER_ROW] =
             {
@@ -90,7 +91,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][RIGHT_TOP_ROW] =
             {
-                KC_NO,
+                CAMEL_CASE_KEY,
                 KC_Y,
                 KC_F,
                 KC_U,
@@ -100,7 +101,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][RIGHT_HOME_ROW] =
             {
-                KC_NO,
+                PASCAL_CASE_KEY,
                 KC_I,
                 RSFT_T(KC_A),
                 RGUI_T(KC_E),
@@ -502,10 +503,8 @@ typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
 
 /** Key event handlers, in call order; the log is first, so it gets each event */
 static const record_handler_t record_handlers[] = {
-    process_key_event_log,
-    process_special_mode,
-    process_symbol_holds,
-    process_precision_key,
+    process_key_event_log, process_case_modes,    process_special_mode,
+    process_symbol_holds,  process_precision_key,
 };
 
 /** Handler for each pass of QMK's main loop */
