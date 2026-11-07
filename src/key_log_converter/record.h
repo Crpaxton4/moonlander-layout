@@ -4,8 +4,14 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
+
+// #endregion
+
+// #region Macros
 
 /** Key code slots of a keyboard report */
 #define REPORT_KEY_COUNT 6
@@ -15,6 +21,10 @@
 
 /** Bytes of the longest handler name of a handler record, with its terminator */
 #define HANDLER_NAME_SIZE 32
+
+// #endregion
+
+// #region Enumerations
 
 /** Record types, from the second field of a record */
 typedef enum {
@@ -34,6 +44,10 @@ typedef enum {
     LOGGING_OFF,      /**< Operator switched logging off */
     LOGGING_IDLE_OFF, /**< Keyboard switched logging off after an idle time */
 } logging_state_t;
+
+// #endregion
+
+// #region Types
 
 /** Key position in QMK matrix coordinates */
 typedef struct {
@@ -82,6 +96,10 @@ typedef struct {
     uint32_t           stack_free_bytes; /**< Lowest free stack of a stack record */
 } record_t;
 
+// #endregion
+
+// #region Functions
+
 /**
  * Parses one log line. A line that is not a complete record gives false.
  *
@@ -90,3 +108,5 @@ typedef struct {
  * @return true for a complete record.
  */
 bool parse_record(char *line, record_t *record);
+
+// #endregion

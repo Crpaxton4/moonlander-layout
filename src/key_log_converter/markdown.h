@@ -4,8 +4,14 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stddef.h>
 #include <stdio.h>
+
+// #endregion
+
+// #region Macros
 
 /** Bytes of one table cell, with its terminator */
 #define CELL_SIZE 64
@@ -13,11 +19,19 @@
 /** Most columns of a table */
 #define MAX_TABLE_COLUMNS 5
 
+// #endregion
+
+// #region Enumerations
+
 /** Alignment of a table column */
 typedef enum {
     ALIGN_LEFT,  /**< Text */
     ALIGN_RIGHT, /**< Numbers */
 } alignment_t;
+
+// #endregion
+
+// #region Types
 
 /** Heading and alignment of a table column */
 typedef struct {
@@ -38,6 +52,10 @@ typedef struct {
     size_t          row_count;    /**< Rows in use */
     size_t          capacity;     /**< Rows that the array can hold */
 } table_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Writes a heading or a paragraph after a blank line.
@@ -63,3 +81,5 @@ table_row_t *add_table_row(table_t *table);
  * @param table Table.
  */
 void write_table(FILE *file, table_t *table);
+
+// #endregion

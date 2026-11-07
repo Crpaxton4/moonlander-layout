@@ -2,14 +2,24 @@
  * Sessions, corpus text, heatmap lines, counts and profiling from the log records
  */
 
+// #region Includes
+
 #include "converter.h"
 #include "hid_usage.h"
+
+// #endregion
+
+// #region Macros
 
 /** Backspace pushes in this time after a push count against that position */
 #define CORRECTION_WINDOW_MS 1000
 
 /** Heatmap file line with no line break: keycode, row, column and layer */
 #define HEATMAP_ROW_FORMAT "0x%04X,%u,%u,%u"
+
+// #endregion
+
+// #region Types
 
 /**
  * Uses one record of one type.
@@ -24,6 +34,37 @@ typedef struct {
     record_handler_t *convert; /**< Use of the record */
     bool outside_sessions;     /**< true if the record also applies with logging off */
 } record_rule_t;
+
+// #endregion
+
+// #region Function declarations
+
+static void convert_state(converter_t *converter, const record_t *record);
+static void convert_input(converter_t *converter, const record_t *record);
+static void convert_output(converter_t *converter, const record_t *record);
+static void convert_clock(converter_t *converter, const record_t *record);
+static void convert_handler(converter_t *converter, const record_t *record);
+static void convert_scans(converter_t *converter, const record_t *record);
+static void convert_stack(converter_t *converter, const record_t *record);
+
+// #endregion
+
+// #region Data
+
+/** Record rules, indexed by record_type_t */
+static const record_rule_t record_rules[RECORD_TYPE_COUNT] = {
+    [RECORD_STATE]   = {.convert = convert_state, .outside_sessions = true},
+    [RECORD_INPUT]   = {.convert = convert_input},
+    [RECORD_OUTPUT]  = {.convert = convert_output},
+    [RECORD_CLOCK]   = {.convert = convert_clock, .outside_sessions = true},
+    [RECORD_HANDLER] = {.convert = convert_handler},
+    [RECORD_SCANS]   = {.convert = convert_scans},
+    [RECORD_STACK]   = {.convert = convert_stack},
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Starts a session. Keys from before the session are not new keys of it.
@@ -271,17 +312,6 @@ static void convert_stack(converter_t *converter, const record_t *record) {
     add_stack_record(&converter->profile, record->stack_free_bytes);
 }
 
-/** Record rules, indexed by record_type_t */
-static const record_rule_t record_rules[RECORD_TYPE_COUNT] = {
-    [RECORD_STATE]   = {.convert = convert_state, .outside_sessions = true},
-    [RECORD_INPUT]   = {.convert = convert_input},
-    [RECORD_OUTPUT]  = {.convert = convert_output},
-    [RECORD_CLOCK]   = {.convert = convert_clock, .outside_sessions = true},
-    [RECORD_HANDLER] = {.convert = convert_handler},
-    [RECORD_SCANS]   = {.convert = convert_scans},
-    [RECORD_STACK]   = {.convert = convert_stack},
-};
-
 /**
  * Starts again after a restart or a timer wrap. Profiling is off after a
  * restart, so the file has no clock until its next clock record. An open session
@@ -299,6 +329,10 @@ static void restart_stream(converter_t *converter, uint32_t time) {
         begin_session(converter, time);
     }
 }
+
+// #endregion
+
+// #region Public functions
 
 void begin_stream(converter_t *converter) {
     converter->stream = (stream_t){.in_session = false};
@@ -327,3 +361,5 @@ void end_stream(converter_t *converter) {
         end_session(converter);
     }
 }
+
+// #endregion

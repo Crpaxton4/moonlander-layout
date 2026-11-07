@@ -4,9 +4,15 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+// #endregion
+
+// #region Macros
 
 /** HID usage of Backspace, also the QMK keycode KC_BACKSPACE */
 #define USAGE_BACKSPACE 0x2A
@@ -32,11 +38,19 @@
 /** Bytes of the longest shortcut name, with its terminator */
 #define SHORTCUT_NAME_SIZE 48
 
+// #endregion
+
+// #region Types
+
 /** New key of a report, with the modifiers of that report */
 typedef struct {
     uint8_t mods;  /**< HID modifier byte */
     uint8_t usage; /**< HID usage of the key */
 } key_press_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Gives the character that a key types on the Windows US English layout.
@@ -54,3 +68,5 @@ char usage_character(uint8_t usage, bool shifted);
  * @param name  Buffer of SHORTCUT_NAME_SIZE bytes that gets the name.
  */
 void write_shortcut_name(key_press_t press, char name[SHORTCUT_NAME_SIZE]);
+
+// #endregion

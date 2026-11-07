@@ -2,6 +2,8 @@
  * Count tables with a linear search. A log has a few hundred positions or names
  */
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +11,10 @@
 
 #include "counters.h"
 #include "support.h"
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Compares two positions.
@@ -36,29 +42,6 @@ static bool same_key(layer_position_t left, layer_position_t right) {
         return false;
     }
     return same_position(left.position, right.position);
-}
-
-position_count_t *find_position_count(position_counts_t *counts, layer_position_t key) {
-    for (size_t index = 0; index < counts->count; index++) {
-        if (same_key(counts->items[index].key, key)) {
-            return &counts->items[index];
-        }
-    }
-    counts->items = reserve(counts->items, sizeof(position_count_t), &counts->capacity,
-                            counts->count);
-    position_count_t *item = &counts->items[counts->count++];
-    *item                  = (position_count_t){.key = key, .count = 0};
-    return item;
-}
-
-void add_matrix_positions(position_counts_t *counts, uint8_t layer) {
-    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            layer_position_t key = {.position = {.row = row, .col = col},
-                                    .layer    = layer};
-            find_position_count(counts, key);
-        }
-    }
 }
 
 /**
@@ -93,26 +76,6 @@ static int compare_position_counts(const void *first, const void *second) {
     return order;
 }
 
-void sort_position_counts(position_counts_t *counts) {
-    size_t item_size = sizeof(position_count_t);
-    if (counts->count > 0) {
-        qsort(counts->items, counts->count, item_size, compare_position_counts);
-    }
-}
-
-void set_recent_push(recent_pushes_t *pushes, position_t position, uint32_t time) {
-    for (size_t index = 0; index < pushes->count; index++) {
-        if (same_position(pushes->items[index].position, position)) {
-            pushes->items[index].time = time;
-            return;
-        }
-    }
-    pushes->items =
-        reserve(pushes->items, sizeof(recent_push_t), &pushes->capacity, pushes->count);
-    pushes->items[pushes->count++] =
-        (recent_push_t){.position = position, .time = time};
-}
-
 /**
  * Finds the count of a name, and adds a zero count if none exists.
  *
@@ -134,10 +97,6 @@ static named_count_t *find_named_count(named_counts_t *counts, const char *name)
     return item;
 }
 
-void add_named_count(named_counts_t *counts, const char *name) {
-    find_named_count(counts, name)->count++;
-}
-
 /**
  * Orders name counts from the largest count, then by name, for qsort().
  *
@@ -152,9 +111,62 @@ static int compare_named_counts(const void *first, const void *second) {
     return order != 0 ? order : strcmp(one->name, other->name);
 }
 
+// #endregion
+
+// #region Public functions
+
+position_count_t *find_position_count(position_counts_t *counts, layer_position_t key) {
+    for (size_t index = 0; index < counts->count; index++) {
+        if (same_key(counts->items[index].key, key)) {
+            return &counts->items[index];
+        }
+    }
+    counts->items = reserve(counts->items, sizeof(position_count_t), &counts->capacity,
+                            counts->count);
+    position_count_t *item = &counts->items[counts->count++];
+    *item                  = (position_count_t){.key = key, .count = 0};
+    return item;
+}
+
+void add_matrix_positions(position_counts_t *counts, uint8_t layer) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            layer_position_t key = {.position = {.row = row, .col = col},
+                                    .layer    = layer};
+            find_position_count(counts, key);
+        }
+    }
+}
+
+void sort_position_counts(position_counts_t *counts) {
+    size_t item_size = sizeof(position_count_t);
+    if (counts->count > 0) {
+        qsort(counts->items, counts->count, item_size, compare_position_counts);
+    }
+}
+
+void set_recent_push(recent_pushes_t *pushes, position_t position, uint32_t time) {
+    for (size_t index = 0; index < pushes->count; index++) {
+        if (same_position(pushes->items[index].position, position)) {
+            pushes->items[index].time = time;
+            return;
+        }
+    }
+    pushes->items =
+        reserve(pushes->items, sizeof(recent_push_t), &pushes->capacity, pushes->count);
+    pushes->items[pushes->count++] =
+        (recent_push_t){.position = position, .time = time};
+}
+
+void add_named_count(named_counts_t *counts, const char *name) {
+    find_named_count(counts, name)->count++;
+}
+
 void sort_named_counts(named_counts_t *counts) {
     size_t item_size = sizeof(named_count_t);
     if (counts->count > 0) {
         qsort(counts->items, counts->count, item_size, compare_named_counts);
     }
 }
+
+// #endregion

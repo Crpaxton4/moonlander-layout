@@ -2,10 +2,16 @@
  * Profiling totals with a linear search. The firmware has few handlers
  */
 
+// #region Includes
+
 #include <stdio.h>
 #include <string.h>
 
 #include "profile.h"
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Finds the totals of the handler of a record, and adds zero totals if none
@@ -29,6 +35,10 @@ static handler_totals_t *find_handler(handler_table_t *table, const record_t *re
     snprintf(item->name, sizeof(item->name), "%s", name);
     return item;
 }
+
+// #endregion
+
+// #region Public functions
 
 void add_handler_interval(profile_t *profile, const record_t *record, size_t session) {
     const handler_interval_t *interval       = &record->handler;
@@ -85,3 +95,5 @@ ratio_t average_call_time(const profile_t *profile, const handler_totals_t *hand
 ratio_t slowest_call_time(const profile_t *profile, const handler_totals_t *handler) {
     return (ratio_t){.part = handler->cycle_max, .whole = profile->cpu_hz};
 }
+
+// #endregion

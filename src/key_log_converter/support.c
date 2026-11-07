@@ -2,10 +2,16 @@
  * Array growth for the converter tables, and fixed-point number texts
  */
 
+// #region Includes
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "support.h"
+
+// #endregion
+
+// #region Macros
 
 /** Capacity multiplier for a full array, so that appends stay fast on average */
 #define GROWTH_FACTOR 2
@@ -19,11 +25,40 @@
 /** Scale of a number with no decimals */
 #define NO_DECIMALS_SCALE 1ULL
 
+// #endregion
+
+// #region Types
+
 /** Decimal number as an integer and its number of decimals */
 typedef struct {
     unsigned long long scaled;   /**< Number times 10 to the power of decimals */
     size_t             decimals; /**< Digits after the point, 1 or more */
 } fixed_point_t;
+
+// #endregion
+
+// #region Static functions
+
+/**
+ * Writes a number with a fixed number of decimals.
+ *
+ * @param text   Buffer of NUMBER_TEXT_SIZE bytes that gets the number.
+ * @param number Number and its decimals.
+ */
+static void format_fixed(char *text, fixed_point_t number) {
+    unsigned long long scale = NO_DECIMALS_SCALE;
+    for (size_t digit = 0; digit < number.decimals; digit++) {
+        scale *= DECIMAL_BASE;
+    }
+    unsigned long long whole_part = number.scaled / scale;
+    unsigned long long fraction   = number.scaled % scale;
+    int                width      = (int)number.decimals;
+    snprintf(text, NUMBER_TEXT_SIZE, "%llu.%0*llu", whole_part, width, fraction);
+}
+
+// #endregion
+
+// #region Public functions
 
 void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
     if (count < *capacity) {
@@ -53,23 +88,6 @@ unsigned long long scaled_quotient(ratio_t ratio, size_t decimals) {
     return quotient;
 }
 
-/**
- * Writes a number with a fixed number of decimals.
- *
- * @param text   Buffer of NUMBER_TEXT_SIZE bytes that gets the number.
- * @param number Number and its decimals.
- */
-static void format_fixed(char *text, fixed_point_t number) {
-    unsigned long long scale = NO_DECIMALS_SCALE;
-    for (size_t digit = 0; digit < number.decimals; digit++) {
-        scale *= DECIMAL_BASE;
-    }
-    unsigned long long whole_part = number.scaled / scale;
-    unsigned long long fraction   = number.scaled % scale;
-    int                width      = (int)number.decimals;
-    snprintf(text, NUMBER_TEXT_SIZE, "%llu.%0*llu", whole_part, width, fraction);
-}
-
 void format_ratio(char text[NUMBER_TEXT_SIZE], ratio_t ratio, size_t decimals) {
     if (ratio.whole == 0) {
         snprintf(text, NUMBER_TEXT_SIZE, "%s", NO_VALUE_TEXT);
@@ -94,3 +112,5 @@ void format_microseconds(char text[NUMBER_TEXT_SIZE], ratio_t seconds) {
     };
     format_fixed(text, microseconds);
 }
+
+// #endregion

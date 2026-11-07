@@ -2,6 +2,8 @@
  * Key log converter entry point: log files in, corpus and metrics out
  */
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +12,10 @@
 #include "converter.h"
 #include "outputs.h"
 #include "record.h"
+
+// #endregion
+
+// #region Macros
 
 /** argv index of the output folder. argv[0] is the program name */
 #define OUTPUT_FOLDER_ARGUMENT 1
@@ -26,12 +32,20 @@
 /** Command line help */
 #define USAGE_TEXT "usage: key_log_converter OUTPUT_FOLDER LOG_FILE...\n"
 
+// #endregion
+
+// #region Enumerations
+
 /** Results of a line read */
 typedef enum {
     LINE_COMPLETE,   /**< Line with a line break */
     LINE_INCOMPLETE, /**< Line that is too long or has no line break at the end */
     LINE_END,        /**< No more lines */
 } line_status_t;
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Reads and discards the rest of a line that is too long for the buffer.
@@ -161,6 +175,10 @@ static void free_tables(converter_t *converter) {
     free(converter->profile.handlers.items);
 }
 
+// #endregion
+
+// #region Public functions
+
 /**
  * Converts all log files into the output files.
  *
@@ -192,3 +210,5 @@ int main(int argc, char *argv[]) {
     free_tables(&converter);
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
+
+// #endregion

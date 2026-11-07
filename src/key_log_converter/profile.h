@@ -4,6 +4,8 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -12,8 +14,16 @@
 #include "record.h"
 #include "support.h"
 
+// #endregion
+
+// #region Macros
+
 /** Core clock of a run or a file with no clock record */
 #define NO_CLOCK 0
+
+// #endregion
+
+// #region Types
 
 /**
  * Totals of one handler. Each total is a sum or a maximum of whole numbers, so the
@@ -52,6 +62,10 @@ typedef struct {
     bool            has_stack;             /**< true after a stack record */
     uint32_t        lowest_free_stack;     /**< Lowest free stack of all records */
 } profile_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Adds a handler record to the totals of its handler.
@@ -113,3 +127,5 @@ ratio_t average_call_time(const profile_t *profile, const handler_totals_t *hand
  * @return Seconds as a ratio, with a whole of 0 for no clock.
  */
 ratio_t slowest_call_time(const profile_t *profile, const handler_totals_t *handler);
+
+// #endregion
