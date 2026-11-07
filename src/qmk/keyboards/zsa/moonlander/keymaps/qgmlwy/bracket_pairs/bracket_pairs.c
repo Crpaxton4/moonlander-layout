@@ -13,9 +13,6 @@
 /** Open pairs; all zero at power-up, so the stack is empty */
 static pair_stack_t pair_stack;
 
-/** True while a mode that must not make pairs is on; false at power-up */
-static bool paused;
-
 /** Opening and closing key of one pair kind */
 typedef struct {
     uint16_t opener; /**< Key of the opening character */
@@ -290,8 +287,6 @@ static bool release_goes_on(uint16_t keycode) {
 bool process_bracket_pairs(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) {
         return release_goes_on(keycode);
-    } else if (paused) {
-        return true;
     }
     pair_key_t    key    = classify_key(keycode, record);
     pair_result_t result = pair_stack_push(&pair_stack, key, timer_read32());
@@ -318,9 +313,4 @@ void bracket_pairs_take_back_count(void) {
     // Same count change as a Backspace, because the push counted one character
     pair_key_t taken_back = {.key_class = PAIR_KEY_BACKSPACE};
     pair_stack_count_sent_key(&pair_stack, taken_back, timer_read32());
-}
-
-void bracket_pairs_set_paused(bool is_paused) {
-    paused = is_paused;
-    pair_stack_clear(&pair_stack);
 }

@@ -18,3 +18,4 @@ SRC += case_modes/case_modes_logic.c
 SRC += case_modes/case_modes.c
 SRC += bracket_pairs/bracket_pairs_logic.c
 SRC += bracket_pairs/bracket_pairs.c
+SRC += plain_mode/plain_mode.c

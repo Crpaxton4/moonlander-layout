@@ -19,4 +19,7 @@ enum custom_keycode {
     CONSTANT_CASE_KEY, /**< Starts or ends CONSTANT_CASE */
     CAMEL_CASE_KEY,    /**< Starts or ends camelCase */
     PASCAL_CASE_KEY,   /**< Starts or ends PascalCase */
+    PLAIN_MODE_COMBO_LEFT_POSITION,  /**< Combo key at (2,6), never sent */
+    PLAIN_MODE_COMBO_RIGHT_POSITION, /**< Combo key at (2,7), never sent */
+    PLAIN_MODE_TOGGLE,               /**< Plain-mode combo: plain mode on or off */
 };
