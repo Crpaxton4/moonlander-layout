@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.2.0...v1.3.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add bracket and code symbol holds on the bottom letter row ([#145](https://github.com/Crpaxton4/moonlander-layout/issues/145)) ([47fc4e5](https://github.com/Crpaxton4/moonlander-layout/commit/47fc4e572343ccb765dbed26299b5b9cddce3fd7))
+
 ## [1.2.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.1.0...v1.2.0) (2026-11-07)
 
 
