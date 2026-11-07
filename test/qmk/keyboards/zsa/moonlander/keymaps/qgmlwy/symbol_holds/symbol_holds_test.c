@@ -9,19 +9,44 @@
  * one release in that way.
  */
 
-#include QMK_KEYBOARD_H
+// #region Includes
 
+#include QMK_KEYBOARD_H
 #include "keymap_introspection.h"
+
 #include "layers/layers.h"
 #include "recorded_calls.h"
 #include "symbol_holds/symbol_holds.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
+
+/** Index of the symbol hold key to compare when the prior key is the first one */
+#define SECOND_SYMBOL_HOLD_KEY 1
+
+// #endregion
+
+// #region Types
 
 /** Push and release of one key, as QMK's layer-tap code sends them */
 typedef struct {
     keyrecord_t push;    /**< Push event */
     keyrecord_t release; /**< Release event */
 } key_events_t;
+
+/** One symbol hold key of the spec table */
+typedef struct {
+    uint8_t  row;    /**< Matrix row of the key */
+    uint8_t  column; /**< Matrix column of the key */
+    uint16_t symbol; /**< Symbol of a hold */
+    char     hand;   /**< Hand of the key for chordal hold */
+} symbol_hold_case_t;
+
+// #endregion
+
+// #region Data
 
 /** Key events that QMK's layer-tap code sees as a tap */
 static const key_events_t tap_events = {
@@ -34,14 +59,6 @@ static const key_events_t hold_events = {
     .push    = {.event = {.pressed = true}, .tap = {.count = 0}},
     .release = {.event = {.pressed = false}, .tap = {.count = 0}},
 };
-
-/** One symbol hold key of the spec table */
-typedef struct {
-    uint8_t  row;    /**< Matrix row of the key */
-    uint8_t  column; /**< Matrix column of the key */
-    uint16_t symbol; /**< Symbol of a hold */
-    char     hand;   /**< Hand of the key for chordal hold */
-} symbol_hold_case_t;
 
 /** Symbol hold keys from the left pinky to the right pinky, as the spec gives them */
 static const symbol_hold_case_t symbol_hold_keys[] = {
@@ -106,6 +123,10 @@ static const symbol_hold_case_t symbol_hold_keys[] = {
         .hand   = 'R',
     },
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the base layer keycode of a symbol hold key.
@@ -180,9 +201,6 @@ static void symbol_holds_r4_r5_hand_of_each_key(void **state) {
         assert_int_equal(chordal_hold_handedness(position), key->hand);
     }
 }
-
-/** Index of the symbol hold key to compare when the prior key is the first one */
-#define SECOND_SYMBOL_HOLD_KEY 1
 
 /**
  * Gives the flow tap term of the symbol hold keys after a prior key. Fails the test
@@ -278,6 +296,10 @@ static void symbol_holds_r7_release_keeps_the_shift_of_a_held_symbol(void **stat
     assert_int_equal(get_weak_mods(), MOD_BIT(KC_LEFT_SHIFT));
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in the order of the spec requirements */
 static const struct CMUnitTest symbol_holds_cases[] = {
     cmocka_unit_test(symbol_holds_r1_tap_sends_the_usual_key),
@@ -299,3 +321,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(symbol_holds_cases, NULL, NULL);
 }
+
+// #endregion

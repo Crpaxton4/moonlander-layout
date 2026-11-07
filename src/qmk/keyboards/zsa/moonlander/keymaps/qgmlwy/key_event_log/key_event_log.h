@@ -9,9 +9,15 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "key_event_log/key_event_log_logic.h"
+
+// #endregion
+
+// #region Functions
 
 /**
  * Writes an input record of a key event while logging is on, and switches logging
@@ -40,3 +46,5 @@ void key_event_log_housekeeping(void);
  * @return True while logging is on.
  */
 bool key_event_log_is_on(void);
+
+// #endregion

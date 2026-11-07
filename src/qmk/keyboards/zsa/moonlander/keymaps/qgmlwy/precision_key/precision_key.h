@@ -8,7 +8,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+
+// #endregion
+
+// #region Functions
 
 /**
  * Sets the top cursor speed to one count while QK_MOUSE_ACCELERATION_0 is held, and
@@ -20,3 +26,5 @@
  * @return False for QK_MOUSE_ACCELERATION_0, true for all other keys.
  */
 bool process_precision_key(uint16_t keycode, keyrecord_t *record);
+
+// #endregion

@@ -2,13 +2,23 @@
  * Tests of the double whitespace rule of the special mode, with no QMK code.
  */
 
+// #region Includes
+
 #include <stdbool.h>
 
 #include "special_mode/special_mode_logic.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
 /** Number of pushes in a list of pushes */
 #define PUSH_COUNT(pushes) (sizeof(pushes) / sizeof((pushes)[0]))
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Starts a mode, then gives it each push of a list.
@@ -100,6 +110,10 @@ static void special_mode_logic_r5_different_whitespace_keys_keep_mode(void **sta
     assert_false(last_push_ends_mode(pushes, PUSH_COUNT(pushes)));
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program */
 static const struct CMUnitTest special_mode_logic_cases[] = {
     cmocka_unit_test(special_mode_logic_r3_one_whitespace_push_keeps_mode),
@@ -116,3 +130,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(special_mode_logic_cases, NULL, NULL);
 }
+
+// #endregion

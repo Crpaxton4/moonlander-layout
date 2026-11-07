@@ -8,9 +8,15 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+// #endregion
+
+// #region Macros
 
 /** Key slots of an output record, as in a 6-key keyboard report */
 #define LOGGED_REPORT_KEY_COUNT 6
@@ -18,12 +24,20 @@
 /** Time with no key push that switches logging off: 30 minutes */
 #define LOGGING_IDLE_MILLISECONDS (UINT32_C(30) * 60 * 1000)
 
+// #endregion
+
+// #region Enumerations
+
 /** Value of a state record */
 enum logging_state {
     LOGGING_OFF,      /**< Operator switched logging off */
     LOGGING_ON,       /**< Operator switched logging on */
     LOGGING_IDLE_OFF, /**< Idle time switched logging off */
 };
+
+// #endregion
+
+// #region Types
 
 /** Modifiers and keys of one keyboard report, as an output record gives them */
 typedef struct {
@@ -37,6 +51,10 @@ typedef struct {
     uint32_t        last_push_time; /**< Time of the last key push, in ms */
     logged_report_t last_report;    /**< Last report that the keyboard sent */
 } logging_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Switches logging on or off. Switching on starts the idle time.
@@ -101,3 +119,5 @@ const char *logging_state_name(enum logging_state state);
  * @return 'd' for a push, 'u' for a release.
  */
 char key_event_direction(bool pressed);
+
+// #endregion

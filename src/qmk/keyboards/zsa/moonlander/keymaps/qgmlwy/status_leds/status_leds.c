@@ -2,11 +2,17 @@
  * Status LED settings from the logging state and the highest active layer.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "key_event_log/key_event_log.h"
 #include "layers/layers.h"
 #include "status_leds/status_leds.h"
+
+// #endregion
+
+// #region Data
 
 /** LEDs that each layer turns on while it is the highest active layer */
 static const uint8_t layer_leds[] = {
@@ -17,6 +23,10 @@ static const uint8_t layer_leds[] = {
         STATUS_LED_BIT(LEFT_MIDDLE_LED) | STATUS_LED_BIT(RIGHT_MIDDLE_LED),
     [LAYER_PLAIN] = STATUS_LED_BIT(LEFT_INNER_LED) | STATUS_LED_BIT(RIGHT_OUTER_LED),
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Sets one status LED.
@@ -61,6 +71,10 @@ static uint8_t highest_layer_leds(void) {
     return layer_leds[layer];
 }
 
+// #endregion
+
+// #region Public functions
+
 void update_status_leds(void) {
     uint8_t leds = highest_layer_leds();
     if (key_event_log_is_on()) {
@@ -70,3 +84,5 @@ void update_status_leds(void) {
         set_status_led((enum status_led)led, (leds & STATUS_LED_BIT(led)) != 0);
     }
 }
+
+// #endregion

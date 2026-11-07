@@ -7,15 +7,21 @@
  * Each release must pass, because the hook acts only on pushes.
  */
 
-#include QMK_KEYBOARD_H
+// #region Includes
 
 #include <ctype.h>
+
+#include QMK_KEYBOARD_H
 
 #include "bracket_pairs/bracket_pairs.h"
 #include "case_modes/case_modes.h"
 #include "keycodes/keycodes.h"
 #include "recorded_calls.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
 
 /** Tap count of a key that is not a tap-hold key, or of a tap-hold hold */
 #define NO_TAP 0
@@ -32,11 +38,25 @@
 /** Most keys that one case gives to assert_host_got() */
 #define MOST_HOST_KEYS 64
 
+// #endregion
+
+// #region Types
+
 /** Character of a test text and the key that types it, for keys that are not letters */
 typedef struct {
     char     character; /**< Character in a test text */
     uint16_t keycode;   /**< Key that types it on a US host layout */
 } character_key_t;
+
+/** Home row mod and the modifier that its hold gives */
+typedef struct {
+    uint16_t keycode;  /**< Mod-tap keycode of the home row key */
+    uint8_t  modifier; /**< Modifier bit that QMK sets while the hold lasts */
+} home_row_mod_t;
+
+// #endregion
+
+// #region Data
 
 /** Keys of the characters other than letters and digits */
 static const character_key_t character_keys[] = {
@@ -44,6 +64,34 @@ static const character_key_t character_keys[] = {
     {'\b', KC_BACKSPACE},
     {'_', KC_UNDERSCORE},
 };
+
+/** Home row mods of the right hand that make a shortcut */
+static const home_row_mod_t shortcut_mods[] = {
+    {MT(MOD_RCTL, KC_H), MOD_BIT(KC_RIGHT_CTRL)},
+    {MT(MOD_RALT, KC_O), MOD_BIT(KC_RIGHT_ALT)},
+    {MT(MOD_RGUI, KC_E), MOD_BIT(KC_RIGHT_GUI)},
+};
+
+/** Calls of camelCase "get value", then a hold of "<" on Z, then " x" */
+static const qmk_call_t symbol_hold_host_calls[] = {
+    {CALLED_TAP_CODE16, KC_G},
+    {CALLED_TAP_CODE16, KC_E},
+    {CALLED_TAP_CODE16, KC_T},
+    {CALLED_TAP_CODE16, LSFT(KC_V)},
+    {CALLED_TAP_CODE16, KC_A},
+    {CALLED_TAP_CODE16, KC_L},
+    {CALLED_TAP_CODE16, KC_U},
+    {CALLED_TAP_CODE16, KC_E},
+    {CALLED_TAP_CODE16, KC_LEFT_ANGLE_BRACKET},
+    {CALLED_TAP_CODE16, KC_RIGHT_ANGLE_BRACKET},
+    {CALLED_TAP_CODE16, KC_LEFT},
+    {CALLED_TAP_CODE16, KC_SPACE},
+    {CALLED_TAP_CODE16, KC_X},
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the key of a character that is not a letter or a digit.
@@ -130,19 +178,6 @@ static void assert_host_got(const char *keys) {
     }
     assert_recorded_calls(expected, count);
 }
-
-/** Home row mod and the modifier that its hold gives */
-typedef struct {
-    uint16_t keycode;  /**< Mod-tap keycode of the home row key */
-    uint8_t  modifier; /**< Modifier bit that QMK sets while the hold lasts */
-} home_row_mod_t;
-
-/** Home row mods of the right hand that make a shortcut */
-static const home_row_mod_t shortcut_mods[] = {
-    {MT(MOD_RCTL, KC_H), MOD_BIT(KC_RIGHT_CTRL)},
-    {MT(MOD_RALT, KC_O), MOD_BIT(KC_RIGHT_ALT)},
-    {MT(MOD_RGUI, KC_E), MOD_BIT(KC_RIGHT_GUI)},
-};
 
 /** Clears the fake, ends any mode and removes any pair that an earlier case left */
 static void start_case(void) {
@@ -254,23 +289,6 @@ static void case_modes_r4_ac8_backspace_keeps_mode(void **state) {
     assert_host_got("max_ret\bx_y");
 }
 
-/** Calls of camelCase "get value", then a hold of "<" on Z, then " x" */
-static const qmk_call_t symbol_hold_host_calls[] = {
-    {CALLED_TAP_CODE16, KC_G},
-    {CALLED_TAP_CODE16, KC_E},
-    {CALLED_TAP_CODE16, KC_T},
-    {CALLED_TAP_CODE16, LSFT(KC_V)},
-    {CALLED_TAP_CODE16, KC_A},
-    {CALLED_TAP_CODE16, KC_L},
-    {CALLED_TAP_CODE16, KC_U},
-    {CALLED_TAP_CODE16, KC_E},
-    {CALLED_TAP_CODE16, KC_LEFT_ANGLE_BRACKET},
-    {CALLED_TAP_CODE16, KC_RIGHT_ANGLE_BRACKET},
-    {CALLED_TAP_CODE16, KC_LEFT},
-    {CALLED_TAP_CODE16, KC_SPACE},
-    {CALLED_TAP_CODE16, KC_X},
-};
-
 static void case_modes_r6_ac6_symbol_hold_ends_mode(void **state) {
     (void)state;
     start_case();
@@ -376,6 +394,10 @@ static void case_modes_sent_keys_count_in_bracket_pairs(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program; the power-up case must run first */
 static const struct CMUnitTest case_modes_cases[] = {
     cmocka_unit_test(case_modes_r10_no_mode_at_power_up),
@@ -403,3 +425,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(case_modes_cases, NULL, NULL);
 }
+
+// #endregion

@@ -2,9 +2,15 @@
  * Logging state, idle time and report comparison of the key event log.
  */
 
-#include "key_event_log/key_event_log_logic.h"
+// #region Includes
 
 #include <string.h>
+
+#include "key_event_log/key_event_log_logic.h"
+
+// #endregion
+
+// #region Macros
 
 /** Key codes in one byte of a key bitmap */
 #define KEYS_PER_BITMAP_BYTE 8
@@ -12,12 +18,20 @@
 /** Bit of a key code in its byte of a key bitmap, as QMK's add_key_bit() sets it */
 #define KEY_CODE_BIT(code) ((uint8_t)(1U << ((code) % KEYS_PER_BITMAP_BYTE)))
 
+// #endregion
+
+// #region Data
+
 /** Text of each state, indexed by state */
 static const char *const state_names[] = {
     [LOGGING_OFF]      = "off",
     [LOGGING_ON]       = "on",
     [LOGGING_IDLE_OFF] = "idle-off",
 };
+
+// #endregion
+
+// #region Public functions
 
 enum logging_state logging_toggle(logging_t *logging, uint32_t now) {
     enum logging_state state = logging->is_on ? LOGGING_OFF : LOGGING_ON;
@@ -65,3 +79,5 @@ const char *logging_state_name(enum logging_state state) {
 char key_event_direction(bool pressed) {
     return pressed ? 'd' : 'u';
 }
+
+// #endregion

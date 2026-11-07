@@ -8,7 +8,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
+
+// #endregion
+
+// #region Enumerations
 
 /** Identifier style that the keyboard makes from words with Space between them */
 enum case_mode {
@@ -30,12 +36,6 @@ enum case_key_class {
     CASE_KEY_OTHER,     /**< Any other key, or a key with Ctrl, Alt or GUI held */
 };
 
-/** One key push */
-typedef struct {
-    enum case_key_class key_class; /**< Kind of the key */
-    enum case_mode      mode;      /**< Mode of a CASE_KEY_MODE key */
-} case_key_t;
-
 /** What the keyboard sends for one key push */
 enum case_action {
     CASE_ACTION_SEND_AS_IS,                /**< Pushed key, with no change */
@@ -52,6 +52,16 @@ enum case_separator {
     CASE_SEPARATOR_EMPTY,      /**< Space typed nothing */
 };
 
+// #endregion
+
+// #region Types
+
+/** One key push */
+typedef struct {
+    enum case_key_class key_class; /**< Kind of the key */
+    enum case_mode      mode;      /**< Mode of a CASE_KEY_MODE key */
+} case_key_t;
+
 /** State of the case modes; all zero is the state at power-up, no mode */
 typedef struct {
     enum case_mode      mode;               /**< Mode that is on */
@@ -59,6 +69,10 @@ typedef struct {
     bool                space_since_letter; /**< A Space came after the last letter */
     bool                letter_in_mode;     /**< A letter came after the mode started */
 } case_modes_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Gives the action for one key push, and changes the mode as the push requires.
@@ -75,3 +89,5 @@ enum case_action case_modes_push(case_modes_t *case_modes, case_key_t key);
  * @param case_modes Case mode state.
  */
 void case_modes_end(case_modes_t *case_modes);
+
+// #endregion

@@ -8,8 +8,27 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
+
+// #endregion
+
+// #region Macros
+
+/** Most outputs of one push: opener, closer and Left */
+#define PAIR_MOST_OUTPUTS 3
+
+/** Most open pairs; a new pair removes the oldest entry of a full stack */
+#define PAIR_STACK_CAPACITY 8
+
+/** Time in ms with no key push after which the host cursor can have moved */
+#define PAIR_IDLE_TIME 30000
+
+// #endregion
+
+// #region Enumerations
 
 /** Kind of a pair; a quote is its own closer */
 enum pair_kind {
@@ -34,12 +53,6 @@ enum pair_key_class {
     PAIR_KEY_CLEARING,     /**< Key that can move the host cursor */
 };
 
-/** One key push */
-typedef struct {
-    enum pair_key_class key_class; /**< Kind of the key */
-    enum pair_kind      kind;      /**< Pair of an opener, closer or quote */
-} pair_key_t;
-
 /** Key that the keyboard sends in place of the pushed key */
 enum pair_output {
     PAIR_OUTPUT_OPENER,    /**< Opening character of the result kind */
@@ -50,8 +63,15 @@ enum pair_output {
     PAIR_OUTPUT_DELETE,    /**< Delete */
 };
 
-/** Most outputs of one push: opener, closer and Left */
-#define PAIR_MOST_OUTPUTS 3
+// #endregion
+
+// #region Types
+
+/** One key push */
+typedef struct {
+    enum pair_key_class key_class; /**< Kind of the key */
+    enum pair_kind      kind;      /**< Pair of an opener, closer or quote */
+} pair_key_t;
 
 /** What the keyboard does for one key push */
 typedef struct {
@@ -67,18 +87,16 @@ typedef struct {
     uint16_t       count; /**< Characters that the host has in the pair */
 } pair_entry_t;
 
-/** Most open pairs; a new pair removes the oldest entry of a full stack */
-#define PAIR_STACK_CAPACITY 8
-
-/** Time in ms with no key push after which the host cursor can have moved */
-#define PAIR_IDLE_TIME 30000
-
 /** Open pairs, the innermost pair on top; all zero is an empty stack */
 typedef struct {
     pair_entry_t entries[PAIR_STACK_CAPACITY]; /**< Open pairs, oldest first */
     uint8_t      depth;                        /**< Number of entries */
     uint32_t     last_push_time;               /**< Time of the last key push in ms */
 } pair_stack_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Gives the result of one key push, and changes the stack as the push requires.
@@ -107,3 +125,5 @@ void pair_stack_count_sent_key(pair_stack_t *stack, pair_key_t sent, uint32_t no
  * @param stack Pair stack.
  */
 void pair_stack_clear(pair_stack_t *stack);
+
+// #endregion

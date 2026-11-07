@@ -6,6 +6,8 @@
  * acceptance check. A '|' in an expected text is the cursor.
  */
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -14,38 +16,12 @@
 #include "bracket_pairs/bracket_pairs_logic.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
 /** Characters that the editor model can keep, with the terminating zero */
 #define EDITOR_CAPACITY 64
-
-/** Text in the editor model of the host, with a text cursor */
-typedef struct {
-    char   text[EDITOR_CAPACITY]; /**< Text, with a terminating zero */
-    size_t length;                /**< Characters in text */
-    size_t cursor;                /**< Characters before the cursor */
-} editor_t;
-
-/** Pair stack, editor model and clock of one case */
-typedef struct {
-    pair_stack_t stack;  /**< Pair stack under test */
-    editor_t     editor; /**< Text that the host shows */
-    uint32_t     now;    /**< Time of the next push in ms */
-} typing_t;
-
-/** Opening and closing character of each pair kind */
-typedef struct {
-    char opener; /**< Character that opens the pair */
-    char closer; /**< Character that closes the pair */
-} pair_characters_t;
-
-/** Characters of each pair kind, indexed by kind */
-static const pair_characters_t pair_characters[] = {
-    [PAIR_PARENTHESES]     = {.opener = '(', .closer = ')'},
-    [PAIR_SQUARE_BRACKETS] = {.opener = '[', .closer = ']'},
-    [PAIR_CURLY_BRACES]    = {.opener = '{', .closer = '}'},
-    [PAIR_ANGLE_BRACKETS]  = {.opener = '<', .closer = '>'},
-    [PAIR_DOUBLE_QUOTES]   = {.opener = '"', .closer = '"'},
-    [PAIR_BACKTICKS]       = {.opener = '`', .closer = '`'},
-};
 
 /** Number of pair kinds */
 #define PAIR_KIND_COUNT (sizeof(pair_characters) / sizeof(pair_characters[0]))
@@ -67,6 +43,48 @@ static const pair_characters_t pair_characters[] = {
 
 /** Time in ms between two pushes that does not clear the stack */
 #define JUST_BEFORE_IDLE_TIME (PAIR_IDLE_TIME - 1)
+
+// #endregion
+
+// #region Types
+
+/** Text in the editor model of the host, with a text cursor */
+typedef struct {
+    char   text[EDITOR_CAPACITY]; /**< Text, with a terminating zero */
+    size_t length;                /**< Characters in text */
+    size_t cursor;                /**< Characters before the cursor */
+} editor_t;
+
+/** Pair stack, editor model and clock of one case */
+typedef struct {
+    pair_stack_t stack;  /**< Pair stack under test */
+    editor_t     editor; /**< Text that the host shows */
+    uint32_t     now;    /**< Time of the next push in ms */
+} typing_t;
+
+/** Opening and closing character of each pair kind */
+typedef struct {
+    char opener; /**< Character that opens the pair */
+    char closer; /**< Character that closes the pair */
+} pair_characters_t;
+
+// #endregion
+
+// #region Data
+
+/** Characters of each pair kind, indexed by kind */
+static const pair_characters_t pair_characters[] = {
+    [PAIR_PARENTHESES]     = {.opener = '(', .closer = ')'},
+    [PAIR_SQUARE_BRACKETS] = {.opener = '[', .closer = ']'},
+    [PAIR_CURLY_BRACES]    = {.opener = '{', .closer = '}'},
+    [PAIR_ANGLE_BRACKETS]  = {.opener = '<', .closer = '>'},
+    [PAIR_DOUBLE_QUOTES]   = {.opener = '"', .closer = '"'},
+    [PAIR_BACKTICKS]       = {.opener = '`', .closer = '`'},
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Types one character at the cursor of the editor model.
@@ -581,6 +599,10 @@ static void bracket_pairs_logic_r17_quote_adds_count_to_new_top(void **state) {
     assert_int_equal(typing.stack.depth, 0);
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in the order of the spec requirements */
 static const struct CMUnitTest bracket_pairs_logic_cases[] = {
     cmocka_unit_test(bracket_pairs_logic_r1_opener_sends_pair_and_left),
@@ -617,3 +639,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(bracket_pairs_logic_cases, NULL, NULL);
 }
+
+// #endregion

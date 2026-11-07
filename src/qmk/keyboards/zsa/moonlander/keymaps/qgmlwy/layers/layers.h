@@ -7,6 +7,18 @@
 
 #pragma once
 
+// #region Macros
+
+/**
+ * Matrix position with no physical key, which keeps the other keys of the row in
+ * their matrix columns.
+ */
+#define NO_PHYSICAL_KEY KC_NO
+
+// #endregion
+
+// #region Enumerations
+
 /** Keymap layers, in the order of their index in `keymaps` */
 enum layer {
     LAYER_BASE            = 0, /**< QGMLWY alphas with mouse keys bottom right */
@@ -38,12 +50,6 @@ enum layer_row {
     RIGHT_THUMB_KEYS        = 11, /**< Thumb keys R0 to R3, indexed by `thumb_key` */
 };
 
-/**
- * Matrix position with no physical key, which keeps the other keys of the row in
- * their matrix columns.
- */
-#define NO_PHYSICAL_KEY KC_NO
-
 /** Thumb keys in LEFT_THUMB_KEYS and RIGHT_THUMB_KEYS */
 enum thumb_key {
     LEFT_LARGE_THUMB   = 3, /**< L0, large left thumb key */
@@ -55,3 +61,5 @@ enum thumb_key {
     RIGHT_MIDDLE_THUMB = 5, /**< R2, small right thumb key between the other two */
     RIGHT_INNER_THUMB  = 4, /**< R3, small right thumb key nearest to the middle */
 };
+
+// #endregion

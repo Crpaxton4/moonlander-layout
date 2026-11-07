@@ -7,10 +7,16 @@
  * mouse key value that config.h does not set is QMK's default.
  */
 
+// #region Includes
+
 #include "config.h"
 #include "layers/layers.h"
 #include "mousekey.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Static functions
 
 static void config_usb_suspend_wakeup_delay(void **state) {
     (void)state;
@@ -157,6 +163,10 @@ static void config_serial_number(void **state) {
     assert_string_equal(SERIAL_NUMBER, "LzzVe/pjxZ7X");
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in the order of config.h */
 static const struct CMUnitTest config_cases[] = {
     cmocka_unit_test(config_usb_suspend_wakeup_delay),
@@ -190,3 +200,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(config_cases, NULL, NULL);
 }
+
+// #endregion

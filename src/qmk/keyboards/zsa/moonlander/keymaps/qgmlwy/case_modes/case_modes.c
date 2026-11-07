@@ -2,6 +2,8 @@
  * Key classes and QMK calls of the case modes.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "bracket_pairs/bracket_pairs.h"
@@ -9,14 +11,47 @@
 #include "case_modes/case_modes_logic.h"
 #include "keycodes/keycodes.h"
 
-/** Case mode state; all zero at power-up, so no mode is on */
-static case_modes_t case_modes;
+// #endregion
+
+// #region Macros
+
+/** Modifiers that make a key push a shortcut, not text */
+#define SHORTCUT_MODIFIERS (MOD_MASK_CTRL | MOD_MASK_ALT | MOD_MASK_GUI)
+
+// #endregion
+
+// #region Types
 
 /** Mode of one mode key */
 typedef struct {
     uint16_t       keycode; /**< Keycode of the mode key */
     enum case_mode mode;    /**< Mode that the key starts */
 } mode_key_t;
+
+/**
+ * Does one action of the case modes.
+ *
+ * @param keycode Keycode of the pushed key.
+ * @return True if QMK must send the pushed key.
+ */
+typedef bool (*action_handler_t)(uint16_t keycode);
+
+// #endregion
+
+// #region Function declarations
+
+static bool send_as_is(uint16_t keycode);
+static bool send_with_shift(uint16_t keycode);
+static bool send_underscore(uint16_t keycode);
+static bool send_nothing(uint16_t keycode);
+static bool send_backspace_then_space(uint16_t keycode);
+
+// #endregion
+
+// #region Data
+
+/** Case mode state; all zero at power-up, so no mode is on */
+static case_modes_t case_modes;
 
 /** Mode of each mode key */
 static const mode_key_t mode_keys[] = {
@@ -25,6 +60,19 @@ static const mode_key_t mode_keys[] = {
     {CAMEL_CASE_KEY, CASE_MODE_CAMEL},
     {PASCAL_CASE_KEY, CASE_MODE_PASCAL},
 };
+
+/** Handler of each action, indexed by action */
+static const action_handler_t action_handlers[] = {
+    [CASE_ACTION_SEND_AS_IS]                = send_as_is,
+    [CASE_ACTION_SEND_WITH_SHIFT]           = send_with_shift,
+    [CASE_ACTION_SEND_UNDERSCORE]           = send_underscore,
+    [CASE_ACTION_SEND_NOTHING]              = send_nothing,
+    [CASE_ACTION_SEND_BACKSPACE_THEN_SPACE] = send_backspace_then_space,
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the mode of a mode key.
@@ -57,9 +105,6 @@ static uint16_t sent_key(uint16_t keycode, const keyrecord_t *record) {
     // Mod-tap and layer-tap keycodes both keep the tap key in their low byte
     return QK_MOD_TAP_GET_TAP_KEYCODE(keycode);
 }
-
-/** Modifiers that make a key push a shortcut, not text */
-#define SHORTCUT_MODIFIERS (MOD_MASK_CTRL | MOD_MASK_ALT | MOD_MASK_GUI)
 
 /**
  * Tells if a push only holds a modifier, which types nothing.
@@ -179,22 +224,9 @@ static bool send_backspace_then_space(uint16_t keycode) {
     return true;
 }
 
-/**
- * Does one action of the case modes.
- *
- * @param keycode Keycode of the pushed key.
- * @return True if QMK must send the pushed key.
- */
-typedef bool (*action_handler_t)(uint16_t keycode);
+// #endregion
 
-/** Handler of each action, indexed by action */
-static const action_handler_t action_handlers[] = {
-    [CASE_ACTION_SEND_AS_IS]                = send_as_is,
-    [CASE_ACTION_SEND_WITH_SHIFT]           = send_with_shift,
-    [CASE_ACTION_SEND_UNDERSCORE]           = send_underscore,
-    [CASE_ACTION_SEND_NOTHING]              = send_nothing,
-    [CASE_ACTION_SEND_BACKSPACE_THEN_SPACE] = send_backspace_then_space,
-};
+// #region Public functions
 
 bool process_case_modes(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) {
@@ -208,3 +240,5 @@ bool process_case_modes(uint16_t keycode, keyrecord_t *record) {
 void case_modes_end_all(void) {
     case_modes_end(&case_modes);
 }
+
+// #endregion

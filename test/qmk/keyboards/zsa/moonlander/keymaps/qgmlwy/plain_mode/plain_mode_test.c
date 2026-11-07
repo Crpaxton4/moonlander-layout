@@ -6,7 +6,11 @@
  * state that QMK would have.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+#include "keymap_introspection.h"
+#include "mousekey.h"
 
 #include "bracket_pairs/bracket_pairs.h"
 #include "case_modes/case_modes.h"
@@ -14,12 +18,14 @@
 #include "fake_state.h"
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
-#include "keymap_introspection.h"
 #include "layers/layers.h"
-#include "mousekey.h"
 #include "recorded_calls.h"
 #include "symbol_holds/symbol_holds.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
 
 /** Layer state with one layer on */
 #define ONLY_LAYER(layer) ((layer_state_t)(1U << (layer)))
@@ -32,6 +38,10 @@
 
 /** Top cursor speed of the keymap, in counts per movement report */
 #define TOP_SPEED 20
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Sends a push or a release of a key to process_record_user().
@@ -230,6 +240,10 @@ static void plain_mode_r4_precision_key_release_after_mode_start(void **state) {
     assert_int_equal(mk_max_speed, TOP_SPEED);
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program */
 static const struct CMUnitTest plain_mode_cases[] = {
     cmocka_unit_test(plain_mode_r1_combo_keys),
@@ -254,3 +268,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(plain_mode_cases, NULL, NULL);
 }
+
+// #endregion
