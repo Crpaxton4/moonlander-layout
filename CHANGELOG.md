@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.5.0...v1.6.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** give the mouse cursor exact taps, a smooth ramp and a precision key ([#148](https://github.com/Crpaxton4/moonlander-layout/issues/148)) ([49b8785](https://github.com/Crpaxton4/moonlander-layout/commit/49b8785742171bb63d838215f984659ce413872f))
+
 ## [1.5.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.4.0...v1.5.0) (2026-11-07)
 
 
