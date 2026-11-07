@@ -12,14 +12,6 @@
 #include "tap_dance/tap_dance.h"
 
 dance_t dances[DANCE_COUNT] = {
-    [DANCE_CTRL_OR_GUI] =
-        {
-            .tap                   = KC_LEFT_CTRL,
-            .hold                  = KC_LEFT_CTRL,
-            .double_tap            = KC_LEFT_GUI,
-            .double_hold           = KC_LEFT_GUI,
-            .repeats_on_triple_tap = true,
-        },
     [DANCE_LEFT_BRACKETS] =
         {
             .tap                   = KC_LEFT_PAREN,

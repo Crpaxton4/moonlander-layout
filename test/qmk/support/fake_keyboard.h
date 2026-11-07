@@ -25,6 +25,7 @@
 
 #include "action.h"
 #include "action_layer.h"
+#include "action_tapping.h"
 #include "action_util.h"
 #include "host.h"
 #include "process_combo.h"

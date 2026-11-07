@@ -62,6 +62,61 @@ static void config_combo_only_from_layer(void **state) {
     assert_int_equal(COMBO_ONLY_FROM_LAYER, LAYER_COMBO_POSITIONS);
 }
 
+static void config_tapping_term(void **state) {
+    (void)state;
+    assert_int_equal(TAPPING_TERM, 250);
+}
+
+static void config_tapping_term_per_key(void **state) {
+    (void)state;
+#ifndef TAPPING_TERM_PER_KEY
+    fail_msg("TAPPING_TERM_PER_KEY is not defined");
+#endif
+}
+
+static void config_shift_tapping_term(void **state) {
+    (void)state;
+    assert_int_equal(SHIFT_TAPPING_TERM, 200);
+}
+
+static void config_permissive_hold(void **state) {
+    (void)state;
+#ifndef PERMISSIVE_HOLD
+    fail_msg("PERMISSIVE_HOLD is not defined");
+#endif
+}
+
+static void config_chordal_hold(void **state) {
+    (void)state;
+#ifndef CHORDAL_HOLD
+    fail_msg("CHORDAL_HOLD is not defined");
+#endif
+}
+
+static void config_flow_tap_term(void **state) {
+    (void)state;
+    assert_int_equal(FLOW_TAP_TERM, 150);
+}
+
+static void config_quick_tap_term(void **state) {
+    (void)state;
+    assert_int_equal(QUICK_TAP_TERM, 0);
+}
+
+static void config_no_hold_on_other_key_press(void **state) {
+    (void)state;
+#ifdef HOLD_ON_OTHER_KEY_PRESS
+    fail_msg("HOLD_ON_OTHER_KEY_PRESS is defined");
+#endif
+}
+
+static void config_no_retro_tapping(void **state) {
+    (void)state;
+#ifdef RETRO_TAPPING
+    fail_msg("RETRO_TAPPING is defined");
+#endif
+}
+
 static void config_serial_number(void **state) {
     (void)state;
     assert_string_equal(SERIAL_NUMBER, "LzzVe/pjxZ7X");
@@ -79,6 +134,15 @@ static const struct CMUnitTest config_cases[] = {
     cmocka_unit_test(config_mousekey_wheel_time_to_max),
     cmocka_unit_test(config_moonlander_user_leds),
     cmocka_unit_test(config_combo_only_from_layer),
+    cmocka_unit_test(config_tapping_term),
+    cmocka_unit_test(config_tapping_term_per_key),
+    cmocka_unit_test(config_shift_tapping_term),
+    cmocka_unit_test(config_permissive_hold),
+    cmocka_unit_test(config_chordal_hold),
+    cmocka_unit_test(config_flow_tap_term),
+    cmocka_unit_test(config_quick_tap_term),
+    cmocka_unit_test(config_no_hold_on_other_key_press),
+    cmocka_unit_test(config_no_retro_tapping),
     cmocka_unit_test(config_serial_number),
 };
 
