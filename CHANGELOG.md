@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/Crpaxton4/moonlander-layout/compare/v1.11.0...v1.11.1) (2026-11-07)
+
+
+### Code Refactoring
+
+* **firmware:** group the declarations of each c file in regions ([#172](https://github.com/Crpaxton4/moonlander-layout/issues/172)) ([1a4183d](https://github.com/Crpaxton4/moonlander-layout/commit/1a4183d7c25294d9fdac620c823f9d782a85735b))
+
 ## [1.11.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.10.0...v1.11.0) (2026-11-07)
 
 
