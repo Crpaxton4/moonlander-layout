@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.9.0...v1.10.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add automatic bracket pairs with jump-out ([#152](https://github.com/Crpaxton4/moonlander-layout/issues/152)) ([7f29616](https://github.com/Crpaxton4/moonlander-layout/commit/7f2961644c2385b79639e4aeafefd11220586b5b))
+
 ## [1.9.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.8.0...v1.9.0) (2026-11-07)
 
 
