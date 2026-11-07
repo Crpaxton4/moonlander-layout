@@ -4,10 +4,16 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdio.h>
 
 #include "converter.h"
+
+// #endregion
+
+// #region Macros
 
 /** Typed text, for carpalx and the keyboard_layout_optimizer ngrams tool */
 #define OUTPUT_CORPUS "corpus.txt"
@@ -29,6 +35,10 @@
 
 /** Markdown summary of the usage, the profiling and the data quality */
 #define OUTPUT_REPORT "report.md"
+
+// #endregion
+
+// #region Functions
 
 /**
  * Writes the errno message of a failed file operation to standard error.
@@ -64,3 +74,5 @@ bool close_output(FILE *file, const char *name);
  * @return false after an error message.
  */
 bool write_count_files(converter_t *converter, const char *folder);
+
+// #endregion

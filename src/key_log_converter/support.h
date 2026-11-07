@@ -4,7 +4,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stddef.h>
+
+// #endregion
+
+// #region Macros
 
 /** Number of items in an array. A pointer gives a wrong result */
 #define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
@@ -24,11 +30,19 @@
 /** Decimals of a time in microseconds, thus whole nanoseconds */
 #define MICROSECOND_DECIMALS 3
 
+// #endregion
+
+// #region Types
+
 /** Ratio of two numbers */
 typedef struct {
     unsigned long long part;  /**< Dividend */
     unsigned long long whole; /**< Divisor, 0 for a ratio with no value */
 } ratio_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Grows an array so that it can hold one more item than count.
@@ -72,3 +86,5 @@ void format_ratio(char text[NUMBER_TEXT_SIZE], ratio_t ratio, size_t decimals);
  * @param seconds Time in seconds as a ratio.
  */
 void format_microseconds(char text[NUMBER_TEXT_SIZE], ratio_t seconds);
+
+// #endregion

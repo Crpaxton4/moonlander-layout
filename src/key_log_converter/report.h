@@ -4,9 +4,15 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdio.h>
 
 #include "converter.h"
+
+// #endregion
+
+// #region Functions
 
 /**
  * Writes the summary. The number formats are fixed and the sort orders are stable,
@@ -16,3 +22,5 @@
  * @param converter Totals of the run. The tables of names get their sort order.
  */
 void write_report(FILE *file, converter_t *converter);
+
+// #endregion

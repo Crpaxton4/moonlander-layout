@@ -2,11 +2,17 @@
  * Usage table of the HID keyboard page for the Windows US English layout
  */
 
+// #region Includes
+
 #include <stdio.h>
 #include <string.h>
 
 #include "hid_usage.h"
 #include "support.h"
+
+// #endregion
+
+// #region Types
 
 /** Name and characters of one HID usage */
 typedef struct {
@@ -14,6 +20,16 @@ typedef struct {
     char        plain;   /**< Character with no Shift, or '\0' */
     char        shifted; /**< Character with Shift, or '\0' */
 } usage_t;
+
+/** Modifier of a shortcut name and its HID modifier bits */
+typedef struct {
+    uint8_t     mask; /**< Left and right bits */
+    const char *name; /**< Name in the shortcut */
+} modifier_t;
+
+// #endregion
+
+// #region Data
 
 /**
  * Usages, indexed by HID usage. The keypad assumes Num Lock on. With Shift, Windows
@@ -134,12 +150,6 @@ static const usage_t usages[] = {
     [0x73] = {"F24", '\0', '\0'},
 };
 
-/** Modifier of a shortcut name and its HID modifier bits */
-typedef struct {
-    uint8_t     mask; /**< Left and right bits */
-    const char *name; /**< Name in the shortcut */
-} modifier_t;
-
 /** Modifiers in the order of the shortcut names */
 static const modifier_t modifiers[] = {
     {MODS_CTRL, "Ctrl+"},
@@ -147,6 +157,10 @@ static const modifier_t modifiers[] = {
     {MODS_ALT, "Alt+"},
     {MODS_GUI, "GUI+"},
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Finds the table entry of a usage.
@@ -161,14 +175,6 @@ static const usage_t *find_usage(uint8_t usage) {
     return &usages[usage];
 }
 
-char usage_character(uint8_t usage, bool shifted) {
-    const usage_t *entry = find_usage(usage);
-    if (entry == NULL) {
-        return '\0';
-    }
-    return shifted ? entry->shifted : entry->plain;
-}
-
 /**
  * Adds text to the end of a shortcut name. snprintf() cuts a text that is too long.
  *
@@ -178,6 +184,18 @@ char usage_character(uint8_t usage, bool shifted) {
 static void append_name(char name[SHORTCUT_NAME_SIZE], const char *text) {
     size_t length = strlen(name);
     snprintf(name + length, SHORTCUT_NAME_SIZE - length, "%s", text);
+}
+
+// #endregion
+
+// #region Public functions
+
+char usage_character(uint8_t usage, bool shifted) {
+    const usage_t *entry = find_usage(usage);
+    if (entry == NULL) {
+        return '\0';
+    }
+    return shifted ? entry->shifted : entry->plain;
 }
 
 void write_shortcut_name(key_press_t press, char name[SHORTCUT_NAME_SIZE]) {
@@ -196,3 +214,5 @@ void write_shortcut_name(key_press_t press, char name[SHORTCUT_NAME_SIZE]) {
     }
     append_name(name, entry->name);
 }
+
+// #endregion

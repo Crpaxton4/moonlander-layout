@@ -2,6 +2,8 @@
  * Parser of the log records. Tables give the fields of each record type
  */
 
+// #region Includes
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -10,6 +12,10 @@
 
 #include "record.h"
 #include "support.h"
+
+// #endregion
+
+// #region Macros
 
 /** Character between two fields */
 #define FIELD_SEPARATOR ','
@@ -20,16 +26,25 @@
 /** Characters that hid_listen writes after a status text while it waits */
 #define STATUS_PROGRESS "."
 
-/**
- * Status texts of hid_listen. The text can be in front of a record on the same
- * line, so the parser removes it
- */
-static const char *const status_texts[] = {
-    "Waiting for device:",
-    "Waiting for new device:",
-    "Listening:",
-    "Device disconnected.",
-};
+/** Most fields of a record type */
+#define MAX_FIELD_COUNT INPUT_FIELD_COUNT
+
+/** Base of a decimal number field */
+#define DECIMAL_BASE 10
+
+/** Base of a hexadecimal number field */
+#define HEX_BASE 16
+
+/** Characters of a handler name. Other characters can break the Markdown report */
+#define NAME_CHARACTERS \
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+
+/** Field count that split_fields() gives for a line with too many fields */
+#define TOO_MANY_FIELDS (MAX_FIELD_COUNT + 1)
+
+// #endregion
+
+// #region Enumerations
 
 /** Field positions that all record types share */
 enum {
@@ -93,31 +108,6 @@ enum {
     STACK_FIELD_COUNT,                       /**< Fields of a stack record */
 };
 
-/** Most fields of a record type */
-#define MAX_FIELD_COUNT INPUT_FIELD_COUNT
-
-/** Base of a decimal number field */
-#define DECIMAL_BASE 10
-
-/** Base of a hexadecimal number field */
-#define HEX_BASE 16
-
-/** Characters of a handler name. Other characters can break the Markdown report */
-#define NAME_CHARACTERS \
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
-
-/** Field count that split_fields() gives for a line with too many fields */
-#define TOO_MANY_FIELDS (MAX_FIELD_COUNT + 1)
-
-/** Value of a field */
-typedef unsigned long long field_value_t;
-
-/** Text and value of one field */
-typedef struct {
-    const char   *text;  /**< Field text, terminated at its separator */
-    field_value_t value; /**< Value after a parse */
-} field_t;
-
 /**
  * Value formats of the fields. FORMAT_HEX_BYTE is the zero value, so a field that a
  * format table does not list is a hexadecimal byte.
@@ -135,6 +125,19 @@ typedef enum {
     FORMAT_NAME,         /**< Handler name of NAME_CHARACTERS */
     FORMAT_COUNT,        /**< Number of formats */
 } field_format_t;
+
+// #endregion
+
+// #region Types
+
+/** Value of a field */
+typedef unsigned long long field_value_t;
+
+/** Text and value of one field */
+typedef struct {
+    const char   *text;  /**< Field text, terminated at its separator */
+    field_value_t value; /**< Value after a parse */
+} field_t;
 
 /** Word of a field and the value that it gives */
 typedef struct {
@@ -163,80 +166,52 @@ struct format_rule {
 };
 
 /**
- * Parses a number field. strtoull() accepts a sign and leading blanks, so the
- * function first checks for a digit.
+ * Copies the field values of one record type into a record.
  *
- * @param rule  Range of the number.
- * @param field Field that gets its value.
- * @param base  strtoull() base of the number.
- * @return true for a number that has only digits and is in the range.
+ * @param fields Fields by field position.
+ * @param record Record that gets the values.
  */
-static bool parse_number(const format_rule_t *rule, field_t *field, int base) {
-    if (!isxdigit((unsigned char)field->text[0])) {
-        return false;
-    }
-    char *end    = NULL;
-    errno        = 0;
-    field->value = strtoull(field->text, &end, base);
-    if (errno != 0 || *end != '\0' || field->value < rule->minimum) {
-        return false;
-    }
-    return field->value <= rule->maximum;
-}
+typedef void record_store_t(const field_t *fields, record_t *record);
+
+/** Field layout of one record type */
+typedef struct {
+    const char           *letter;      /**< Second field of the record */
+    record_type_t         type;        /**< Record type */
+    size_t                field_count; /**< Fields of the record */
+    const field_format_t *formats;     /**< Format of each field */
+    record_store_t       *store;       /**< Copy of the values into a record */
+} record_layout_t;
+
+// #endregion
+
+// #region Function declarations
+
+static bool parse_decimal(const format_rule_t *rule, field_t *field);
+static bool parse_hex(const format_rule_t *rule, field_t *field);
+static bool parse_name(const format_rule_t *rule, field_t *field);
+static bool parse_word(const format_rule_t *rule, field_t *field);
+static void store_state(const field_t *fields, record_t *record);
+static void store_input(const field_t *fields, record_t *record);
+static void store_output(const field_t *fields, record_t *record);
+static void store_clock(const field_t *fields, record_t *record);
+static void store_handler(const field_t *fields, record_t *record);
+static void store_scans(const field_t *fields, record_t *record);
+static void store_stack(const field_t *fields, record_t *record);
+
+// #endregion
+
+// #region Data
 
 /**
- * Parses a decimal number field.
- *
- * @param rule  Range of the number.
- * @param field Field that gets its value.
- * @return true for a decimal number in the range.
+ * Status texts of hid_listen. The text can be in front of a record on the same
+ * line, so the parser removes it
  */
-static bool parse_decimal(const format_rule_t *rule, field_t *field) {
-    return parse_number(rule, field, DECIMAL_BASE);
-}
-
-/**
- * Parses a hexadecimal number field.
- *
- * @param rule  Range of the number.
- * @param field Field that gets its value.
- * @return true for a hexadecimal number in the range.
- */
-static bool parse_hex(const format_rule_t *rule, field_t *field) {
-    return parse_number(rule, field, HEX_BASE);
-}
-
-/**
- * Checks a name field. The field keeps its text, and its value is not used.
- *
- * @param rule  Longest permitted name.
- * @param field Field with the name.
- * @return true for a name of NAME_CHARACTERS that is not empty and not too long.
- */
-static bool parse_name(const format_rule_t *rule, field_t *field) {
-    size_t length = strlen(field->text);
-    if (length == 0 || length > rule->maximum) {
-        return false;
-    }
-    return strspn(field->text, NAME_CHARACTERS) == length;
-}
-
-/**
- * Parses a word field.
- *
- * @param rule  Permitted words.
- * @param field Field that gets its value.
- * @return true for a permitted word.
- */
-static bool parse_word(const format_rule_t *rule, field_t *field) {
-    for (const word_t *word = rule->words; word->text != NULL; word++) {
-        if (strcmp(word->text, field->text) == 0) {
-            field->value = word->value;
-            return true;
-        }
-    }
-    return false;
-}
+static const char *const status_texts[] = {
+    "Waiting for device:",
+    "Waiting for new device:",
+    "Listening:",
+    "Device disconnected.",
+};
 
 /** Words of a state record, with logging_state_t values */
 static const word_t state_words[] = {
@@ -322,22 +297,96 @@ static const field_format_t stack_formats[STACK_FIELD_COUNT] = {
     [STACK_FIELD_FREE_BYTES] = FORMAT_DECIMAL,
 };
 
-/**
- * Copies the field values of one record type into a record.
- *
- * @param fields Fields by field position.
- * @param record Record that gets the values.
- */
-typedef void record_store_t(const field_t *fields, record_t *record);
+/** Layouts of the record types */
+static const record_layout_t layouts[RECORD_TYPE_COUNT] = {
+    {"S", RECORD_STATE, STATE_FIELD_COUNT, state_formats, store_state},
+    {"I", RECORD_INPUT, INPUT_FIELD_COUNT, input_formats, store_input},
+    {"O", RECORD_OUTPUT, OUTPUT_FIELD_COUNT, output_formats, store_output},
+    {"C", RECORD_CLOCK, CLOCK_FIELD_COUNT, clock_formats, store_clock},
+    {"P", RECORD_HANDLER, HANDLER_FIELD_COUNT, handler_formats, store_handler},
+    {"R", RECORD_SCANS, SCANS_FIELD_COUNT, scans_formats, store_scans},
+    {"H", RECORD_STACK, STACK_FIELD_COUNT, stack_formats, store_stack},
+};
 
-/** Field layout of one record type */
-typedef struct {
-    const char           *letter;      /**< Second field of the record */
-    record_type_t         type;        /**< Record type */
-    size_t                field_count; /**< Fields of the record */
-    const field_format_t *formats;     /**< Format of each field */
-    record_store_t       *store;       /**< Copy of the values into a record */
-} record_layout_t;
+// #endregion
+
+// #region Static functions
+
+/**
+ * Parses a number field. strtoull() accepts a sign and leading blanks, so the
+ * function first checks for a digit.
+ *
+ * @param rule  Range of the number.
+ * @param field Field that gets its value.
+ * @param base  strtoull() base of the number.
+ * @return true for a number that has only digits and is in the range.
+ */
+static bool parse_number(const format_rule_t *rule, field_t *field, int base) {
+    if (!isxdigit((unsigned char)field->text[0])) {
+        return false;
+    }
+    char *end    = NULL;
+    errno        = 0;
+    field->value = strtoull(field->text, &end, base);
+    if (errno != 0 || *end != '\0' || field->value < rule->minimum) {
+        return false;
+    }
+    return field->value <= rule->maximum;
+}
+
+/**
+ * Parses a decimal number field.
+ *
+ * @param rule  Range of the number.
+ * @param field Field that gets its value.
+ * @return true for a decimal number in the range.
+ */
+static bool parse_decimal(const format_rule_t *rule, field_t *field) {
+    return parse_number(rule, field, DECIMAL_BASE);
+}
+
+/**
+ * Parses a hexadecimal number field.
+ *
+ * @param rule  Range of the number.
+ * @param field Field that gets its value.
+ * @return true for a hexadecimal number in the range.
+ */
+static bool parse_hex(const format_rule_t *rule, field_t *field) {
+    return parse_number(rule, field, HEX_BASE);
+}
+
+/**
+ * Checks a name field. The field keeps its text, and its value is not used.
+ *
+ * @param rule  Longest permitted name.
+ * @param field Field with the name.
+ * @return true for a name of NAME_CHARACTERS that is not empty and not too long.
+ */
+static bool parse_name(const format_rule_t *rule, field_t *field) {
+    size_t length = strlen(field->text);
+    if (length == 0 || length > rule->maximum) {
+        return false;
+    }
+    return strspn(field->text, NAME_CHARACTERS) == length;
+}
+
+/**
+ * Parses a word field.
+ *
+ * @param rule  Permitted words.
+ * @param field Field that gets its value.
+ * @return true for a permitted word.
+ */
+static bool parse_word(const format_rule_t *rule, field_t *field) {
+    for (const word_t *word = rule->words; word->text != NULL; word++) {
+        if (strcmp(word->text, field->text) == 0) {
+            field->value = word->value;
+            return true;
+        }
+    }
+    return false;
+}
 
 /**
  * Copies the values of a state record.
@@ -425,17 +474,6 @@ static void store_scans(const field_t *fields, record_t *record) {
 static void store_stack(const field_t *fields, record_t *record) {
     record->stack_free_bytes = (uint32_t)fields[STACK_FIELD_FREE_BYTES].value;
 }
-
-/** Layouts of the record types */
-static const record_layout_t layouts[RECORD_TYPE_COUNT] = {
-    {"S", RECORD_STATE, STATE_FIELD_COUNT, state_formats, store_state},
-    {"I", RECORD_INPUT, INPUT_FIELD_COUNT, input_formats, store_input},
-    {"O", RECORD_OUTPUT, OUTPUT_FIELD_COUNT, output_formats, store_output},
-    {"C", RECORD_CLOCK, CLOCK_FIELD_COUNT, clock_formats, store_clock},
-    {"P", RECORD_HANDLER, HANDLER_FIELD_COUNT, handler_formats, store_handler},
-    {"R", RECORD_SCANS, SCANS_FIELD_COUNT, scans_formats, store_scans},
-    {"H", RECORD_STACK, STACK_FIELD_COUNT, stack_formats, store_stack},
-};
 
 /**
  * Cuts a line into fields at each FIELD_SEPARATOR.
@@ -535,6 +573,10 @@ static char *skip_status_texts(char *line) {
     return text;
 }
 
+// #endregion
+
+// #region Public functions
+
 bool parse_record(char *line, record_t *record) {
     field_t                fields[MAX_FIELD_COUNT] = {{.text = NULL}};
     size_t                 count  = split_fields(skip_status_texts(line), fields);
@@ -552,3 +594,5 @@ bool parse_record(char *line, record_t *record) {
     layout->store(fields, record);
     return true;
 }
+
+// #endregion

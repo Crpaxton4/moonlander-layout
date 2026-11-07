@@ -4,11 +4,17 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stddef.h>
 #include <stdint.h>
 
 #include "hid_usage.h"
 #include "record.h"
+
+// #endregion
+
+// #region Macros
 
 /** Rows of the Moonlander (rev A) QMK matrix, both halves */
 #define MATRIX_ROWS 12
@@ -21,6 +27,10 @@
 
 /** Bytes of the longest name of a name count, with its terminator */
 #define COUNT_NAME_SIZE SHORTCUT_NAME_SIZE
+
+// #endregion
+
+// #region Types
 
 /** Number of pushes or corrections */
 typedef unsigned long long count_t;
@@ -70,6 +80,10 @@ typedef struct {
     size_t         capacity; /**< Items that the array can hold */
 } named_counts_t;
 
+// #endregion
+
+// #region Functions
+
 /**
  * Finds the count of a position and layer, and adds a zero count if none exists.
  *
@@ -117,3 +131,5 @@ void add_named_count(named_counts_t *counts, const char *name);
  * @param counts Table of counts.
  */
 void sort_named_counts(named_counts_t *counts);
+
+// #endregion

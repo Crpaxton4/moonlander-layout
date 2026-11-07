@@ -2,6 +2,8 @@
  * Output file paths and the count files
  */
 
+// #region Includes
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +11,10 @@
 #include "outputs.h"
 #include "report.h"
 #include "support.h"
+
+// #endregion
+
+// #region Macros
 
 /** Windows also accepts this separator */
 #define PATH_SEPARATOR "/"
@@ -30,6 +36,10 @@
 /** Half of the whole goes into the sum before the division, so that it rounds */
 #define ROUNDING_DIVISOR 2ULL
 
+// #endregion
+
+// #region Types
+
 /**
  * Writes the lines of one count file.
  *
@@ -38,37 +48,37 @@
  */
 typedef void count_writer_t(FILE *file, converter_t *converter);
 
-void report_file_error(const char *path) {
-    fprintf(stderr, "key_log_converter: %s: %s\n", path, strerror(errno));
-}
+/** Count file and the function that writes its lines */
+typedef struct {
+    const char     *name;   /**< File name in the output folder */
+    count_writer_t *writer; /**< Writer of the lines */
+} count_file_t;
 
-FILE *open_output(const char *folder, const char *name) {
-    size_t size = strlen(folder) + strlen(PATH_SEPARATOR) + strlen(name) + sizeof("");
-    char  *path = malloc(size);
-    if (path == NULL) {
-        perror("key_log_converter");
-        abort();
-    }
-    snprintf(path, size, "%s%s%s", folder, PATH_SEPARATOR, name);
-    FILE *file = fopen(path, "wb");
-    if (file == NULL) {
-        report_file_error(path);
-    }
-    free(path);
-    return file;
-}
+// #endregion
 
-bool close_output(FILE *file, const char *name) {
-    if (file == NULL) {
-        return true;
-    }
-    bool written = ferror(file) == 0;
-    if (fclose(file) != 0 || !written) {
-        report_file_error(name);
-        return false;
-    }
-    return true;
-}
+// #region Function declarations
+
+static void write_usage_lines(FILE *file, converter_t *converter);
+static void write_correction_lines(FILE *file, converter_t *converter);
+static void write_shortcut_lines(FILE *file, converter_t *converter);
+static void write_profile_lines(FILE *file, converter_t *converter);
+
+// #endregion
+
+// #region Data
+
+/** Count files in the order of their writes. The report uses the sorted tables */
+static const count_file_t count_files[] = {
+    {OUTPUT_USAGE, write_usage_lines},
+    {OUTPUT_CORRECTIONS, write_correction_lines},
+    {OUTPUT_SHORTCUTS, write_shortcut_lines},
+    {OUTPUT_PROFILE, write_profile_lines},
+    {OUTPUT_REPORT, write_report},
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Writes the push count of each position and layer. Each layer up to the highest
@@ -180,20 +190,41 @@ static void write_profile_lines(FILE *file, converter_t *converter) {
     }
 }
 
-/** Count file and the function that writes its lines */
-typedef struct {
-    const char     *name;   /**< File name in the output folder */
-    count_writer_t *writer; /**< Writer of the lines */
-} count_file_t;
+// #endregion
 
-/** Count files in the order of their writes. The report uses the sorted tables */
-static const count_file_t count_files[] = {
-    {OUTPUT_USAGE, write_usage_lines},
-    {OUTPUT_CORRECTIONS, write_correction_lines},
-    {OUTPUT_SHORTCUTS, write_shortcut_lines},
-    {OUTPUT_PROFILE, write_profile_lines},
-    {OUTPUT_REPORT, write_report},
-};
+// #region Public functions
+
+void report_file_error(const char *path) {
+    fprintf(stderr, "key_log_converter: %s: %s\n", path, strerror(errno));
+}
+
+FILE *open_output(const char *folder, const char *name) {
+    size_t size = strlen(folder) + strlen(PATH_SEPARATOR) + strlen(name) + sizeof("");
+    char  *path = malloc(size);
+    if (path == NULL) {
+        perror("key_log_converter");
+        abort();
+    }
+    snprintf(path, size, "%s%s%s", folder, PATH_SEPARATOR, name);
+    FILE *file = fopen(path, "wb");
+    if (file == NULL) {
+        report_file_error(path);
+    }
+    free(path);
+    return file;
+}
+
+bool close_output(FILE *file, const char *name) {
+    if (file == NULL) {
+        return true;
+    }
+    bool written = ferror(file) == 0;
+    if (fclose(file) != 0 || !written) {
+        report_file_error(name);
+        return false;
+    }
+    return true;
+}
 
 bool write_count_files(converter_t *converter, const char *folder) {
     bool success = true;
@@ -209,3 +240,5 @@ bool write_count_files(converter_t *converter, const char *folder) {
     }
     return success;
 }
+
+// #endregion

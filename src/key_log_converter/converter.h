@@ -4,6 +4,8 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -12,6 +14,10 @@
 #include "counters.h"
 #include "profile.h"
 #include "record.h"
+
+// #endregion
+
+// #region Types
 
 /** Counts that the converter writes to standard output */
 typedef struct {
@@ -55,6 +61,10 @@ typedef struct {
     summary_t         summary;           /**< Counts for standard output */
 } converter_t;
 
+// #endregion
+
+// #region Functions
+
 /**
  * Starts a log file with no session and no record before it.
  *
@@ -76,3 +86,5 @@ void convert_record(converter_t *converter, const record_t *record);
  * @param converter Outputs and totals.
  */
 void end_stream(converter_t *converter);
+
+// #endregion

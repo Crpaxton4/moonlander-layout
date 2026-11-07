@@ -3,12 +3,18 @@
  * value that the logs cannot give is NO_VALUE_TEXT
  */
 
+// #region Includes
+
 #include <stdio.h>
 #include <string.h>
 
 #include "markdown.h"
 #include "report.h"
 #include "support.h"
+
+// #endregion
+
+// #region Macros
 
 /** Unit of a time in microseconds */
 #define MICROSECONDS_UNIT "µs"
@@ -40,6 +46,10 @@
 /** Decimals of a correction rate or a percent */
 #define PERCENT_DECIMALS 2
 
+// #endregion
+
+// #region Enumerations
+
 /** Columns of a metric table */
 enum {
     METRIC_LABEL_COLUMN, /**< Name of the metric */
@@ -64,6 +74,27 @@ enum {
     HANDLER_COLUMN_COUNT,   /**< Columns */
 };
 
+// #endregion
+
+// #region Types
+
+/** Label and value of a metric row with a count */
+typedef struct {
+    const char *label; /**< Name of the metric */
+    count_t     value; /**< Count */
+} count_metric_t;
+
+/** Heading and columns of a list of the largest name counts */
+typedef struct {
+    const char *heading;                   /**< Markdown heading */
+    column_t    columns[TOP_COLUMN_COUNT]; /**< Columns */
+    const char *name_mark;                 /**< Text on the two sides of each name */
+} top_list_t;
+
+// #endregion
+
+// #region Data
+
 /** Columns of a metric table */
 static const column_t metric_columns[METRIC_COLUMN_COUNT] = {
     [METRIC_LABEL_COLUMN] = {"Metric", ALIGN_LEFT},
@@ -78,19 +109,6 @@ static const column_t handler_columns[HANDLER_COLUMN_COUNT] = {
     [HANDLER_MAXIMUM_COLUMN] = {"Maximum µs", ALIGN_RIGHT},
     [HANDLER_SHARE_COLUMN]   = {"Share of a scan", ALIGN_RIGHT},
 };
-
-/** Label and value of a metric row with a count */
-typedef struct {
-    const char *label; /**< Name of the metric */
-    count_t     value; /**< Count */
-} count_metric_t;
-
-/** Heading and columns of a list of the largest name counts */
-typedef struct {
-    const char *heading;                   /**< Markdown heading */
-    column_t    columns[TOP_COLUMN_COUNT]; /**< Columns */
-    const char *name_mark;                 /**< Text on the two sides of each name */
-} top_list_t;
 
 /** Names of the new keys */
 static const top_list_t key_list = {
@@ -112,6 +130,10 @@ static const top_list_t shortcut_list = {
     .columns   = {{"Shortcut", ALIGN_LEFT}, {"Pushes", ALIGN_RIGHT}},
     .name_mark = "",
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Writes a duration as hours, minutes and seconds. The seconds round down.
@@ -388,9 +410,15 @@ static void write_data_quality(FILE *file, const converter_t *converter) {
     write_table(file, &table);
 }
 
+// #endregion
+
+// #region Public functions
+
 void write_report(FILE *file, converter_t *converter) {
     fputs("# Key log report\n", file);
     write_usage(file, converter);
     write_profiling(file, &converter->profile);
     write_data_quality(file, converter);
 }
+
+// #endregion

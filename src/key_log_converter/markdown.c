@@ -2,11 +2,17 @@
  * Markdown tables with padded cells, as Prettier writes them
  */
 
+// #region Includes
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "markdown.h"
 #include "support.h"
+
+// #endregion
+
+// #region Macros
 
 /** Prettier makes each column at least as wide as the three dashes of a delimiter */
 #define MIN_COLUMN_WIDTH 3
@@ -20,11 +26,19 @@
 /** Paragraph in place of a table with no rows */
 #define EMPTY_TABLE_TEXT "None."
 
+// #endregion
+
+// #region Data
+
 /** End of the delimiter of each alignment, after the dashes */
 static const char *const delimiter_ends[] = {
     [ALIGN_LEFT]  = "",
     [ALIGN_RIGHT] = ":",
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the width of a text. Each UTF-8 character has the width 1, as for Prettier.
@@ -174,6 +188,10 @@ static void write_body_lines(FILE *file, const table_t *table, const size_t *wid
     }
 }
 
+// #endregion
+
+// #region Public functions
+
 void write_block(FILE *file, const char *text) {
     fprintf(file, "\n%s\n", text);
 }
@@ -201,3 +219,5 @@ void write_table(FILE *file, table_t *table) {
     table->row_count = 0;
     table->capacity  = 0;
 }
+
+// #endregion
