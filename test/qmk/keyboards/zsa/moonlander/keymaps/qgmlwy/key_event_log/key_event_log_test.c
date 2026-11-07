@@ -184,6 +184,13 @@ static void key_event_log_r6_input_record_of_a_mod_tap_key(void **state) {
     assert_console_text("KL,I,0,d,2,3,0,2107,00,00,0,0\n");
 }
 
+static void key_event_log_r6_input_record_of_a_symbol_hold(void **state) {
+    (void)state;
+    start_with_logging(true);
+    assert_false(send_key_event(LT(0, KC_Z), true));
+    assert_console_text("KL,I,0,d,2,3,0,401D,00,00,0,0\n");
+}
+
 static void key_event_log_r7_output_record_of_a_changed_report(void **state) {
     (void)state;
     start_with_logging(true);
@@ -291,6 +298,7 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r6_input_record_of_a_push),
     cmocka_unit_test(key_event_log_r6_input_record_of_a_release),
     cmocka_unit_test(key_event_log_r6_input_record_of_a_mod_tap_key),
+    cmocka_unit_test(key_event_log_r6_input_record_of_a_symbol_hold),
     cmocka_unit_test(key_event_log_r7_output_record_of_a_changed_report),
     cmocka_unit_test(key_event_log_r7_output_record_of_an_nkro_report),
     cmocka_unit_test(key_event_log_r9_idle_off_after_thirty_minutes),

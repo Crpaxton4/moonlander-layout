@@ -67,7 +67,8 @@ add_library(qgmlwy_keymap STATIC
     ${KEYMAP_DIR}/tap_dance/dances.c
     ${KEYMAP_DIR}/tap_hold/tap_hold.c
     ${KEYMAP_DIR}/key_event_log/key_event_log.c
-    ${KEYMAP_DIR}/status_leds/status_leds.c)
+    ${KEYMAP_DIR}/status_leds/status_leds.c
+    ${KEYMAP_DIR}/symbol_holds/symbol_holds.c)
 target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
 target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk keymap_logic)
 
@@ -80,4 +81,6 @@ add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_test.c
     LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/status_leds/status_leds_test.c LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/tap_dance/tap_dance_test.c LIBRARIES qgmlwy_keymap)
+add_cmocka_test(${KEYMAP_TESTS}/symbol_holds/symbol_holds_test.c
+    LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/tap_hold/tap_hold_test.c LIBRARIES qgmlwy_keymap)

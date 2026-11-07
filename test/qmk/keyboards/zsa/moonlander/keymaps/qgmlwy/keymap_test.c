@@ -100,11 +100,11 @@ static void keymap_base_left_bottom_letter_row(void **state) {
         .keys =
             {
                 KC_NO,
-                KC_Z,
-                KC_X,
-                KC_C,
-                KC_V,
-                KC_J,
+                LT(0, KC_Z),
+                LT(0, KC_X),
+                LT(0, KC_C),
+                LT(0, KC_V),
+                LT(0, KC_J),
                 NO_PHYSICAL_KEY,
             },
     };
@@ -199,12 +199,12 @@ static void keymap_base_right_bottom_letter_row(void **state) {
         .keys =
             {
                 NO_PHYSICAL_KEY,
-                KC_K,
-                KC_P,
-                KC_COMMA,
-                KC_DOT,
-                KC_SLASH,
-                TD(DANCE_LEFT_BRACKETS),
+                LT(0, KC_K),
+                LT(0, KC_P),
+                LT(0, KC_COMMA),
+                LT(0, KC_DOT),
+                LT(0, KC_SLASH),
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, RIGHT_BOTTOM_LETTER_ROW, &expected);
@@ -221,7 +221,7 @@ static void keymap_base_right_bottom_row(void **state) {
                 QK_MOUSE_CURSOR_UP,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
-                TD(DANCE_RIGHT_BRACKETS),
+                KC_NO,
             },
     };
     assert_row(LAYER_BASE, RIGHT_BOTTOM_ROW, &expected);
