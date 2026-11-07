@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.32](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.31...v1.0.32) (2026-11-07)
+
+
+### Code Refactoring
+
+* **firmware:** write every doc comment as a /** */ block ([#135](https://github.com/Crpaxton4/moonlander-layout/issues/135)) ([e5cc208](https://github.com/Crpaxton4/moonlander-layout/commit/e5cc208bda9fe5dd64457a734a6b40bee22804e7))
+
 ## [1.0.31](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.30...v1.0.31) (2026-11-07)
 
 
