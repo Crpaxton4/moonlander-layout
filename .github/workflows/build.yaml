@@ -27,9 +27,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # A skipped job satisfies its required check, but a `paths:` filter keeps the
-# check pending. The Doxygen check also covers src/check_standards/
+# check pending. The Doxygen check also covers src/check_standards/ and
+# src/key_log_converter/
 env:
-  FIRMWARE_PATHS: '^src/(qmk|ci|check_standards)/|^test/|^Makefile$|^CMakeLists\.txt$|^CMakePresets\.json$|^strict-c-flags\.txt$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
+  FIRMWARE_PATHS: '^src/(qmk|ci|check_standards|key_log_converter)/|^test/|^Makefile$|^CMakeLists\.txt$|^CMakePresets\.json$|^strict-c-flags\.txt$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
 
 jobs:
   changes:
