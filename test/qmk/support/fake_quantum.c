@@ -8,6 +8,8 @@
 
 #include QMK_KEYBOARD_H
 
+#include "mousekey.h"
+
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -57,6 +59,8 @@ static bool status_leds[FAKE_STATUS_LED_COUNT];
 layer_state_t layer_state;
 
 layer_state_t default_layer_state;
+
+uint8_t mk_max_speed;
 
 /** Name of each recorded function, for the failure output */
 static const char *const function_names[] = {
@@ -128,6 +132,7 @@ void reset_fake_qmk(void) {
     fake_weak_modifiers     = 0;
     layer_state             = 0;
     default_layer_state     = 0;
+    mk_max_speed            = 0;
     host_driver             = &fake_host_driver;
     memset(status_leds, 0, sizeof(status_leds));
 }
