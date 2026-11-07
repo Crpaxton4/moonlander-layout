@@ -67,7 +67,9 @@ clang-tidy: ## Run clang-tidy (needs the compile database)
 
 ANALYZE_CHECKS += doxygen
 
+# Doxygen makes only the last directory of OUTPUT_DIRECTORY
 doxygen: ## Run the Doxygen check
+	@mkdir -p .build
 	@time doxygen Doxyfile
 
 # Only this inner make continues after a failed check, so the firmware build

@@ -3,6 +3,5 @@
 node_modules/
 /.tmp/
 compile_commands.json
-/doxygen/
 /.claude/
 /.vscode/
