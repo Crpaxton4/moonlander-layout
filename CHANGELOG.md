@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.1.0...v1.2.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add home row mods in cags order ([#144](https://github.com/Crpaxton4/moonlander-layout/issues/144)) ([6f58197](https://github.com/Crpaxton4/moonlander-layout/commit/6f58197acaa24e1c59fc91077aba41186888023f))
+
 ## [1.1.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.32...v1.1.0) (2026-11-07)
 
 
