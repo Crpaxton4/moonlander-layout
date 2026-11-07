@@ -5,6 +5,8 @@
  * each record handler that it calls, about 100 cycles for each handler.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "matrix.h"
@@ -13,8 +15,16 @@
 #include "profiling/profiling.h"
 #include "profiling/profiling_hardware.h"
 
+// #endregion
+
+// #region Data
+
 /** Profiling state; all zero at power-up, so profiling is off */
 static profile_t profile;
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives a value for a record. uint32_t is unsigned long on the keyboard and
@@ -104,6 +114,10 @@ static bool measure_handler(size_t call, measured_handler_t handler, uint16_t ke
     return result;
 }
 
+// #endregion
+
+// #region Public functions
+
 bool process_profiled_event(measured_handler_t dispatcher, uint16_t keycode,
                             keyrecord_t *record) {
     if (keycode == PROFILING_TOGGLE) {
@@ -136,3 +150,5 @@ void matrix_scan_user(void) {
         write_interval_records(now);
     }
 }
+
+// #endregion

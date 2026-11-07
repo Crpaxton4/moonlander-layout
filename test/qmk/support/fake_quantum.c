@@ -6,6 +6,8 @@
  * does not compile.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "mousekey.h"
@@ -20,11 +22,29 @@
 #include "recorded_calls.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
 /** Lowest bit of an unsigned value */
 #define LOWEST_BIT 1U
 
 /** Calls that one test case can record; a longer log fails the case */
 #define CALL_LOG_CAPACITY 64
+
+/** Console text that one test case can keep; a longer text fails the case */
+#define CONSOLE_CAPACITY 1024
+
+// #endregion
+
+// #region Function declarations
+
+static void send_fake_keyboard(report_keyboard_t *report);
+static void send_fake_nkro(report_nkro_t *report);
+
+// #endregion
+
+// #region Data
 
 /** Calls since the last reset_fake_qmk(), in call order */
 static qmk_call_t recorded_calls[CALL_LOG_CAPACITY];
@@ -34,9 +54,6 @@ static size_t recorded_call_count;
 
 /** Time in milliseconds since the last reset_fake_qmk() */
 static uint32_t fake_clock_milliseconds;
-
-/** Console text that one test case can keep; a longer text fails the case */
-#define CONSOLE_CAPACITY 1024
 
 /** Console text since the last reset_fake_qmk(), with a terminating zero */
 static char console_text[CONSOLE_CAPACITY];
@@ -80,6 +97,19 @@ static const char *const function_names[] = {
     [CALLED_ADD_MODS]          = "add_mods",
 };
 
+/** Host driver that records the keyboard reports, in place of the USB driver */
+static host_driver_t fake_host_driver = {
+    .send_keyboard = send_fake_keyboard,
+    .send_nkro     = send_fake_nkro,
+};
+
+/** Driver that host_get_driver() gives */
+static host_driver_t *host_driver = &fake_host_driver;
+
+// #endregion
+
+// #region Static functions
+
 /**
  * Adds one call to the end of the log.
  *
@@ -115,34 +145,6 @@ static void send_fake_nkro(report_nkro_t *report) {
     record_call(CALLED_SEND_NKRO, report->mods);
 }
 
-/** Host driver that records the keyboard reports, in place of the USB driver */
-static host_driver_t fake_host_driver = {
-    .send_keyboard = send_fake_keyboard,
-    .send_nkro     = send_fake_nkro,
-};
-
-/** Driver that host_get_driver() gives */
-static host_driver_t *host_driver = &fake_host_driver;
-
-void reset_fake_qmk(void) {
-    recorded_call_count     = 0;
-    fake_clock_milliseconds = 0;
-    console_length          = 0;
-    console_text[0]         = '\0';
-    fake_modifiers          = 0;
-    fake_one_shot_modifiers = 0;
-    fake_weak_modifiers     = 0;
-    layer_state             = 0;
-    default_layer_state     = 0;
-    mk_max_speed            = 0;
-    host_driver             = &fake_host_driver;
-    memset(status_leds, 0, sizeof(status_leds));
-}
-
-void advance_fake_clock(uint32_t milliseconds) {
-    fake_clock_milliseconds += milliseconds;
-}
-
 /**
  * Prints a list of calls, one call on each line.
  *
@@ -176,6 +178,29 @@ static bool calls_match(const qmk_call_t *expected, size_t count) {
         }
     }
     return true;
+}
+
+// #endregion
+
+// #region Public functions
+
+void reset_fake_qmk(void) {
+    recorded_call_count     = 0;
+    fake_clock_milliseconds = 0;
+    console_length          = 0;
+    console_text[0]         = '\0';
+    fake_modifiers          = 0;
+    fake_one_shot_modifiers = 0;
+    fake_weak_modifiers     = 0;
+    layer_state             = 0;
+    default_layer_state     = 0;
+    mk_max_speed            = 0;
+    host_driver             = &fake_host_driver;
+    memset(status_leds, 0, sizeof(status_leds));
+}
+
+void advance_fake_clock(uint32_t milliseconds) {
+    fake_clock_milliseconds += milliseconds;
 }
 
 void assert_recorded_calls(const qmk_call_t *expected, size_t count) {
@@ -339,3 +364,5 @@ void assert_console_text(const char *expected) {
     print_message("Console text:\n%s\n", console_text);
     fail_msg("Console text is not the expected text");
 }
+
+// #endregion

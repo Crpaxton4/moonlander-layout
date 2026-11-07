@@ -9,29 +9,20 @@
 
 #pragma once
 
+// #region Macros
+
+// QMK headers read the matrix size and keep this ARRAY_SIZE, so the macros come
+// before the includes
+
 /** Rows of the Moonlander key matrix: six for each half */
 #define MATRIX_ROWS 12
 
 /** Columns of the Moonlander key matrix */
 #define MATRIX_COLS 7
 
-#include <stddef.h>
-
-#include "fake_state.h"
-
 /** Number of elements of an array; QMK headers keep it, because their version needs GNU
  * C */
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
-#include "action.h"
-#include "action_layer.h"
-#include "action_tapping.h"
-#include "action_util.h"
-#include "host.h"
-#include "process_combo.h"
-#include "progmem.h"
-#include "quantum_keycodes.h"
-#include "timer.h"
 
 /** Sets status LED 1, the leftmost LED, as moonlander.h does on the keyboard */
 #define STATUS_LED_1(status) set_fake_status_led(0, (status))
@@ -45,6 +36,28 @@
 #define STATUS_LED_5(status) set_fake_status_led(4, (status))
 /** Sets status LED 6, the rightmost LED */
 #define STATUS_LED_6(status) set_fake_status_led(5, (status))
+
+// #endregion
+
+// #region Includes
+
+#include <stddef.h>
+
+#include "fake_state.h"
+
+#include "action.h"
+#include "action_layer.h"
+#include "action_tapping.h"
+#include "action_util.h"
+#include "host.h"
+#include "process_combo.h"
+#include "progmem.h"
+#include "quantum_keycodes.h"
+#include "timer.h"
+
+// #endregion
+
+// #region Functions
 
 /**
  * Adds formatted text to the console text that the tests read, as QMK's uprintf()
@@ -97,3 +110,5 @@ void wait_ms(uint32_t milliseconds);
  * @return False when the keymap fully handled the event, true otherwise.
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record);
+
+// #endregion

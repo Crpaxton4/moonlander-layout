@@ -7,7 +7,25 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+
+// #endregion
+
+// #region Macros
+
+#ifdef DEBUG_PROFILE
+/** Key at (4,0): the profiling toggle in the profiling debug build */
+#    define PROFILING_TOGGLE_KEY PROFILING_TOGGLE
+#else
+/** Key at (4,0): no key, so the normal firmware has no profiling code */
+#    define PROFILING_TOGGLE_KEY KC_NO
+#endif
+
+// #endregion
+
+// #region Enumerations
 
 /** Keycodes that only the keymap code handles; QMK keeps SAFE_RANGE and up free */
 enum custom_keycode {
@@ -25,10 +43,4 @@ enum custom_keycode {
     PROFILING_TOGGLE, /**< (4,0) in the profiling debug build: profiling on or off */
 };
 
-#ifdef DEBUG_PROFILE
-/** Key at (4,0): the profiling toggle in the profiling debug build */
-#    define PROFILING_TOGGLE_KEY PROFILING_TOGGLE
-#else
-/** Key at (4,0): no key, so the normal firmware has no profiling code */
-#    define PROFILING_TOGGLE_KEY KC_NO
-#endif
+// #endregion

@@ -7,6 +7,8 @@
  * cases, so each case first sets the state that it needs.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "matrix.h"
@@ -19,6 +21,10 @@
 #include "profiling/profiling.h"
 #include "recorded_calls.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
 
 /** Cycles that the fake gives each measured call */
 #define CALL_CYCLES 40
@@ -37,6 +43,10 @@
 
 /** Layer state with one layer on */
 #define ONLY_LAYER(layer) ((layer_state_t)(1U << (layer)))
+
+// #endregion
+
+// #region Data
 
 /**
  * Records of a print interval that ends at 5000 ms, with one tap of a key that each
@@ -77,6 +87,10 @@ static const char two_interval_text[] = "KL,P,5000,record_user,2,80,40\n"
                                         "KL,P,10001,precision_key,0,0,0\n"
                                         "KL,R,10001,1,5001\n"
                                         "KL,H,10001,1000\n";
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Sends a push or a release of a key to process_record_user().
@@ -263,6 +277,10 @@ static void profiling_toggle_on_again_clears_statistics(void **state) {
                         "KL,H,5000,1000\n");
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in run order */
 static const struct CMUnitTest profiling_cases[] = {
     cmocka_unit_test(profiling_toggle_key_is_at_left_bottom_row_column_0),
@@ -283,3 +301,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(profiling_cases, NULL, NULL);
 }
+
+// #endregion

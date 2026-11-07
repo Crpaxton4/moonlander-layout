@@ -8,9 +8,15 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+// #endregion
+
+// #region Macros
 
 /** Time in ms between two prints of the statistics */
 #define PROFILING_INTERVAL_MILLISECONDS 5000
@@ -20,6 +26,19 @@
  * with another value is a word that a function used.
  */
 #define STACK_FILL_WORD UINT32_C(0x55555555)
+
+/**
+ * Measured call of the first record handler. The handlers follow in the order of
+ * the record handler table of keymap.c.
+ */
+#define FIRST_PROFILED_HANDLER PROFILED_KEY_LOG
+
+/** Number of measured record handlers, one for each entry of the handler table */
+#define PROFILED_HANDLER_COUNT (PROFILED_CALL_COUNT - FIRST_PROFILED_HANDLER)
+
+// #endregion
+
+// #region Enumerations
 
 /** Measured calls, each with its own profile record */
 enum profiled_call {
@@ -34,14 +53,9 @@ enum profiled_call {
     PROFILED_CALL_COUNT,    /**< Number of measured calls */
 };
 
-/**
- * Measured call of the first record handler. The handlers follow in the order of
- * the record handler table of keymap.c.
- */
-#define FIRST_PROFILED_HANDLER PROFILED_KEY_LOG
+// #endregion
 
-/** Number of measured record handlers, one for each entry of the handler table */
-#define PROFILED_HANDLER_COUNT (PROFILED_CALL_COUNT - FIRST_PROFILED_HANDLER)
+// #region Types
 
 /** Statistics of one measured call in one print interval */
 typedef struct {
@@ -57,6 +71,10 @@ typedef struct {
     uint32_t          scan_count;     /**< Matrix scans in the print interval */
     call_statistics_t statistics[PROFILED_CALL_COUNT]; /**< Indexed by profiled_call */
 } profile_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Switches profiling on or off. Switching on clears the statistics and starts a
@@ -127,3 +145,5 @@ const char *profiled_call_name(size_t call);
  * @return Bytes from the stack bottom that still hold STACK_FILL_WORD.
  */
 uint32_t free_stack_bytes(const uint32_t *stack_bottom, size_t word_count);
+
+// #endregion

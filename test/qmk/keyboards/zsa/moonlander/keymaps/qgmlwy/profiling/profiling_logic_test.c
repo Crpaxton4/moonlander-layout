@@ -3,12 +3,18 @@
  * with no QMK code.
  */
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
 #include "profiling/profiling_logic.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
 
 /** Time in ms at which each case switches profiling on */
 #define START_TIME 1000
@@ -42,6 +48,10 @@
 
 /** Number of elements of an array */
 #define ELEMENT_COUNT(array) (sizeof(array) / sizeof((array)[0]))
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Sets a profile to its power-up state, then switches profiling on.
@@ -229,6 +239,10 @@ static void profiling_logic_fill_word_is_the_chibios_pattern(void **state) {
     assert_int_equal(STACK_FILL_WORD, 0x55555555);
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in run order */
 static const struct CMUnitTest profiling_logic_cases[] = {
     cmocka_unit_test(profiling_logic_power_up_state_is_off),
@@ -252,3 +266,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(profiling_logic_cases, NULL, NULL);
 }
+
+// #endregion
