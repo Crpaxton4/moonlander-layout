@@ -4,7 +4,7 @@
 # must not call make. Put new tooling in CMake, not in this file
 
 .PHONY: firmware debug-firmware memory-report build analyze all test checker-test \
-	converter-test qmk-test windows compiledb clean help
+	converter-test qmk-test windows coverage compiledb clean help
 
 firmware:
 	cmake --workflow --preset firmware
@@ -38,6 +38,9 @@ qmk-test:
 
 windows:
 	cmake --workflow --preset windows
+
+coverage:
+	cmake --workflow --preset coverage
 
 compiledb:
 	cmake --workflow --preset compile-databases

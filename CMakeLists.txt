@@ -60,6 +60,17 @@ set(STRICT_C_FLAGS
     -Wjump-misses-init
     # GCC path-based static analysis
     -fanalyzer)
+
+# gcov counters make the programs slower and larger, so only the coverage preset
+# adds them. The GCC analyzer reads the counter code as out-of-bounds accesses. The
+# other GCC builds run the analyzer, so the coverage build does not
+option(MOONLANDER_COVERAGE "Add gcov counters to the host programs and the unit tests"
+    OFF)
+if(MOONLANDER_COVERAGE)
+    list(REMOVE_ITEM STRICT_C_FLAGS -fanalyzer)
+    add_compile_options(--coverage)
+    add_link_options(--coverage)
+endif()
 add_compile_options(${STRICT_C_FLAGS})
 enable_testing()
 
@@ -527,4 +538,75 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
             -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
         VERBATIM)
     add_dependencies(analyze clang-tidy-unit-tests)
+endif()
+
+# ----------------------------------------------------------------------------------
+# Test coverage
+# ----------------------------------------------------------------------------------
+
+# coverage-report makes the reports from the gcov counters of the last test runs, and
+# coverage-gate compares the coverage of each area with its minimum. Each check finds
+# gcovr on PATH when it runs, so the configure step needs no coverage tool
+if(MOONLANDER_COVERAGE)
+    set(COVERAGE_REPORT_DIR ${CMAKE_BINARY_DIR}/report)
+    set(COVERAGE_DATA ${COVERAGE_REPORT_DIR}/coverage.json)
+
+    # Test code, the fake QMK layer, the QMK headers and the tree-sitter grammar are
+    # not code under test. gcovr removes the counters after it reads them, so the
+    # next report shows only the tests that ran after this report
+    add_custom_target(coverage-report
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_REPORT_DIR}
+        COMMAND gcovr --root ${PROJECT_SOURCE_DIR}
+            --filter src/qmk/keyboards/ --filter src/check_standards/
+            --filter src/key_log_converter/
+            --exclude-unreachable-branches --delete
+            --json ${COVERAGE_DATA}
+            --html-details ${COVERAGE_REPORT_DIR}/index.html
+            --lcov ${COVERAGE_REPORT_DIR}/coverage.info
+            --cobertura ${COVERAGE_REPORT_DIR}/cobertura.xml
+            --txt-summary
+            ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        VERBATIM)
+    add_custom_target(coverage-gate)
+
+    # add_coverage_area(<area> PART <part> TITLE <title> DIRECTORY <directory>
+    #     MINIMUM_LINES <percent> MINIMUM_BRANCHES <percent>)
+    #
+    # Adds the gate of one area to coverage-gate if the build has its part. The gate
+    # prints the coverage, writes <area>.md into the report folder and fails if a
+    # value is less than its minimum
+    function(add_coverage_area area)
+        set(values PART TITLE DIRECTORY MINIMUM_LINES MINIMUM_BRANCHES)
+        cmake_parse_arguments(PARSE_ARGV 1 area "" "${values}" "")
+        if(NOT area_PART IN_LIST MOONLANDER_PARTS)
+            return()
+        endif()
+        set(minimums "minimum ${area_MINIMUM_LINES} % lines")
+        string(APPEND minimums ", ${area_MINIMUM_BRANCHES} % branches")
+        add_custom_target(coverage-gate-${area}
+            COMMAND gcovr --root ${PROJECT_SOURCE_DIR}
+                --add-tracefile ${COVERAGE_DATA} --filter ${area_DIRECTORY}
+                --txt-summary
+                --markdown ${COVERAGE_REPORT_DIR}/${area}.md
+                --markdown-title "Coverage of the ${area_TITLE}, ${minimums}"
+                --markdown-heading-level 2
+                --fail-under-line ${area_MINIMUM_LINES}
+                --fail-under-branch ${area_MINIMUM_BRANCHES}
+            COMMENT "Coverage of the ${area_TITLE}, ${minimums}"
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+            VERBATIM)
+        add_dependencies(coverage-gate-${area} coverage-report)
+        add_dependencies(coverage-gate coverage-gate-${area})
+    endfunction()
+
+    # Each minimum is the coverage of main, rounded down to a full percent. Thus a
+    # change that removes a test of a path fails the gate. When the tests get better,
+    # increase the minimum
+    add_coverage_area(keymap PART unit-tests TITLE "keymap"
+        DIRECTORY src/qmk/keyboards/ MINIMUM_LINES 99 MINIMUM_BRANCHES 97)
+    add_coverage_area(checker PART checker TITLE "standards checker"
+        DIRECTORY src/check_standards/ MINIMUM_LINES 97 MINIMUM_BRANCHES 90)
+    add_coverage_area(converter PART converter TITLE "key log converter"
+        DIRECTORY src/key_log_converter/ MINIMUM_LINES 96 MINIMUM_BRANCHES 86)
 endif()

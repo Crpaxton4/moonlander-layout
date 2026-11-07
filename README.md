@@ -38,6 +38,7 @@ The script installs these items:
 - Node at the version in [`versions.env`](versions.env), and the npm devDependencies
 - pre-commit and its git hooks
 - The check tools: shellcheck, tree-sitter, clang-tidy and Doxygen
+- gcovr for the test coverage reports
 - CMake, and cmocka for the unit tests
 - The MinGW-w64 cross compiler, for the Windows build of the key log converter
 
@@ -193,6 +194,7 @@ build directory in `.build/`:
 | `converter`      | The key log converter             | `.build/converter/`  |
 | `unit-tests`     | The keymap unit tests             | `.build/unit-tests/` |
 | `windows`        | The key log converter for Windows | `.build/windows/`    |
+| `coverage`       | The tests, with gcov counters     | `.build/coverage/`   |
 
 The configure step writes the compile database `compile_commands.json` into the build
 directory. Each workflow preset does the configure step and the build of one configure
@@ -242,6 +244,7 @@ runs one command:
 | `make converter-test`   | `cmake --workflow --preset converter-test`    |
 | `make qmk-test`         | `cmake --workflow --preset qmk-test`          |
 | `make windows`          | `cmake --workflow --preset windows`           |
+| `make coverage`         | `cmake --workflow --preset coverage`          |
 | `make compiledb`        | `cmake --workflow --preset compile-databases` |
 | `make clean`            | `cmake --build --preset dev --target clean`   |
 | `make help`             | `cmake --list-presets=all`                    |
@@ -315,6 +318,7 @@ To run the checks, use these commands:
 | `cmake --workflow --preset checker-test`   | Tests the standards checker.          |
 | `cmake --workflow --preset qmk-test`       | Runs the keymap unit tests.           |
 | `cmake --workflow --preset converter-test` | Tests the key log converter.          |
+| `cmake --workflow --preset coverage`       | Measures the test coverage.           |
 
 The static analysis reads the compile databases and builds no program. The keymap
 checks read the compile databases of the firmware and of the debug firmware, so run
@@ -379,6 +383,8 @@ The `Test` and `Analyze` jobs start when the `Build` job is complete, and they r
 the same time. If a PR changes no file that the build, the tests or the analysis
 use, CI skips these three jobs. A skipped job passes its check.
 
+CI also runs the Test coverage check on each PR and on each push to `main`.
+
 ## Unit tests
 
 The keymap unit tests use [cmocka][cmocka] and [CTest][ctest]. The test build compiles
@@ -411,6 +417,51 @@ The CMake presets give the build directory and the compile database
 run and debug each test.
 
 The static analysis also runs clang-tidy on the test code (`clang-tidy-unit-tests`).
+
+## Test coverage
+
+[gcovr][gcovr] makes the test coverage reports from the gcov counters of GCC. This
+command builds the host programs and the unit tests with the counters in
+`.build/coverage/`, runs all the tests and then runs the coverage gate:
+
+```bash
+cmake --workflow --preset coverage
+```
+
+The coverage includes only the code under test: the keymap in `src/qmk/keyboards/`,
+the standards checker and the key log converter. It does not include the test code,
+the fake QMK functions, the QMK headers and the tree-sitter grammar.
+
+The coverage build uses the strict compiler flags, but not `-fanalyzer`. The GCC
+analyzer reads the code of the gcov counters as out-of-bounds accesses. The other GCC
+builds run the analyzer.
+
+The `coverage-report` target writes the reports into `.build/coverage/report/`:
+
+| File            | Contents                                         |
+| --------------- | ------------------------------------------------ |
+| `index.html`    | The coverage of each line and branch, for people |
+| `coverage.info` | The LCOV tracefile                               |
+| `cobertura.xml` | The Cobertura report                             |
+| `coverage.json` | The gcovr data that the gate reads               |
+
+The target reads the counters and then deletes them. Thus, each report shows only
+the tests that ran after the report before it.
+
+The `coverage-gate` target compares the line coverage and the branch coverage of each
+area with a minimum. The areas are the keymap, the standards checker and the key log
+converter. `add_coverage_area` in `CMakeLists.txt` gives the minimums. The gate prints
+the coverage of each area, writes it into `<area>.md` in the report folder, and fails
+if a value is less than its minimum. When the tests get better, increase the minimum.
+
+The Test coverage workflow in CI runs `cmake --workflow --preset coverage` on each PR
+and on each push to `main`. The job summary shows the coverage of each area, and the
+artifact `coverage-report` contains the report folder.
+
+The CMake Tools extension of VS Code can show the coverage of each line after it runs
+the tests with coverage. To use it, select the `coverage` configure preset. Then set
+`cmake.postRunCoverageTarget` to `coverage-report`, and set `cmake.coverageInfoFiles`
+to `${workspaceFolder}/.build/coverage/report/coverage.info`.
 
 ## Key log converter
 
@@ -586,6 +637,7 @@ release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 [cmake]: https://cmake.org/
 [cmocka]: https://cmocka.org/
 [ctest]: https://cmake.org/cmake/help/latest/manual/ctest.1.html
+[gcovr]: https://gcovr.com/
 [keymapp]: https://www.zsa.io/keymapp
 [carpalx]: http://mkweb.bcgsc.ca/carpalx/
 [keyboard-layout-optimizer]: https://github.com/dariogoetz/keyboard_layout_optimizer
