@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.12.1...v1.13.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** keep bracket pairs across left and right moves ([#180](https://github.com/Crpaxton4/moonlander-layout/issues/180)) ([5fef409](https://github.com/Crpaxton4/moonlander-layout/commit/5fef409ffbf00d07bb35e9931c47550abf2fa5ad))
+
 ## [1.12.1](https://github.com/Crpaxton4/moonlander-layout/compare/v1.12.0...v1.12.1) (2026-11-07)
 
 
