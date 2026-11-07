@@ -75,6 +75,9 @@ pre-commit install
 # clang-tidy uses the same LLVM release as clang-format
 uv tool install "clang-tidy==$LLVM_VERSION"
 
+# coverage preset makes its reports with gcovr
+uv tool install "gcovr==$GCOVR_VERSION"
+
 # CI runs the same official release binary, independent of the distribution
 # packages
 DOXYGEN_URL="https://github.com/doxygen/doxygen/releases/download/\

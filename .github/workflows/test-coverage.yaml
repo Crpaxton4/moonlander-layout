@@ -1,0 +1,118 @@
+name: "Test coverage"
+
+# A run on main fills the caches that all PRs can restore. The job is short, so it
+# runs on each PR and needs no change filter
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  coverage:
+    name: "Test coverage"
+    # Apt pins need the Ubuntu release of the development machine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      # Unit tests compile against the QMK headers of this checkout
+      QMK_HOME: ${{ github.workspace }}/qmk_firmware
+    # Dependabot updates each SHA pin and its release comment on the same line
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
+
+      # Unit tests read only the QMK headers, so the checkout has no submodules
+      - name: "Read ZSA firmware pin"
+        id: qmk
+        run: .github/scripts/shared/read-qmk-ref.sh
+      - name: "Check out ZSA firmware headers"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: zsa/qmk_firmware
+          ref: ${{ steps.qmk.outputs.ref }}
+          path: qmk_firmware
+          submodules: false
+          sparse-checkout: |
+            platforms
+            quantum
+            tmk_core
+          persist-credentials: false
+
+      # Checker part needs tree-sitter. The Lint and firmware jobs use the same cache
+      # key
+      - name: "Compute tree-sitter cache key"
+        id: tree-sitter-key
+        run: .github/scripts/shared/compute-tree-sitter-cache-key.sh
+      - name: "Restore tree-sitter packages"
+        id: tree-sitter-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tree-sitter-debs
+          key: ${{ steps.tree-sitter-key.outputs.key }}
+
+      - name: "Download tree-sitter packages"
+        if: ${{ steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: .github/scripts/shared/download-tree-sitter-packages.sh
+
+      - name: "Verify tree-sitter versions"
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: .github/scripts/shared/verify-tree-sitter-versions.sh
+
+      - name: "Unpack tree-sitter"
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: .github/scripts/shared/unpack-tree-sitter.sh
+
+      # Save before the tests, so a failed test does not discard them
+      - name: "Save tree-sitter packages"
+        if: ${{ steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tree-sitter-debs
+          key: ${{ steps.tree-sitter-key.outputs.key }}
+
+      - name: "Install CMake and cmocka"
+        run: .github/scripts/shared/install-unit-test-tools.sh
+
+      # uv downloads from PyPI faster than the Actions cache restores
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+      - name: "Check uv"
+        run: .github/scripts/shared/check-uv-version.sh
+      - name: "Install gcovr"
+        run: .github/scripts/coverage/install-gcovr.sh
+
+      # Workflow builds with gcov counters, runs all tests and then the coverage
+      # gate of each area
+      - name: "Measure test coverage"
+        run: cmake --workflow --preset coverage
+
+      - name: "Summarize coverage"
+        if: ${{ !cancelled() }}
+        env:
+          REPORT_DIR: .build/coverage/report
+        run: .github/scripts/coverage/summarize-coverage.sh
+
+      # upload-artifact skips the dot directory .build/ without include-hidden-files
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-report
+          path: .build/coverage/report/
+          include-hidden-files: true
