@@ -4,6 +4,7 @@
 
 #include QMK_KEYBOARD_H
 
+#include "bracket_pairs/bracket_pairs.h"
 #include "case_modes/case_modes.h"
 #include "case_modes/case_modes_logic.h"
 #include "keycodes/keycodes.h"
@@ -111,6 +112,16 @@ static case_key_t classify_key(uint16_t key, const keyrecord_t *record) {
 }
 
 /**
+ * Sends a key in place of the pushed key, and counts it in the bracket pairs.
+ *
+ * @param keycode Key to send.
+ */
+static void send_key(uint16_t keycode) {
+    tap_code16(keycode);
+    bracket_pairs_count_sent_key(keycode);
+}
+
+/**
  * Lets the pushed key pass.
  *
  * @param keycode Keycode of the pushed key.
@@ -128,7 +139,7 @@ static bool send_as_is(uint16_t keycode) {
  * @return False, so QMK does not also send the key.
  */
 static bool send_with_shift(uint16_t keycode) {
-    tap_code16(LSFT(keycode));
+    send_key(LSFT(keycode));
     return false;
 }
 
@@ -140,7 +151,7 @@ static bool send_with_shift(uint16_t keycode) {
  */
 static bool send_underscore(uint16_t keycode) {
     (void)keycode;
-    tap_code16(KC_UNDERSCORE);
+    send_key(KC_UNDERSCORE);
     return false;
 }
 
@@ -164,7 +175,7 @@ static bool send_nothing(uint16_t keycode) {
  */
 static bool send_backspace_then_space(uint16_t keycode) {
     (void)keycode;
-    tap_code16(KC_BACKSPACE);
+    send_key(KC_BACKSPACE);
     return true;
 }
 
