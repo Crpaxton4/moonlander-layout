@@ -25,6 +25,9 @@ sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
 # make compiledb adds the keymap.c entry with jq
 sudo apt-get install -y "jq=$JQ_VERSION"
 
+# make converter-windows builds the key log converter with this cross compiler
+sudo apt-get install -y "gcc-mingw-w64-x86-64-win32=$MINGW_VERSION"
+
 # check-standards hook builds against these packages
 sudo apt-get install -y build-essential "libtree-sitter-dev=$TREE_SITTER_VERSION" \
     "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
