@@ -1,4 +1,0 @@
-# Tools write these files in their own format
-CHANGELOG.md
-.release-please-manifest.json
-package-lock.json
