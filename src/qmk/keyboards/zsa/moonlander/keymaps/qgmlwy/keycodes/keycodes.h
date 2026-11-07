@@ -14,4 +14,5 @@ enum custom_keycode {
     LOGGING_COMBO_LEFT_POSITION = SAFE_RANGE, /**< Combo key at (1,6), never sent */
     LOGGING_COMBO_RIGHT_POSITION,             /**< Combo key at (1,7), never sent */
     LOGGING_TOGGLE,                           /**< Logging combo: logging on or off */
+    SPECIAL_MODE_KEY, /**< (2,0): special mode on, or off on the special layer */
 };

@@ -14,6 +14,7 @@
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
+#include "special_mode/special_mode.h"
 #include "status_leds/status_leds.h"
 #include "symbol_holds/symbol_holds.h"
 #include "tap_dance/tap_dance.h"
@@ -43,7 +44,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][LEFT_HOME_ROW] =
             {
-                KC_NO,
+                SPECIAL_MODE_KEY,
                 LCTL_T(KC_D),
                 LALT_T(KC_S),
                 LGUI_T(KC_T),
@@ -365,6 +366,121 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
             },
+
+        [LAYER_SPECIAL][LEFT_NUMBER_ROW] =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][LEFT_TOP_ROW] =
+            {
+                KC_TAB,
+                KC_TILDE,
+                KC_AT,
+                KC_CIRCUMFLEX,
+                KC_PERCENT,
+                KC_GRAVE,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][LEFT_HOME_ROW] =
+            {
+                SPECIAL_MODE_KEY,
+                KC_EXCLAIM,
+                KC_ASTERISK,
+                KC_DOLLAR,
+                KC_EQUAL,
+                KC_AMPERSAND,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][LEFT_BOTTOM_LETTER_ROW] =
+            {
+                KC_NO,
+                KC_HASH,
+                KC_PIPE,
+                KC_PLUS,
+                KC_MINUS,
+                KC_NO,
+                NO_PHYSICAL_KEY,
+            },
+        [LAYER_SPECIAL][LEFT_BOTTOM_ROW] =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+            },
+        [LAYER_SPECIAL][LEFT_THUMB_KEYS] =
+            {
+                [LEFT_LARGE_THUMB]  = KC_ENTER,
+                [LEFT_OUTER_THUMB]  = KC_SPACE,
+                [LEFT_MIDDLE_THUMB] = KC_BACKSPACE,
+                [LEFT_INNER_THUMB]  = KC_NO,
+            },
+        [LAYER_SPECIAL][RIGHT_NUMBER_ROW] =
+            {
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][RIGHT_TOP_ROW] =
+            {
+                KC_NO,
+                KC_NO,
+                KC_7,
+                KC_8,
+                KC_9,
+                KC_NO,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][RIGHT_HOME_ROW] =
+            {
+                KC_NO,
+                KC_NO,
+                KC_4,
+                KC_5,
+                KC_6,
+                KC_NO,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][RIGHT_BOTTOM_LETTER_ROW] =
+            {
+                NO_PHYSICAL_KEY,
+                KC_NO,
+                KC_1,
+                KC_2,
+                KC_3,
+                KC_NO,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][RIGHT_BOTTOM_ROW] =
+            {
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+                KC_0,
+                KC_DOT,
+                KC_COMMA,
+                KC_NO,
+                KC_NO,
+            },
+        [LAYER_SPECIAL][RIGHT_THUMB_KEYS] =
+            {
+                [RIGHT_LARGE_THUMB]  = KC_NO,
+                [RIGHT_OUTER_THUMB]  = KC_NO,
+                [RIGHT_MIDDLE_THUMB] = KC_NO,
+                [RIGHT_INNER_THUMB]  = KC_NO,
+            },
 };
 
 /** QMK actions of the tap dances, indexed by slot; each plays its `dances` row */
@@ -394,6 +510,7 @@ typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
 /** Key event handlers, in call order; the log is first, so it gets each event */
 static const record_handler_t record_handlers[] = {
     process_key_event_log,
+    process_special_mode,
     process_symbol_holds,
 };
 
