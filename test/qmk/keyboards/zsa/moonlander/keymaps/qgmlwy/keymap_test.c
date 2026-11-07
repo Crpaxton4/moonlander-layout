@@ -60,7 +60,7 @@ static uint8_t function_keys_in_row(uint8_t layer, uint8_t row) {
 
 static void keymap_number_of_layers(void **state) {
     (void)state;
-    assert_int_equal(keymap_layer_count(), 4);
+    assert_int_equal(keymap_layer_count(), 5);
 }
 
 static void keymap_function_keys_only_on_the_base_number_row(void **state) {
@@ -518,7 +518,7 @@ static void keymap_combo_positions_left_home_row(void **state) {
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                PLAIN_MODE_COMBO_LEFT_POSITION,
             },
     };
     assert_row(LAYER_COMBO_POSITIONS, LEFT_HOME_ROW, &expected);
@@ -611,7 +611,7 @@ static void keymap_combo_positions_right_home_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_TRANSPARENT,
+                PLAIN_MODE_COMBO_RIGHT_POSITION,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
@@ -869,6 +869,228 @@ static void keymap_special_right_thumb_keys(void **state) {
     assert_row(LAYER_SPECIAL, RIGHT_THUMB_KEYS, &expected);
 }
 
+static void keymap_plain_left_number_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_ESCAPE,
+                KC_GRAVE,
+                KC_1,
+                KC_2,
+                KC_3,
+                KC_4,
+                KC_5,
+            },
+    };
+    assert_row(LAYER_PLAIN, LEFT_NUMBER_ROW, &expected);
+}
+
+static void keymap_plain_left_top_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_TAB,
+                KC_Q,
+                KC_W,
+                KC_E,
+                KC_R,
+                KC_T,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_PLAIN, LEFT_TOP_ROW, &expected);
+}
+
+static void keymap_plain_left_home_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_A,
+                KC_S,
+                KC_D,
+                KC_F,
+                KC_G,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_PLAIN, LEFT_HOME_ROW, &expected);
+}
+
+static void keymap_plain_left_bottom_letter_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_LEFT_SHIFT,
+                KC_Z,
+                KC_X,
+                KC_C,
+                KC_V,
+                KC_B,
+                NO_PHYSICAL_KEY,
+            },
+    };
+    assert_row(LAYER_PLAIN, LEFT_BOTTOM_LETTER_ROW, &expected);
+}
+
+static void keymap_plain_left_bottom_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_LEFT_CTRL,
+                KC_LEFT_ALT,
+                KC_LEFT_GUI,
+                KC_NO,
+                KC_NO,
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+            },
+    };
+    assert_row(LAYER_PLAIN, LEFT_BOTTOM_ROW, &expected);
+}
+
+static void keymap_plain_left_thumb_keys(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                [LEFT_LARGE_THUMB]  = KC_ENTER,
+                [LEFT_OUTER_THUMB]  = KC_SPACE,
+                [LEFT_MIDDLE_THUMB] = KC_BACKSPACE,
+                [LEFT_INNER_THUMB]  = KC_DELETE,
+            },
+    };
+    assert_row(LAYER_PLAIN, LEFT_THUMB_KEYS, &expected);
+}
+
+static void keymap_plain_right_number_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_6,
+                KC_7,
+                KC_8,
+                KC_9,
+                KC_0,
+                KC_MINUS,
+                KC_EQUAL,
+            },
+    };
+    assert_row(LAYER_PLAIN, RIGHT_NUMBER_ROW, &expected);
+}
+
+static void keymap_plain_right_top_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_Y,
+                KC_U,
+                KC_I,
+                KC_O,
+                KC_P,
+                KC_BACKSLASH,
+            },
+    };
+    assert_row(LAYER_PLAIN, RIGHT_TOP_ROW, &expected);
+}
+
+static void keymap_plain_right_home_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                KC_NO,
+                KC_H,
+                KC_J,
+                KC_K,
+                KC_L,
+                KC_SEMICOLON,
+                KC_QUOTE,
+            },
+    };
+    assert_row(LAYER_PLAIN, RIGHT_HOME_ROW, &expected);
+}
+
+static void keymap_plain_right_bottom_letter_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                NO_PHYSICAL_KEY,
+                KC_N,
+                KC_M,
+                KC_COMMA,
+                KC_DOT,
+                KC_SLASH,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_PLAIN, RIGHT_BOTTOM_LETTER_ROW, &expected);
+}
+
+static void keymap_plain_right_bottom_row(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+    };
+    assert_row(LAYER_PLAIN, RIGHT_BOTTOM_ROW, &expected);
+}
+
+static void keymap_plain_right_thumb_keys(void **state) {
+    (void)state;
+    static const keymap_row_t expected = {
+        .keys =
+            {
+                [RIGHT_LARGE_THUMB]  = KC_NO,
+                [RIGHT_OUTER_THUMB]  = KC_NO,
+                [RIGHT_MIDDLE_THUMB] = KC_NO,
+                [RIGHT_INNER_THUMB]  = KC_NO,
+            },
+    };
+    assert_row(LAYER_PLAIN, RIGHT_THUMB_KEYS, &expected);
+}
+
+/**
+ * Fails the test at the first key of a plain layer row that is not a plain key: a
+ * transparent key, a tap-hold key, a mouse key or a keymap keycode.
+ *
+ * @param row Row in the key matrix.
+ */
+static void assert_plain_keys_in_row(uint8_t row) {
+    for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+        uint16_t keycode  = keycode_at_keymap_location(LAYER_PLAIN, row, column);
+        bool     is_plain = IS_QK_BASIC(keycode) && !IS_MOUSE_KEYCODE(keycode);
+        if (keycode == KC_TRANSPARENT || !is_plain) {
+            print_error("Row %d, column %d\n", row, column);
+            fail_msg("Keycode 0x%04X is not a plain key", keycode);
+        }
+    }
+}
+
+static void keymap_plain_r3_opaque_with_plain_keys(void **state) {
+    (void)state;
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        assert_plain_keys_in_row(row);
+    }
+}
+
 /** Cases of this program, in the order of `keymaps` */
 static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_number_of_layers),
@@ -921,6 +1143,19 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_special_right_bottom_letter_row),
     cmocka_unit_test(keymap_special_right_bottom_row),
     cmocka_unit_test(keymap_special_right_thumb_keys),
+    cmocka_unit_test(keymap_plain_left_number_row),
+    cmocka_unit_test(keymap_plain_left_top_row),
+    cmocka_unit_test(keymap_plain_left_home_row),
+    cmocka_unit_test(keymap_plain_left_bottom_letter_row),
+    cmocka_unit_test(keymap_plain_left_bottom_row),
+    cmocka_unit_test(keymap_plain_left_thumb_keys),
+    cmocka_unit_test(keymap_plain_right_number_row),
+    cmocka_unit_test(keymap_plain_right_top_row),
+    cmocka_unit_test(keymap_plain_right_home_row),
+    cmocka_unit_test(keymap_plain_right_bottom_letter_row),
+    cmocka_unit_test(keymap_plain_right_bottom_row),
+    cmocka_unit_test(keymap_plain_right_thumb_keys),
+    cmocka_unit_test(keymap_plain_r3_opaque_with_plain_keys),
 };
 
 int main(int argc, char **argv) {

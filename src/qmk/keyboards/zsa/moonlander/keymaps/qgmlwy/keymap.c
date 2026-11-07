@@ -15,6 +15,7 @@
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
+#include "plain_mode/plain_mode.h"
 #include "precision_key/precision_key.h"
 #include "special_mode/special_mode.h"
 #include "status_leds/status_leds.h"
@@ -281,7 +282,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                PLAIN_MODE_COMBO_LEFT_POSITION,
             },
         [LAYER_COMBO_POSITIONS][LEFT_BOTTOM_LETTER_ROW] =
             {
@@ -332,7 +333,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_COMBO_POSITIONS][RIGHT_HOME_ROW] =
             {
-                KC_TRANSPARENT,
+                PLAIN_MODE_COMBO_RIGHT_POSITION,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
@@ -482,6 +483,121 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
                 [RIGHT_MIDDLE_THUMB] = KC_NO,
                 [RIGHT_INNER_THUMB]  = KC_NO,
             },
+
+        [LAYER_PLAIN][LEFT_NUMBER_ROW] =
+            {
+                KC_ESCAPE,
+                KC_GRAVE,
+                KC_1,
+                KC_2,
+                KC_3,
+                KC_4,
+                KC_5,
+            },
+        [LAYER_PLAIN][LEFT_TOP_ROW] =
+            {
+                KC_TAB,
+                KC_Q,
+                KC_W,
+                KC_E,
+                KC_R,
+                KC_T,
+                KC_NO,
+            },
+        [LAYER_PLAIN][LEFT_HOME_ROW] =
+            {
+                KC_NO,
+                KC_A,
+                KC_S,
+                KC_D,
+                KC_F,
+                KC_G,
+                KC_NO,
+            },
+        [LAYER_PLAIN][LEFT_BOTTOM_LETTER_ROW] =
+            {
+                KC_LEFT_SHIFT,
+                KC_Z,
+                KC_X,
+                KC_C,
+                KC_V,
+                KC_B,
+                NO_PHYSICAL_KEY,
+            },
+        [LAYER_PLAIN][LEFT_BOTTOM_ROW] =
+            {
+                KC_LEFT_CTRL,
+                KC_LEFT_ALT,
+                KC_LEFT_GUI,
+                KC_NO,
+                KC_NO,
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+            },
+        [LAYER_PLAIN][LEFT_THUMB_KEYS] =
+            {
+                [LEFT_LARGE_THUMB]  = KC_ENTER,
+                [LEFT_OUTER_THUMB]  = KC_SPACE,
+                [LEFT_MIDDLE_THUMB] = KC_BACKSPACE,
+                [LEFT_INNER_THUMB]  = KC_DELETE,
+            },
+        [LAYER_PLAIN][RIGHT_NUMBER_ROW] =
+            {
+                KC_6,
+                KC_7,
+                KC_8,
+                KC_9,
+                KC_0,
+                KC_MINUS,
+                KC_EQUAL,
+            },
+        [LAYER_PLAIN][RIGHT_TOP_ROW] =
+            {
+                KC_NO,
+                KC_Y,
+                KC_U,
+                KC_I,
+                KC_O,
+                KC_P,
+                KC_BACKSLASH,
+            },
+        [LAYER_PLAIN][RIGHT_HOME_ROW] =
+            {
+                KC_NO,
+                KC_H,
+                KC_J,
+                KC_K,
+                KC_L,
+                KC_SEMICOLON,
+                KC_QUOTE,
+            },
+        [LAYER_PLAIN][RIGHT_BOTTOM_LETTER_ROW] =
+            {
+                NO_PHYSICAL_KEY,
+                KC_N,
+                KC_M,
+                KC_COMMA,
+                KC_DOT,
+                KC_SLASH,
+                KC_NO,
+            },
+        [LAYER_PLAIN][RIGHT_BOTTOM_ROW] =
+            {
+                NO_PHYSICAL_KEY,
+                NO_PHYSICAL_KEY,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+                KC_NO,
+            },
+        [LAYER_PLAIN][RIGHT_THUMB_KEYS] =
+            {
+                [RIGHT_LARGE_THUMB]  = KC_NO,
+                [RIGHT_OUTER_THUMB]  = KC_NO,
+                [RIGHT_MIDDLE_THUMB] = KC_NO,
+                [RIGHT_INNER_THUMB]  = KC_NO,
+            },
 };
 
 /** Keys of the logging combo, from LAYER_COMBO_POSITIONS */
@@ -491,9 +607,17 @@ static const uint16_t PROGMEM logging_combo_keys[] = {
     COMBO_END,
 };
 
-/** QMK combos, indexed by `combo`; the logging combo sends LOGGING_TOGGLE */
+/** Keys of the plain-mode combo, from LAYER_COMBO_POSITIONS */
+static const uint16_t PROGMEM plain_mode_combo_keys[] = {
+    PLAIN_MODE_COMBO_LEFT_POSITION,
+    PLAIN_MODE_COMBO_RIGHT_POSITION,
+    COMBO_END,
+};
+
+/** QMK combos, indexed by `combo`; each combo sends a keymap keycode */
 combo_t key_combos[] = {
-    [LOGGING_COMBO] = COMBO(logging_combo_keys, LOGGING_TOGGLE),
+    [LOGGING_COMBO]    = COMBO(logging_combo_keys, LOGGING_TOGGLE),
+    [PLAIN_MODE_COMBO] = COMBO(plain_mode_combo_keys, PLAIN_MODE_TOGGLE),
 };
 
 /**
@@ -502,10 +626,25 @@ combo_t key_combos[] = {
  */
 typedef bool (*record_handler_t)(uint16_t keycode, keyrecord_t *record);
 
-/** Key event handlers, in call order; the log is first, so it gets each event */
-static const record_handler_t record_handlers[] = {
-    process_key_event_log, process_case_modes,   process_bracket_pairs,
-    process_special_mode,  process_symbol_holds, process_precision_key,
+/** Key event handler, and if it also operates in the plain mode */
+typedef struct {
+    record_handler_t handler;    /**< Handler of the key events */
+    bool operates_in_plain_mode; /**< False if it gets no push in the plain mode */
+} record_step_t;
+
+/**
+ * Key event handlers, in call order. Log is first, so it gets each event. Plain
+ * mode stops all handlers of the normal mode, so the keys act as on a standard
+ * keyboard.
+ */
+static const record_step_t record_handlers[] = {
+    {.handler = process_key_event_log, .operates_in_plain_mode = true},
+    {.handler = process_plain_mode, .operates_in_plain_mode = true},
+    {.handler = process_case_modes, .operates_in_plain_mode = false},
+    {.handler = process_bracket_pairs, .operates_in_plain_mode = false},
+    {.handler = process_special_mode, .operates_in_plain_mode = false},
+    {.handler = process_symbol_holds, .operates_in_plain_mode = false},
+    {.handler = process_precision_key, .operates_in_plain_mode = false},
 };
 
 /** Handler for each pass of QMK's main loop */
@@ -518,7 +657,24 @@ static const housekeeping_handler_t housekeeping_handlers[] = {
 };
 
 /**
- * Gives each key event to each record handler, until one handler fully handles it.
+ * Tells if the plain mode stops a record handler for a key event. Plain mode stops
+ * each push to a handler of the normal mode, but no release. Thus a key that the
+ * operator pushed before the plain mode started does not stay pushed.
+ *
+ * @param step   Record handler.
+ * @param record Key event.
+ * @return True if the handler must not get the event.
+ */
+static bool plain_mode_stops(const record_step_t *step, const keyrecord_t *record) {
+    if (step->operates_in_plain_mode || !record->event.pressed) {
+        return false;
+    }
+    return plain_mode_is_on();
+}
+
+/**
+ * Gives each key event to the record handlers in call order, until one handler
+ * fully handles it.
  *
  * @param keycode Keycode of the key event.
  * @param record  Key event.
@@ -531,7 +687,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         clear_weak_mods();
     }
     for (size_t index = 0; index < ARRAY_SIZE(record_handlers); index++) {
-        if (!record_handlers[index](keycode, record)) {
+        const record_step_t *step = &record_handlers[index];
+        if (plain_mode_stops(step, record)) {
+            continue;
+        }
+        if (!step->handler(keycode, record)) {
             return false;
         }
     }
