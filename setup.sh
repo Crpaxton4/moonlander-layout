@@ -29,6 +29,9 @@ sudo apt-get install -y "jq=$JQ_VERSION"
 sudo apt-get install -y build-essential "libtree-sitter-dev=$TREE_SITTER_VERSION" \
     "tree-sitter-c-src=$TREE_SITTER_C_VERSION"
 
+# make qmk-test builds and runs the unit tests with these packages
+sudo apt-get install -y "cmake=$CMAKE_VERSION" "libcmocka-dev=$CMOCKA_VERSION"
+
 QMK_COMMITS_URL="https://api.github.com/repos/qmk/qmk_firmware/commits\
 ?path=util/env-bootstrap.sh&per_page=1"
 QMK_BOOTSTRAP_URL="https://raw.githubusercontent.com/qmk/qmk_firmware/\
