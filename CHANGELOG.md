@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.15.0...v1.16.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** make the special mode key a one-shot on tap and a lock on hold ([#187](https://github.com/Crpaxton4/moonlander-layout/issues/187)) ([62bfa70](https://github.com/Crpaxton4/moonlander-layout/commit/62bfa70633ec19051eac08f4ba099e3eeaa082f5))
+
 ## [1.15.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.14.0...v1.15.0) (2026-11-07)
 
 
