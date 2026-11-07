@@ -155,7 +155,7 @@ static void keymap_base_left_bottom_row(void **state) {
                 KC_NO,
                 KC_NO,
                 KC_NO,
-                KC_NO,
+                QK_MOUSE_ACCELERATION_0,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },

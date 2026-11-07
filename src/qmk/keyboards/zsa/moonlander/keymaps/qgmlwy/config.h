@@ -10,23 +10,42 @@
 /** Time in ms to wait after waking the host from USB suspend; 0 skips the wait */
 #define USB_SUSPEND_WAKEUP_DELAY 0
 
-/** Time in ms between cursor movement reports while a mouse key is held */
+/**
+ * Mouse keys accelerate as in the default mode, and QK_MOUSE_ACCELERATION_0 moves
+ * the cursor one count per report while it is held: the precision key.
+ */
+#define MK_COMBINED
+
+/** Cursor counts of a tap, and the unit of each cursor speed */
+#undef MOUSEKEY_MOVE_DELTA
+#define MOUSEKEY_MOVE_DELTA 1
+
+/**
+ * One cursor movement report each 10 ms while a mouse key is held. QMK sends the
+ * next report only after more than this time in ms, so the value is one less.
+ */
 #undef MOUSEKEY_INTERVAL
-#define MOUSEKEY_INTERVAL 10
+#define MOUSEKEY_INTERVAL 9
 
 /** Time in ms between the first wheel step and the start of wheel repeat */
 #undef MOUSEKEY_WHEEL_DELAY
 #define MOUSEKEY_WHEEL_DELAY 200
 
-/** Time in ms between the first cursor step and the start of cursor repeat */
+/**
+ * Time in ms between the first cursor step and the start of cursor repeat, so that
+ * a tap moves only one count. QMK keeps this value in steps of 10 ms.
+ */
 #undef MOUSEKEY_DELAY
-#define MOUSEKEY_DELAY 0
+#define MOUSEKEY_DELAY 80
 
-/** Top cursor speed, in steps of `MOUSEKEY_MOVE_DELTA` pixels per movement report */
+/** Top cursor speed, in steps of `MOUSEKEY_MOVE_DELTA` counts per movement report */
 #undef MOUSEKEY_MAX_SPEED
-#define MOUSEKEY_MAX_SPEED 3
+#define MOUSEKEY_MAX_SPEED 20
 
-/** Number of movement reports the cursor takes to accelerate to its top speed */
+/**
+ * Number of movement reports the cursor takes to accelerate to its top speed. With
+ * a top speed of 20, the speed increases by one count each four reports.
+ */
 #undef MOUSEKEY_TIME_TO_MAX
 #define MOUSEKEY_TIME_TO_MAX 80
 
