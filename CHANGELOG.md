@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/Crpaxton4/moonlander-layout/compare/v1.12.0...v1.12.1) (2026-11-07)
+
+
+### Code Refactoring
+
+* **firmware:** group the declarations of the remaining keymap c files in regions ([#177](https://github.com/Crpaxton4/moonlander-layout/issues/177)) ([68e9446](https://github.com/Crpaxton4/moonlander-layout/commit/68e9446d6c067205ee77b082408413f9268407c8))
+
 ## [1.12.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.11.1...v1.12.0) (2026-11-07)
 
 
