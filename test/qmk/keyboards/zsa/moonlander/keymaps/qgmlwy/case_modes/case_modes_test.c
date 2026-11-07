@@ -402,6 +402,44 @@ static void case_modes_mode_key_hold_ends_mode(void **state) {
     assert_host_got(" count");
 }
 
+/**
+ * Pushes and releases the special mode key, then empties the call log. Special mode
+ * takes both events, and its layer calls send no key to the host.
+ *
+ * @param is_tap A_TAP for a tap, NOT_A_TAP for a hold.
+ */
+static void push_special_mode_key(bool is_tap) {
+    keyrecord_t record = {.event = {.pressed = true}};
+    record.tap.count   = is_tap ? ONE_TAP : NO_TAP;
+    assert_false(process_record_user(SPECIAL_MODE_KEY, &record));
+    record.event.pressed = false;
+    assert_false(process_record_user(SPECIAL_MODE_KEY, &record));
+    reset_fake_qmk();
+}
+
+static void case_modes_special_mode_key_tap_ends_mode(void **state) {
+    (void)state;
+    start_case();
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
+    type_text("max");
+    assert_host_got("max");
+    push_special_mode_key(A_TAP);
+    // Fake layer state stays on the base layer, so the Space is a Space
+    type_text(" count");
+    assert_host_got(" count");
+}
+
+static void case_modes_special_mode_key_hold_ends_mode(void **state) {
+    (void)state;
+    start_case();
+    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
+    type_text("max");
+    assert_host_got("max");
+    push_special_mode_key(NOT_A_TAP);
+    type_text(" count");
+    assert_host_got(" count");
+}
+
 static void case_modes_r2_tap_of_top_row_hold_key_is_letter(void **state) {
     (void)state;
     start_case();
@@ -570,6 +608,8 @@ static const struct CMUnitTest case_modes_cases[] = {
     cmocka_unit_test(case_modes_r6_escape_hold_ends_mode),
     cmocka_unit_test(case_modes_mode_key_hold_sends_its_function_key),
     cmocka_unit_test(case_modes_mode_key_hold_ends_mode),
+    cmocka_unit_test(case_modes_special_mode_key_tap_ends_mode),
+    cmocka_unit_test(case_modes_special_mode_key_hold_ends_mode),
     cmocka_unit_test(case_modes_r2_tap_of_top_row_hold_key_is_letter),
     cmocka_unit_test(case_modes_r6_shifted_digit_ends_mode),
     cmocka_unit_test(case_modes_r9_modifier_keeps_mode),

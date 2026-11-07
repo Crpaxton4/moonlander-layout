@@ -1,6 +1,7 @@
 /** @file
  * Tests of the tap-hold settings of the keymap: the tapping term of each key, the
- * hand of each key for chordal hold, and the flow tap term.
+ * hand of each key for chordal hold, the flow tap term, and the permissive hold of
+ * each key.
  *
  * QMK's tap-hold engine is not in the test build, so the cases call the keymap's
  * callbacks directly with the values that the engine gives.
@@ -10,6 +11,7 @@
 
 #include QMK_KEYBOARD_H
 
+#include "keycodes/keycodes.h"
 #include "layers/layers.h"
 #include "unit_test.h"
 
@@ -183,6 +185,34 @@ static void tap_hold_r12_no_flow_tap_on_a_push_of_the_same_key(void **state) {
     }
 }
 
+static void tap_hold_r3_permissive_hold_of_the_hold_keys(void **state) {
+    (void)state;
+    for (size_t index = 0; index < ARRAY_SIZE(home_row_mods); index++) {
+        assert_true(get_permissive_hold(home_row_mods[index], &push));
+    }
+    assert_true(get_permissive_hold(SYMBOL_HOLD(KC_V), &push));
+    assert_true(get_permissive_hold(KEY_HOLD(KC_Q), &push));
+    assert_true(get_permissive_hold(SNAKE_CASE_KEY, &push));
+}
+
+static void tap_hold_special_mode_r1_no_permissive_hold_of_the_mode_key(void **state) {
+    (void)state;
+    // A fast roll of the mode key and a digit is a tap, so it gives the one-shot
+    assert_false(get_permissive_hold(SPECIAL_MODE_KEY, &push));
+}
+
+static void tap_hold_special_mode_r1_tapping_term_of_the_mode_key(void **state) {
+    (void)state;
+    assert_int_equal(get_tapping_term(SPECIAL_MODE_KEY, &push), TAPPING_TERM);
+}
+
+static void tap_hold_special_mode_r1_flow_tap_term_of_the_mode_key(void **state) {
+    (void)state;
+    // Mode key just after a letter only taps, as each tap-hold key does
+    assert_int_equal(get_flow_tap_term(SPECIAL_MODE_KEY, &push, KC_A), FLOW_TAP_TERM);
+    assert_int_equal(get_flow_tap_term(SPECIAL_MODE_KEY, &push, KC_SPACE), 0);
+}
+
 // #endregion
 
 // #region Test runner
@@ -198,6 +228,10 @@ static const struct CMUnitTest tap_hold_cases[] = {
     cmocka_unit_test(tap_hold_r6_flow_tap_term_after_a_tapped_home_row_key),
     cmocka_unit_test(tap_hold_r6_no_flow_tap_after_other_keys),
     cmocka_unit_test(tap_hold_r12_no_flow_tap_on_a_push_of_the_same_key),
+    cmocka_unit_test(tap_hold_r3_permissive_hold_of_the_hold_keys),
+    cmocka_unit_test(tap_hold_special_mode_r1_no_permissive_hold_of_the_mode_key),
+    cmocka_unit_test(tap_hold_special_mode_r1_tapping_term_of_the_mode_key),
+    cmocka_unit_test(tap_hold_special_mode_r1_flow_tap_term_of_the_mode_key),
 };
 
 int main(int argc, char **argv) {

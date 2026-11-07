@@ -120,10 +120,10 @@ static void config_shift_tapping_term(void **state) {
     assert_int_equal(SHIFT_TAPPING_TERM, 200);
 }
 
-static void config_permissive_hold(void **state) {
+static void config_permissive_hold_per_key(void **state) {
     (void)state;
-#ifndef PERMISSIVE_HOLD
-    fail_msg("PERMISSIVE_HOLD is not defined");
+#ifndef PERMISSIVE_HOLD_PER_KEY
+    fail_msg("PERMISSIVE_HOLD_PER_KEY is not defined");
 #endif
 }
 
@@ -187,7 +187,7 @@ static const struct CMUnitTest config_cases[] = {
     cmocka_unit_test(config_tapping_term),
     cmocka_unit_test(config_tapping_term_per_key),
     cmocka_unit_test(config_shift_tapping_term),
-    cmocka_unit_test(config_permissive_hold),
+    cmocka_unit_test(config_permissive_hold_per_key),
     cmocka_unit_test(config_chordal_hold),
     cmocka_unit_test(config_flow_tap_term),
     cmocka_unit_test(config_quick_tap_term),

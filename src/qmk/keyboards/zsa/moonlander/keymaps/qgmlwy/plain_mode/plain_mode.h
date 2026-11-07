@@ -18,7 +18,7 @@
 
 /**
  * Starts or ends the plain mode for the plain-mode combo while the special mode is
- * off.
+ * off. While the special mode is on, the combo counts as a push in that mode.
  *
  * @param keycode Keycode of the key event, after layer resolution.
  * @param record  Key event.

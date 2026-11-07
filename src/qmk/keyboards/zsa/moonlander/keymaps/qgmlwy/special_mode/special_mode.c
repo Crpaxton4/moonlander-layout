@@ -1,5 +1,5 @@
 /** @file
- * Mode key and double whitespace end of the special mode.
+ * Mode key, one-shot and double whitespace end of the special mode.
  */
 
 // #region Includes
@@ -56,20 +56,20 @@ static enum special_mode_key key_class(uint16_t keycode) {
 }
 
 /**
- * Ends the special mode on a push of the mode key if the mode is on, or starts a
- * new mode.
+ * Ends the special mode on a tap of the mode key if the mode is on, or starts a new
+ * mode: a one-shot for a tap, a locked mode for a hold.
  *
- * @param record Key event of the mode key.
+ * @param record Key event of the mode key, with its tap count.
  */
 static void process_mode_key(const keyrecord_t *record) {
+    bool is_tap = record->tap.count > 0;
     if (!record->event.pressed) {
         return;
-    }
-    if (layer_state_is(LAYER_SPECIAL)) {
+    } else if (is_tap && layer_state_is(LAYER_SPECIAL)) {
         layer_off(LAYER_SPECIAL);
         return;
     }
-    special_mode_start(&mode);
+    special_mode_start(&mode, is_tap ? SPECIAL_MODE_ONE_SHOT : SPECIAL_MODE_LOCKED);
     layer_on(LAYER_SPECIAL);
 }
 
@@ -85,17 +85,26 @@ bool process_special_mode(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed || !layer_state_is(LAYER_SPECIAL)) {
         return true;
     }
-    if (!special_mode_push_ends_mode(&mode, key_class(keycode))) {
+    enum special_mode_push_result result = special_mode_push(&mode, key_class(keycode));
+    if (result == SPECIAL_MODE_STAYS_ON) {
         return true;
     }
     layer_off(LAYER_SPECIAL);
+    if (result == SPECIAL_MODE_ENDS_AFTER_KEY) {
+        return true;
+    }
     // Bracket pairs ran first and counted the Space, which the host does not get
     bracket_pairs_take_back_count();
     return false;
 }
 
 void special_mode_count_taken_push(void) {
-    (void)special_mode_push_ends_mode(&mode, SPECIAL_MODE_OTHER_KEY);
+    if (!layer_state_is(LAYER_SPECIAL)) {
+        return;
+    }
+    if (special_mode_push(&mode, SPECIAL_MODE_OTHER_KEY) != SPECIAL_MODE_STAYS_ON) {
+        layer_off(LAYER_SPECIAL);
+    }
 }
 
 // #endregion
