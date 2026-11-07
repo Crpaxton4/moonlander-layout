@@ -6,6 +6,8 @@
  * state that QMK would have.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "keycodes/keycodes.h"
@@ -13,11 +15,28 @@
 #include "recorded_calls.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
 /** Layer state while the special mode is on */
 #define SPECIAL_MODE_ON ((layer_state_t)(1U << LAYER_SPECIAL))
 
 /** Layer state while the special mode is off: only the base layer */
 #define SPECIAL_MODE_OFF ((layer_state_t)0)
+
+// #endregion
+
+// #region Data
+
+/** Calls of a push that ends the special mode */
+static const qmk_call_t mode_end_calls[] = {
+    {.function = CALLED_LAYER_OFF, .argument = LAYER_SPECIAL},
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Sends a push or a release of a key to process_record_user().
@@ -75,11 +94,6 @@ static bool tap_keys(const uint16_t *keycodes, size_t count) {
     }
     return push_result;
 }
-
-/** Calls of a push that ends the special mode */
-static const qmk_call_t mode_end_calls[] = {
-    {.function = CALLED_LAYER_OFF, .argument = LAYER_SPECIAL},
-};
 
 static void special_mode_r1_mode_key_starts_mode(void **state) {
     (void)state;
@@ -193,6 +207,10 @@ static void special_mode_r6_disabled_position_keeps_mode(void **state) {
     assert_recorded_calls(NULL, 0);
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program */
 static const struct CMUnitTest special_mode_cases[] = {
     cmocka_unit_test(special_mode_r1_mode_key_starts_mode),
@@ -213,3 +231,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(special_mode_cases, NULL, NULL);
 }
+
+// #endregion

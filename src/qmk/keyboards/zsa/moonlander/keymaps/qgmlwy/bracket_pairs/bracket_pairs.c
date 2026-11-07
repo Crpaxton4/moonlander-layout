@@ -2,6 +2,8 @@
  * Key classes and QMK calls of the bracket and quote pairs.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "bracket_pairs/bracket_pairs.h"
@@ -10,14 +12,42 @@
 #include "special_mode/special_mode.h"
 #include "symbol_holds/symbol_holds.h"
 
-/** Open pairs; all zero at power-up, so the stack is empty */
-static pair_stack_t pair_stack;
+// #endregion
+
+// #region Macros
+
+/** Number of bracket kinds, which come before the quotes in pair_keys */
+#define BRACKET_KIND_COUNT PAIR_DOUBLE_QUOTES
+
+/** Most keys that the operator holds at one time with a push that this module took */
+#define TAKEN_KEY_CAPACITY 4
+
+/** Modifiers that make a key push a shortcut, which can move the host cursor */
+#define SHORTCUT_MODIFIERS (MOD_MASK_CTRL | MOD_MASK_ALT | MOD_MASK_GUI)
+
+// #endregion
+
+// #region Types
 
 /** Opening and closing key of one pair kind */
 typedef struct {
     uint16_t opener; /**< Key of the opening character */
     uint16_t closer; /**< Key of the closing character */
 } pair_keys_t;
+
+/** Range of keycodes with one key class */
+typedef struct {
+    uint16_t            first;     /**< First keycode of the range */
+    uint16_t            last;      /**< Last keycode of the range */
+    enum pair_key_class key_class; /**< Key class of each keycode in the range */
+} key_range_t;
+
+// #endregion
+
+// #region Data
+
+/** Open pairs; all zero at power-up, so the stack is empty */
+static pair_stack_t pair_stack;
 
 /** Keys of each pair kind for a US English host layout, indexed by kind */
 static const pair_keys_t pair_keys[] = {
@@ -53,9 +83,6 @@ static const pair_keys_t pair_keys[] = {
         },
 };
 
-/** Number of bracket kinds, which come before the quotes in pair_keys */
-#define BRACKET_KIND_COUNT PAIR_DOUBLE_QUOTES
-
 /** Key of each fixed output, indexed by output; openers and closers use pair_keys */
 static const uint16_t output_keys[] = {
     [PAIR_OUTPUT_LEFT]      = KC_LEFT,
@@ -64,18 +91,8 @@ static const uint16_t output_keys[] = {
     [PAIR_OUTPUT_DELETE]    = KC_DELETE,
 };
 
-/** Most keys that the operator holds at one time with a push that this module took */
-#define TAKEN_KEY_CAPACITY 4
-
 /** Keys whose push this module took, KC_NO for a free place */
 static uint16_t taken_keys[TAKEN_KEY_CAPACITY];
-
-/** Range of keycodes with one key class */
-typedef struct {
-    uint16_t            first;     /**< First keycode of the range */
-    uint16_t            last;      /**< Last keycode of the range */
-    enum pair_key_class key_class; /**< Key class of each keycode in the range */
-} key_range_t;
 
 /** Key class of each range of basic keycodes; the first range that matches wins */
 static const key_range_t key_ranges[] = {
@@ -94,6 +111,10 @@ static const key_range_t key_ranges[] = {
     // Letters, digits, Space and symbols; the ranges above match the other keys in it
     {.first = KC_A, .last = KC_SLASH, .key_class = PAIR_KEY_CHARACTER},
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the key class of a key that QMK sends, from its basic keycode.
@@ -148,9 +169,6 @@ static uint16_t sent_key(uint16_t keycode, const keyrecord_t *record) {
     // Mod-tap and layer-tap keycodes both keep the tap key in their low byte
     return QK_MOD_TAP_GET_TAP_KEYCODE(keycode);
 }
-
-/** Modifiers that make a key push a shortcut, which can move the host cursor */
-#define SHORTCUT_MODIFIERS (MOD_MASK_CTRL | MOD_MASK_ALT | MOD_MASK_GUI)
 
 /**
  * Gives the pair key of a symbol hold.
@@ -284,6 +302,10 @@ static bool release_goes_on(uint16_t keycode) {
     return true;
 }
 
+// #endregion
+
+// #region Public functions
+
 bool process_bracket_pairs(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) {
         return release_goes_on(keycode);
@@ -314,3 +336,5 @@ void bracket_pairs_take_back_count(void) {
     pair_key_t taken_back = {.key_class = PAIR_KEY_BACKSPACE};
     pair_stack_count_sent_key(&pair_stack, taken_back, timer_read32());
 }
+
+// #endregion

@@ -7,7 +7,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdbool.h>
+
+// #endregion
+
+// #region Enumerations
 
 /** Class of a pushed key, as the double whitespace rule sees it */
 enum special_mode_key {
@@ -17,10 +23,18 @@ enum special_mode_key {
     SPECIAL_MODE_TAB,       /**< Tab */
 };
 
+// #endregion
+
+// #region Types
+
 /** State of one special mode */
 typedef struct {
     enum special_mode_key last_push; /**< Key class of the last push in the mode */
 } special_mode_t;
+
+// #endregion
+
+// #region Functions
 
 /**
  * Clears the last push, because a new mode starts.
@@ -37,3 +51,5 @@ void special_mode_start(special_mode_t *mode);
  * @return True if the push ends the mode and must send nothing.
  */
 bool special_mode_push_ends_mode(special_mode_t *mode, enum special_mode_key key);
+
+// #endregion

@@ -8,7 +8,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+
+// #endregion
+
+// #region Functions
 
 /**
  * Changes, replaces or passes a key push as the case mode requires, and starts,
@@ -27,3 +33,5 @@ bool process_case_modes(uint16_t keycode, keyrecord_t *record);
 
 /** Ends any case mode, for a mode that must not get changed keys */
 void case_modes_end_all(void);
+
+// #endregion

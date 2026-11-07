@@ -4,9 +4,15 @@
  * QMK declares these callbacks, and config.h sets the features that call them.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "layers/layers.h"
+
+// #endregion
+
+// #region Enumerations
 
 /** Hands of chordal hold, with the characters that QMK uses for them */
 enum hand {
@@ -14,6 +20,10 @@ enum hand {
     RIGHT_HAND  = 'R', /**< Key of the right hand */
     EITHER_HAND = '*', /**< Key that combines with keys of each hand */
 };
+
+// #endregion
+
+// #region Data
 
 /**
  * Hand of the keys of each matrix row. Thumb keys combine with each hand, so a
@@ -27,6 +37,10 @@ static const char hand_of_row[MATRIX_ROWS] = {
     [RIGHT_HOME_ROW] = RIGHT_HAND,   [RIGHT_BOTTOM_LETTER_ROW] = RIGHT_HAND,
     [RIGHT_BOTTOM_ROW] = RIGHT_HAND, [RIGHT_THUMB_KEYS] = EITHER_HAND,
 };
+
+// #endregion
+
+// #region Public functions
 
 /**
  * Gives the hand of a key for chordal hold.
@@ -88,3 +102,5 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prior
     }
     return 0;
 }
+
+// #endregion

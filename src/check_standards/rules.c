@@ -2,11 +2,17 @@
  * Checker rules and the walk that gives each node to each rule
  */
 
+// #region Includes
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
 
 #include "rules.h"
+
+// #endregion
+
+// #region Macros
 
 /** Control flow levels that a function body can have */
 #define MAX_NESTING_DEPTH 2
@@ -32,6 +38,22 @@
 /** Bit of a construct kind in a construct_t::may_contain mask */
 #define BIT(kind) (1U << (kind))
 
+/** Mask of a construct that can contain no control flow */
+#define NOTHING 0U
+
+/** Mask of a switch, which contains only its cases */
+#define CASES BIT(KIND_CASE)
+
+/** Mask of a loop body, which can contain no while, do or switch */
+#define LOOP_BODY (BIT(KIND_IF) | BIT(KIND_FOR) | BIT(KIND_TERNARY) | BIT(KIND_GOTO))
+
+/** Mask of a function body, which can contain all constructs except a case */
+#define FUNCTION_BODY (LOOP_BODY | BIT(KIND_WHILE) | BIT(KIND_DO) | BIT(KIND_SWITCH))
+
+// #endregion
+
+// #region Enumerations
+
 /** Control flow constructs that the nesting rule knows, as indexes of constructs */
 typedef enum {
     KIND_FUNCTION, /**< Function definition */
@@ -46,17 +68,9 @@ typedef enum {
     KIND_COUNT,    /**< Number of kinds */
 } construct_kind_t;
 
-/** Mask of a construct that can contain no control flow */
-#define NOTHING 0U
+// #endregion
 
-/** Mask of a switch, which contains only its cases */
-#define CASES BIT(KIND_CASE)
-
-/** Mask of a loop body, which can contain no while, do or switch */
-#define LOOP_BODY (BIT(KIND_IF) | BIT(KIND_FOR) | BIT(KIND_TERNARY) | BIT(KIND_GOTO))
-
-/** Mask of a function body, which can contain all constructs except a case */
-#define FUNCTION_BODY (LOOP_BODY | BIT(KIND_WHILE) | BIT(KIND_DO) | BIT(KIND_SWITCH))
+// #region Types
 
 /** Control flow construct, with the constructs that it can contain */
 typedef struct {
@@ -66,19 +80,6 @@ typedef struct {
     unsigned    may_contain;     /**< BIT() mask of the constructs in its body */
     int         levels;          /**< Nesting levels that the construct adds */
 } construct_t;
-
-/** Constructs, indexed by construct_kind_t */
-static const construct_t constructs[KIND_COUNT] = {
-    [KIND_FUNCTION] = {"function_definition", "function", NULL, FUNCTION_BODY, 0},
-    [KIND_IF]       = {"if_statement", "if", "else_clause", NOTHING, 1},
-    [KIND_FOR]      = {"for_statement", "for", NULL, LOOP_BODY, 1},
-    [KIND_WHILE]    = {"while_statement", "while", NULL, LOOP_BODY, 1},
-    [KIND_DO]       = {"do_statement", "do", NULL, LOOP_BODY, 1},
-    [KIND_SWITCH]   = {"switch_statement", "switch", NULL, CASES, 1},
-    [KIND_CASE]     = {"case_statement", "case", NULL, NOTHING, 0},
-    [KIND_TERNARY]  = {"conditional_expression", "?:", NULL, NOTHING, 1},
-    [KIND_GOTO]     = {"goto_statement", "goto", NULL, NOTHING, 1},
-};
 
 /** Innermost construct around a node, and the nesting depth there */
 typedef struct {
@@ -127,6 +128,54 @@ typedef struct {
     bool (*passes)(const docstring_t *docstring); /**< True if the docstring passes */
     const char *message;                          /**< Message for a failure */
 } docstring_check_t;
+
+// #endregion
+
+// #region Function declarations
+
+static bool opens_doc_comment(const docstring_t *docstring);
+static bool is_closed(const docstring_t *docstring);
+static bool has_file_command(const docstring_t *docstring);
+static bool has_description(const docstring_t *docstring);
+static void check_file_docstring(const char *rule, const visit_t *visit);
+static void check_nesting(const char *rule, const visit_t *visit);
+static void check_parse_error(const char *rule, const visit_t *visit);
+
+// #endregion
+
+// #region Data
+
+/** Constructs, indexed by construct_kind_t */
+static const construct_t constructs[KIND_COUNT] = {
+    [KIND_FUNCTION] = {"function_definition", "function", NULL, FUNCTION_BODY, 0},
+    [KIND_IF]       = {"if_statement", "if", "else_clause", NOTHING, 1},
+    [KIND_FOR]      = {"for_statement", "for", NULL, LOOP_BODY, 1},
+    [KIND_WHILE]    = {"while_statement", "while", NULL, LOOP_BODY, 1},
+    [KIND_DO]       = {"do_statement", "do", NULL, LOOP_BODY, 1},
+    [KIND_SWITCH]   = {"switch_statement", "switch", NULL, CASES, 1},
+    [KIND_CASE]     = {"case_statement", "case", NULL, NOTHING, 0},
+    [KIND_TERNARY]  = {"conditional_expression", "?:", NULL, NOTHING, 1},
+    [KIND_GOTO]     = {"goto_statement", "goto", NULL, NOTHING, 1},
+};
+
+/** Each check needs the checks before it, so keep this order */
+static const docstring_check_t docstring_checks[] = {
+    {opens_doc_comment, "file does not begin with a /** comment"},
+    {is_closed, "the opening /** comment is not closed"},
+    {has_file_command, "the opening /** comment has no @file"},
+    {has_description, "the @file comment has no description"},
+};
+
+/** Rules in the order of their findings at the same position */
+static const rule_t rules[] = {
+    {"file-docstring", check_file_docstring},
+    {"nesting", check_nesting},
+    {"parse-error", check_parse_error},
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Finds the first occurrence of a string in a text that is not NUL-terminated.
@@ -231,14 +280,6 @@ static bool has_description(const docstring_t *docstring) {
     return has_alphanumeric(name + strcspn(name, WHITESPACE), docstring->body_end);
 }
 
-/** Each check needs the checks before it, so keep this order */
-static const docstring_check_t docstring_checks[] = {
-    {opens_doc_comment, "file does not begin with a /** comment"},
-    {is_closed, "the opening /** comment is not closed"},
-    {has_file_command, "the opening /** comment has no @file"},
-    {has_description, "the @file comment has no description"},
-};
-
 /**
  * Checks that a file starts with a FILE_COMMAND comment that has a description.
  * Only the root node starts the check, so each file gets a maximum of one finding.
@@ -330,13 +371,6 @@ static void check_parse_error(const char *rule, const visit_t *visit) {
     }
 }
 
-/** Rules in the order of their findings at the same position */
-static const rule_t rules[] = {
-    {"file-docstring", check_file_docstring},
-    {"nesting", check_nesting},
-    {"parse-error", check_parse_error},
-};
-
 /**
  * Finds the construct of a node type.
  *
@@ -424,6 +458,10 @@ static void walk(TSTreeCursor *cursor, const parent_t *parent) {
     ts_tree_cursor_goto_parent(cursor);
 }
 
+// #endregion
+
+// #region Public functions
+
 void check_source(TSParser *parser, source_t *source) {
     int error = load_source(source);
     if (error != 0) {
@@ -439,3 +477,5 @@ void check_source(TSParser *parser, source_t *source) {
     ts_tree_cursor_delete(&cursor);
     ts_tree_delete(tree);
 }
+
+// #endregion

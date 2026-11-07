@@ -7,6 +7,8 @@
  * redefinition warning.
  */
 
+// #region Macros
+
 /** Time in ms to wait after waking the host from USB suspend; 0 skips the wait */
 #define USB_SUSPEND_WAKEUP_DELAY 0
 
@@ -124,3 +126,5 @@
  * It is also the USB serial number string.
  */
 #define SERIAL_NUMBER "LzzVe/pjxZ7X"
+
+// #endregion

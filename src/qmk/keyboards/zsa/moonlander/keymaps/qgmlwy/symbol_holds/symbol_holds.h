@@ -5,9 +5,15 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "layers/layers.h"
+
+// #endregion
+
+// #region Macros
 
 /**
  * Symbol hold key with a tap key.
@@ -17,6 +23,10 @@
  * hold, so the layer action never occurs.
  */
 #define SYMBOL_HOLD(tap_key) LT(LAYER_BASE, (tap_key))
+
+// #endregion
+
+// #region Functions
 
 /**
  * Gives the symbol that a hold of a symbol hold key pushes.
@@ -36,3 +46,5 @@ uint16_t symbol_of_hold_key(uint16_t keycode);
  *         handles; true for other events.
  */
 bool process_symbol_holds(uint16_t keycode, keyrecord_t *record);
+
+// #endregion

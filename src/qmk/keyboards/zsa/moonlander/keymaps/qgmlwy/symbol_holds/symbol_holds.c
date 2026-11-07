@@ -5,15 +5,25 @@
  * symbols are 16-bit keycodes, so the code uses register_code16().
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "symbol_holds/symbol_holds.h"
+
+// #endregion
+
+// #region Types
 
 /** Tap key and hold symbol of one symbol hold key */
 typedef struct {
     uint16_t tap_key; /**< Key of a tap, which also identifies the key */
     uint16_t symbol;  /**< Symbol of a hold, for a US English host layout */
 } symbol_hold_t;
+
+// #endregion
+
+// #region Data
 
 /** Symbol hold keys from the left pinky to the right pinky */
 static const symbol_hold_t symbol_holds[] = {
@@ -28,6 +38,10 @@ static const symbol_hold_t symbol_holds[] = {
     {.tap_key = KC_DOT, .symbol = KC_RIGHT_BRACKET},
     {.tap_key = KC_SLASH, .symbol = KC_RIGHT_ANGLE_BRACKET},
 };
+
+// #endregion
+
+// #region Public functions
 
 uint16_t symbol_of_hold_key(uint16_t keycode) {
     for (size_t index = 0; index < ARRAY_SIZE(symbol_holds); index++) {
@@ -50,3 +64,5 @@ bool process_symbol_holds(uint16_t keycode, keyrecord_t *record) {
     }
     return false;
 }
+
+// #endregion

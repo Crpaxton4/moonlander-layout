@@ -8,7 +8,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+
+// #endregion
+
+// #region Functions
 
 /**
  * Starts or ends the plain mode for the plain-mode combo while the special mode is
@@ -26,3 +32,5 @@ bool process_plain_mode(uint16_t keycode, keyrecord_t *record);
  * @return True while LAYER_PLAIN is on.
  */
 bool plain_mode_is_on(void);
+
+// #endregion

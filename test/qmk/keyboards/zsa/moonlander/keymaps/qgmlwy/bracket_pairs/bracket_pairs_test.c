@@ -8,15 +8,21 @@
  * and unregister their symbols themselves.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+#include "keymap_introspection.h"
 
 #include "bracket_pairs/bracket_pairs.h"
 #include "case_modes/case_modes.h"
 #include "keycodes/keycodes.h"
-#include "keymap_introspection.h"
 #include "layers/layers.h"
 #include "recorded_calls.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
 
 /** Tap count of a key that is not a tap-hold key, or of a tap-hold hold */
 #define NO_TAP 0
@@ -43,22 +49,37 @@
 /** Right Shift bit, as the hold of the A home row key sets it */
 #define RIGHT_SHIFT_BIT MOD_BIT(KC_RIGHT_SHIFT)
 
-/**
- * Gives the keycode at a grid position of the spec.
- *
- * @param layer  Layer of the key.
- * @param row    Grid row, 0 to 4 from the number row down.
- * @param column Grid column, 0 to 13 from left to right.
- * @return Keycode at that position.
- */
-static uint16_t key_at(uint8_t layer, uint8_t row, uint8_t column) {
-    if (column < FIRST_RIGHT_COLUMN) {
-        return keycode_at_keymap_location(layer, row, column);
+/** Time in ms of the wait of AC9, longer than the idle time */
+#define LONGER_THAN_IDLE_TIME 31000
+
+/** Backspace pushes that empty the pair after snake_case "a b" */
+#define UNDERSCORE_CASE_BACKSPACES 4
+
+/** Backspace pushes that empty the pair after camelCase "a b" */
+#define CAPITAL_CASE_BACKSPACES 3
+
+/** Grid row of the bracket holds */
+#define BRACKET_ROW 3
+
+/** Calls of a hold of V, the "(" hold */
+#define PARENTHESES_PAIR_CALLS                                                 \
+    {CALLED_TAP_CODE16, KC_LEFT_PAREN}, {CALLED_TAP_CODE16, KC_RIGHT_PAREN}, { \
+        CALLED_TAP_CODE16, KC_LEFT                                             \
     }
-    uint8_t matrix_row    = (uint8_t)(row + RIGHT_HALF_ROW_OFFSET);
-    uint8_t matrix_column = (uint8_t)(column - FIRST_RIGHT_COLUMN);
-    return keycode_at_keymap_location(layer, matrix_row, matrix_column);
-}
+
+/** Layer state while the special mode is on */
+#define SPECIAL_MODE_ON ((layer_state_t)(1U << LAYER_SPECIAL))
+
+/** Calls of a double quote with the right home row Shift held */
+#define DOUBLE_QUOTE_PAIR_CALLS                                               \
+    {CALLED_DEL_MODS, RIGHT_SHIFT_BIT}, {CALLED_TAP_CODE16, KC_DOUBLE_QUOTE}, \
+        {CALLED_TAP_CODE16, KC_DOUBLE_QUOTE}, {CALLED_TAP_CODE16, KC_LEFT}, { \
+        CALLED_ADD_MODS, RIGHT_SHIFT_BIT                                      \
+    }
+
+// #endregion
+
+// #region Types
 
 /** Key position of the spec */
 typedef struct {
@@ -66,6 +87,18 @@ typedef struct {
     uint8_t row;    /**< Grid row */
     uint8_t column; /**< Grid column */
 } grid_position_t;
+
+/** Bracket hold of the spec and the symbols of its pair */
+typedef struct {
+    uint8_t  row;    /**< Grid row of the opener hold */
+    uint8_t  column; /**< Grid column of the opener hold */
+    uint16_t opener; /**< Symbol of the opener */
+    uint16_t closer; /**< Symbol of the matching closer */
+} bracket_pair_t;
+
+// #endregion
+
+// #region Data
 
 /** Tab key (1,0) */
 static const grid_position_t tab_key = {
@@ -165,14 +198,86 @@ static const grid_position_t special_digit_one_key = {
     .column = 9,
 };
 
-/** Time in ms of the wait of AC9, longer than the idle time */
-#define LONGER_THAN_IDLE_TIME 31000
+/** Opener holds of the spec, with the grid position of each one */
+static const bracket_pair_t bracket_pairs[] = {
+    {
+        .row    = 3,
+        .column = 4,
+        .opener = KC_LEFT_PAREN,
+        .closer = KC_RIGHT_PAREN,
+    },
+    {
+        .row    = 3,
+        .column = 2,
+        .opener = KC_LEFT_BRACKET,
+        .closer = KC_RIGHT_BRACKET,
+    },
+    {
+        .row    = 3,
+        .column = 3,
+        .opener = KC_LEFT_CURLY_BRACE,
+        .closer = KC_RIGHT_CURLY_BRACE,
+    },
+    {
+        .row    = 3,
+        .column = 1,
+        .opener = KC_LEFT_ANGLE_BRACKET,
+        .closer = KC_RIGHT_ANGLE_BRACKET,
+    },
+};
 
-/** Backspace pushes that empty the pair after snake_case "a b" */
-#define UNDERSCORE_CASE_BACKSPACES 4
+/** Closer holds of the spec, in the order of bracket_pairs */
+static const uint8_t closer_columns[] = {9, 11, 10, 12};
 
-/** Backspace pushes that empty the pair after camelCase "a b" */
-#define CAPITAL_CASE_BACKSPACES 3
+/** Keys of spec 33 R10 that clear the pair stack, as the keymap has them */
+static const uint16_t clearing_keys[] = {
+    KC_LEFT,
+    KC_RIGHT,
+    KC_UP,
+    KC_DOWN,
+    KC_HOME,
+    KC_END,
+    KC_ENTER,
+    KC_ESCAPE,
+    KC_DELETE,
+    KC_F1,
+    KC_F12,
+    QK_MOUSE_CURSOR_LEFT,
+    QK_MOUSE_CURSOR_RIGHT,
+    QK_MOUSE_BUTTON_1,
+    QK_MOUSE_BUTTON_3,
+    QK_MOUSE_WHEEL_UP,
+    QK_MOUSE_WHEEL_DOWN,
+    QK_MOUSE_ACCELERATION_0,
+};
+
+/** Modifier bits of the Ctrl, Alt and GUI home row holds */
+static const uint8_t shortcut_modifiers[] = {
+    MOD_BIT(KC_LEFT_CTRL),
+    MOD_BIT(KC_LEFT_ALT),
+    MOD_BIT(KC_LEFT_GUI),
+};
+
+// #endregion
+
+// #region Static functions
+
+/**
+ * Gives the keycode at a grid position of the spec.
+ *
+ * @param layer  Layer of the key.
+ * @param row    Grid row, 0 to 4 from the number row down.
+ * @param column Grid column, 0 to 13 from left to right.
+ * @return Keycode at that position.
+ */
+static uint16_t key_at(uint8_t layer, uint8_t row, uint8_t column) {
+    if (column < FIRST_RIGHT_COLUMN) {
+        return keycode_at_keymap_location(layer, row, column);
+    }
+    uint8_t matrix_row    = (uint8_t)(row + RIGHT_HALF_ROW_OFFSET);
+    uint8_t matrix_column = (uint8_t)(column - FIRST_RIGHT_COLUMN);
+    return keycode_at_keymap_location(layer, matrix_row, matrix_column);
+}
 
 /**
  * Gives the keycode at a key position of the spec.
@@ -277,54 +382,6 @@ static void start_case(void) {
     bracket_pairs_clear();
     case_modes_end_all();
 }
-
-/** Bracket hold of the spec and the symbols of its pair */
-typedef struct {
-    uint8_t  row;    /**< Grid row of the opener hold */
-    uint8_t  column; /**< Grid column of the opener hold */
-    uint16_t opener; /**< Symbol of the opener */
-    uint16_t closer; /**< Symbol of the matching closer */
-} bracket_pair_t;
-
-/** Opener holds of the spec, with the grid position of each one */
-static const bracket_pair_t bracket_pairs[] = {
-    {
-        .row    = 3,
-        .column = 4,
-        .opener = KC_LEFT_PAREN,
-        .closer = KC_RIGHT_PAREN,
-    },
-    {
-        .row    = 3,
-        .column = 2,
-        .opener = KC_LEFT_BRACKET,
-        .closer = KC_RIGHT_BRACKET,
-    },
-    {
-        .row    = 3,
-        .column = 3,
-        .opener = KC_LEFT_CURLY_BRACE,
-        .closer = KC_RIGHT_CURLY_BRACE,
-    },
-    {
-        .row    = 3,
-        .column = 1,
-        .opener = KC_LEFT_ANGLE_BRACKET,
-        .closer = KC_RIGHT_ANGLE_BRACKET,
-    },
-};
-
-/** Closer holds of the spec, in the order of bracket_pairs */
-static const uint8_t closer_columns[] = {9, 11, 10, 12};
-
-/** Grid row of the bracket holds */
-#define BRACKET_ROW 3
-
-/** Calls of a hold of V, the "(" hold */
-#define PARENTHESES_PAIR_CALLS                                                 \
-    {CALLED_TAP_CODE16, KC_LEFT_PAREN}, {CALLED_TAP_CODE16, KC_RIGHT_PAREN}, { \
-        CALLED_TAP_CODE16, KC_LEFT                                             \
-    }
 
 static void bracket_pairs_r1_ac1_ac10_opener_hold_sends_pair(void **state) {
     (void)state;
@@ -582,28 +639,6 @@ static void bracket_pairs_r9_outputs_with_no_shift(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
-/** Keys of spec 33 R10 that clear the pair stack, as the keymap has them */
-static const uint16_t clearing_keys[] = {
-    KC_LEFT,
-    KC_RIGHT,
-    KC_UP,
-    KC_DOWN,
-    KC_HOME,
-    KC_END,
-    KC_ENTER,
-    KC_ESCAPE,
-    KC_DELETE,
-    KC_F1,
-    KC_F12,
-    QK_MOUSE_CURSOR_LEFT,
-    QK_MOUSE_CURSOR_RIGHT,
-    QK_MOUSE_BUTTON_1,
-    QK_MOUSE_BUTTON_3,
-    QK_MOUSE_WHEEL_UP,
-    QK_MOUSE_WHEEL_DOWN,
-    QK_MOUSE_ACCELERATION_0,
-};
-
 static void bracket_pairs_r10_clearing_key_clears_stack(void **state) {
     (void)state;
     for (size_t index = 0; index < ARRAY_SIZE(clearing_keys); index++) {
@@ -630,13 +665,6 @@ static void bracket_pairs_r10_ac7_mouse_key_then_tab(void **state) {
     };
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
-
-/** Modifier bits of the Ctrl, Alt and GUI home row holds */
-static const uint8_t shortcut_modifiers[] = {
-    MOD_BIT(KC_LEFT_CTRL),
-    MOD_BIT(KC_LEFT_ALT),
-    MOD_BIT(KC_LEFT_GUI),
-};
 
 static void bracket_pairs_r10_shortcut_clears_stack(void **state) {
     (void)state;
@@ -702,16 +730,6 @@ static void bracket_pairs_r13_ac11_empty_stack_tab_and_closer(void **state) {
     };
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
-
-/** Layer state while the special mode is on */
-#define SPECIAL_MODE_ON ((layer_state_t)(1U << LAYER_SPECIAL))
-
-/** Calls of a double quote with the right home row Shift held */
-#define DOUBLE_QUOTE_PAIR_CALLS                                               \
-    {CALLED_DEL_MODS, RIGHT_SHIFT_BIT}, {CALLED_TAP_CODE16, KC_DOUBLE_QUOTE}, \
-        {CALLED_TAP_CODE16, KC_DOUBLE_QUOTE}, {CALLED_TAP_CODE16, KC_LEFT}, { \
-        CALLED_ADD_MODS, RIGHT_SHIFT_BIT                                      \
-    }
 
 /** Types a double quote: the quote key (2,13) while A (2,9), the right Shift, is held
  */
@@ -879,6 +897,10 @@ static void bracket_pairs_clear_removes_pairs(void **state) {
     assert_true(push_and_release(KC_TAB, NOT_A_TAP));
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in the order of the spec requirements */
 static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r1_ac1_ac10_opener_hold_sends_pair),
@@ -917,3 +939,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(bracket_pairs_cases, NULL, NULL);
 }
+
+// #endregion

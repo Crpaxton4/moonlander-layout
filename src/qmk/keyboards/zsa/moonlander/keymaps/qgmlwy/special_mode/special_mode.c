@@ -2,6 +2,8 @@
  * Mode key and double whitespace end of the special mode.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "bracket_pairs/bracket_pairs.h"
@@ -10,11 +12,19 @@
 #include "special_mode/special_mode.h"
 #include "special_mode/special_mode_logic.h"
 
+// #endregion
+
+// #region Types
+
 /** Keycode of one whitespace key and its key class */
 typedef struct {
     uint16_t              keycode; /**< Keycode on LAYER_SPECIAL */
     enum special_mode_key key;     /**< Key class for the double whitespace rule */
 } whitespace_key_t;
+
+// #endregion
+
+// #region Data
 
 /** Whitespace keys of LAYER_SPECIAL; Backspace is not one of them */
 static const whitespace_key_t whitespace_keys[] = {
@@ -25,6 +35,10 @@ static const whitespace_key_t whitespace_keys[] = {
 
 /** State of the mode that is on, or of the last mode */
 static special_mode_t mode;
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the key class of a keycode.
@@ -59,6 +73,10 @@ static void process_mode_key(const keyrecord_t *record) {
     layer_on(LAYER_SPECIAL);
 }
 
+// #endregion
+
+// #region Public functions
+
 bool process_special_mode(uint16_t keycode, keyrecord_t *record) {
     if (keycode == SPECIAL_MODE_KEY) {
         process_mode_key(record);
@@ -79,3 +97,5 @@ bool process_special_mode(uint16_t keycode, keyrecord_t *record) {
 void special_mode_count_taken_push(void) {
     (void)special_mode_push_ends_mode(&mode, SPECIAL_MODE_OTHER_KEY);
 }
+
+// #endregion

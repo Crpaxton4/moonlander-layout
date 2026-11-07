@@ -2,13 +2,50 @@
  * Pair stack of the bracket and quote pairs.
  */
 
+// #region Includes
+
 #include "bracket_pairs/bracket_pairs_logic.h"
+
+// #endregion
+
+// #region Macros
 
 /** Characters of one pair: the opener and the closer */
 #define PAIR_CHARACTERS 2
 
 /** Index step from one entry to the entry above it */
 #define ONE_ENTRY 1
+
+// #endregion
+
+// #region Types
+
+/**
+ * Gives the result of one key push of a key class, and changes the stack.
+ *
+ * @param stack Pair stack.
+ * @param kind  Pair of an opener, closer or quote.
+ * @return Result of the push.
+ */
+typedef pair_result_t (*key_handler_t)(pair_stack_t *stack, enum pair_kind kind);
+
+// #endregion
+
+// #region Function declarations
+
+static pair_result_t push_no_character(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t push_character(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t push_lone_opener(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t open_pair(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t push_tab(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t push_closer(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t push_quote(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t push_backspace(pair_stack_t *stack, enum pair_kind kind);
+static pair_result_t push_clearing_key(pair_stack_t *stack, enum pair_kind kind);
+
+// #endregion
+
+// #region Data
 
 /** Result of a key that goes on with no change */
 static const pair_result_t pass_result = {.passes = true};
@@ -36,6 +73,23 @@ static const pair_result_t delete_pair_result = {
     .output_count = 2,
     .outputs      = {PAIR_OUTPUT_BACKSPACE, PAIR_OUTPUT_DELETE},
 };
+
+/** Handler of each key class, indexed by key class */
+static const key_handler_t key_handlers[] = {
+    [PAIR_KEY_NO_CHARACTER] = push_no_character,
+    [PAIR_KEY_CHARACTER]    = push_character,
+    [PAIR_KEY_OPENER]       = open_pair,
+    [PAIR_KEY_LONE_OPENER]  = push_lone_opener,
+    [PAIR_KEY_CLOSER]       = push_closer,
+    [PAIR_KEY_QUOTE]        = push_quote,
+    [PAIR_KEY_TAB]          = push_tab,
+    [PAIR_KEY_BACKSPACE]    = push_backspace,
+    [PAIR_KEY_CLEARING]     = push_clearing_key,
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the top entry of a stack that is not empty.
@@ -152,10 +206,6 @@ static pair_result_t push_tab(pair_stack_t *stack, enum pair_kind kind) {
     return jump_out(stack);
 }
 
-void pair_stack_clear(pair_stack_t *stack) {
-    stack->depth = 0;
-}
-
 /**
  * Jumps out of the innermost pair for its own closer. Any other closer clears the
  * stack, because the host text no longer matches it. With no pair, the closer
@@ -225,28 +275,6 @@ static pair_result_t push_clearing_key(pair_stack_t *stack, enum pair_kind kind)
 }
 
 /**
- * Gives the result of one key push of a key class, and changes the stack.
- *
- * @param stack Pair stack.
- * @param kind  Pair of an opener, closer or quote.
- * @return Result of the push.
- */
-typedef pair_result_t (*key_handler_t)(pair_stack_t *stack, enum pair_kind kind);
-
-/** Handler of each key class, indexed by key class */
-static const key_handler_t key_handlers[] = {
-    [PAIR_KEY_NO_CHARACTER] = push_no_character,
-    [PAIR_KEY_CHARACTER]    = push_character,
-    [PAIR_KEY_OPENER]       = open_pair,
-    [PAIR_KEY_LONE_OPENER]  = push_lone_opener,
-    [PAIR_KEY_CLOSER]       = push_closer,
-    [PAIR_KEY_QUOTE]        = push_quote,
-    [PAIR_KEY_TAB]          = push_tab,
-    [PAIR_KEY_BACKSPACE]    = push_backspace,
-    [PAIR_KEY_CLEARING]     = push_clearing_key,
-};
-
-/**
  * Clears the stack if no key push occurred for the idle time, and keeps the time of
  * this push.
  *
@@ -258,6 +286,14 @@ static void note_push_time(pair_stack_t *stack, uint32_t now) {
         pair_stack_clear(stack);
     }
     stack->last_push_time = now;
+}
+
+// #endregion
+
+// #region Public functions
+
+void pair_stack_clear(pair_stack_t *stack) {
+    stack->depth = 0;
 }
 
 pair_result_t pair_stack_push(pair_stack_t *stack, pair_key_t key, uint32_t now) {
@@ -278,3 +314,5 @@ void pair_stack_count_sent_key(pair_stack_t *stack, pair_key_t sent, uint32_t no
         stack->depth--;
     }
 }
+
+// #endregion

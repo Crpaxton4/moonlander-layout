@@ -5,6 +5,8 @@
  * text that the host editor shows with the text of the acceptance check.
  */
 
+// #region Includes
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -13,14 +15,56 @@
 #include "case_modes/case_modes_logic.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
 /** Characters that the editor model can keep, with the terminating zero */
 #define EDITOR_CAPACITY 64
+
+/** Number of modes in all_modes */
+#define MODE_COUNT (sizeof(all_modes) / sizeof(all_modes[0]))
+
+// #endregion
+
+// #region Types
 
 /** Text in the editor model of the host */
 typedef struct {
     char   text[EDITOR_CAPACITY]; /**< Text, with a terminating zero */
     size_t length;                /**< Characters in text */
 } editor_t;
+
+/** Keys that a case types, and the text that the editor must then show */
+typedef struct {
+    const char *typed; /**< Characters of the pushed keys, in push order */
+    const char *shown; /**< Text that the editor must show */
+} typing_t;
+
+/** Typing in one mode, a change to a second mode, and more typing */
+typedef struct {
+    enum case_mode first_mode;   /**< Mode to start */
+    const char    *first_typed;  /**< Characters of the keys in the first mode */
+    enum case_mode second_mode;  /**< Mode to change to */
+    const char    *second_typed; /**< Characters of the keys after the change */
+    const char    *shown;        /**< Text that the editor must show */
+} mode_change_t;
+
+// #endregion
+
+// #region Data
+
+/** Each case mode, for cases that cover all four */
+static const enum case_mode all_modes[] = {
+    CASE_MODE_SNAKE,
+    CASE_MODE_CONSTANT,
+    CASE_MODE_CAMEL,
+    CASE_MODE_PASCAL,
+};
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Types one character in the editor model, as the host does for a key.
@@ -112,32 +156,6 @@ static enum case_action push_mode_key(case_modes_t *case_modes, enum case_mode m
     case_key_t mode_key = {.key_class = CASE_KEY_MODE, .mode = mode};
     return case_modes_push(case_modes, mode_key);
 }
-
-/** Keys that a case types, and the text that the editor must then show */
-typedef struct {
-    const char *typed; /**< Characters of the pushed keys, in push order */
-    const char *shown; /**< Text that the editor must show */
-} typing_t;
-
-/** Typing in one mode, a change to a second mode, and more typing */
-typedef struct {
-    enum case_mode first_mode;   /**< Mode to start */
-    const char    *first_typed;  /**< Characters of the keys in the first mode */
-    enum case_mode second_mode;  /**< Mode to change to */
-    const char    *second_typed; /**< Characters of the keys after the change */
-    const char    *shown;        /**< Text that the editor must show */
-} mode_change_t;
-
-/** Each case mode, for cases that cover all four */
-static const enum case_mode all_modes[] = {
-    CASE_MODE_SNAKE,
-    CASE_MODE_CONSTANT,
-    CASE_MODE_CAMEL,
-    CASE_MODE_PASCAL,
-};
-
-/** Number of modes in all_modes */
-#define MODE_COUNT (sizeof(all_modes) / sizeof(all_modes[0]))
 
 /**
  * Starts a mode, types a text, and fails the test if the editor model does not
@@ -350,6 +368,10 @@ static void case_modes_logic_r9_modifier_keeps_mode(void **state) {
     assert_string_equal(editor.text, "max x");
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program */
 static const struct CMUnitTest case_modes_logic_cases[] = {
     cmocka_unit_test(case_modes_logic_r10_zero_state_has_no_mode),
@@ -372,3 +394,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(case_modes_logic_cases, NULL, NULL);
 }
+
+// #endregion

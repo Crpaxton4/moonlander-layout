@@ -2,6 +2,8 @@
  * Plain-mode combo: plain mode on or off.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "bracket_pairs/bracket_pairs.h"
@@ -9,6 +11,10 @@
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
 #include "plain_mode/plain_mode.h"
+
+// #endregion
+
+// #region Static functions
 
 /** Turns on LAYER_PLAIN, after it ends each mode that changes keys */
 static void start_plain_mode(void) {
@@ -29,6 +35,10 @@ static void toggle_plain_mode(void) {
     start_plain_mode();
 }
 
+// #endregion
+
+// #region Public functions
+
 bool process_plain_mode(uint16_t keycode, keyrecord_t *record) {
     if (keycode != PLAIN_MODE_TOGGLE) {
         return true;
@@ -43,3 +53,5 @@ bool process_plain_mode(uint16_t keycode, keyrecord_t *record) {
 bool plain_mode_is_on(void) {
     return layer_state_is(LAYER_PLAIN);
 }
+
+// #endregion

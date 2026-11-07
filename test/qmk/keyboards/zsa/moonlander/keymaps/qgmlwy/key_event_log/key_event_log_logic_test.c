@@ -3,11 +3,17 @@
  * event log, with no QMK code.
  */
 
+// #region Includes
+
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "key_event_log/key_event_log_logic.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
 
 /** HID key code of the A key */
 #define KEY_A 0x04
@@ -53,6 +59,10 @@
 
 /** Bytes in the key bitmap of a QMK NKRO report */
 #define NKRO_BITMAP_BYTES 30
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Sets the bit of a key code in a key bitmap, as QMK's add_key_bit().
@@ -172,6 +182,10 @@ static void key_event_log_logic_r9_no_idle_off_while_off(void **state) {
     assert_false(logging_idle_ended(&logging, LOGGING_IDLE_MILLISECONDS));
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program */
 static const struct CMUnitTest key_event_log_logic_cases[] = {
     cmocka_unit_test(key_event_log_logic_r1_static_state_is_off),
@@ -192,3 +206,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(key_event_log_logic_cases, NULL, NULL);
 }
+
+// #endregion

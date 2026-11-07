@@ -6,15 +6,21 @@
  * cases, so each case first sets the state that it needs.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+#include "keymap_introspection.h"
 
 #include "combos/combos.h"
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
-#include "keymap_introspection.h"
 #include "layers/layers.h"
 #include "recorded_calls.h"
 #include "unit_test.h"
+
+// #endregion
+
+// #region Macros
 
 /** Matrix row of a test key */
 #define TEST_KEY_ROW 2
@@ -45,6 +51,10 @@
 
 /** Byte of an NKRO key bitmap that holds key codes 0x20 to 0x27 */
 #define KEY_9_BYTE 4
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Sends a push or a release of a key to process_record_user().
@@ -308,6 +318,10 @@ static void key_event_log_special_mode_r10_combo_keeps_logging_on(void **state) 
     assert_console_text("");
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program; the power-up case is first, for a run of all cases */
 static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r1_off_at_power_up),
@@ -335,3 +349,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(key_event_log_cases, NULL, NULL);
 }
+
+// #endregion

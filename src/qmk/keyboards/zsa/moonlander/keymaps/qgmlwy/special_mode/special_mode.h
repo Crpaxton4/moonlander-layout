@@ -8,7 +8,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+
+// #endregion
+
+// #region Functions
 
 /**
  * Starts or ends the special mode for the mode key, and ends the mode when the
@@ -26,3 +32,5 @@ bool process_special_mode(uint16_t keycode, keyrecord_t *record);
  * that the push separates two whitespace keys.
  */
 void special_mode_count_taken_push(void);
+
+// #endregion

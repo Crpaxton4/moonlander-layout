@@ -7,13 +7,19 @@
  * housekeeping task would not see those keys.
  */
 
-#include QMK_KEYBOARD_H
+// #region Includes
 
 #include <string.h>
+
+#include QMK_KEYBOARD_H
 
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
+
+// #endregion
+
+// #region Data
 
 /** Logging state; all zero at power-up, so logging is off */
 static logging_t logging;
@@ -23,6 +29,10 @@ static host_driver_t *host_driver;
 
 /** Copy of host_driver that also writes the output records */
 static host_driver_t logging_driver;
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Gives the time for a record. uint32_t is unsigned long on the keyboard and
@@ -142,6 +152,10 @@ static bool toggle_logging(const keyrecord_t *record) {
     return false;
 }
 
+// #endregion
+
+// #region Public functions
+
 bool process_key_event_log(uint16_t keycode, keyrecord_t *record) {
     end_idle_logging();
     if (keycode == LOGGING_TOGGLE) {
@@ -164,3 +178,5 @@ void key_event_log_housekeeping(void) {
 bool key_event_log_is_on(void) {
     return logging.is_on;
 }
+
+// #endregion

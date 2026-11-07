@@ -2,6 +2,8 @@
  * Reads a file into the text that tree-sitter parses
  */
 
+// #region Includes
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -11,8 +13,16 @@
 
 #include "source.h"
 
+// #endregion
+
+// #region Macros
+
 /** Characters before the name of a preprocessor directive */
 #define DIRECTIVE_LEAD "# \t"
+
+// #endregion
+
+// #region Types
 
 /** Wrapper that makes a file of one kind into a translation unit */
 typedef struct {
@@ -20,6 +30,10 @@ typedef struct {
     const char *before; /**< Text before the file text */
     const char *after;  /**< Text after the file text */
 } file_kind_t;
+
+// #endregion
+
+// #region Data
 
 /** An .inc file contains only the elements of a brace initializer */
 static const file_kind_t file_kinds[] = {
@@ -44,6 +58,10 @@ static const char *const blanked_directives[] = {
     // tables include their rows
     "include",
 };
+
+// #endregion
+
+// #region Static functions
 
 /**
  * Tells if a string ends with a suffix.
@@ -169,6 +187,23 @@ static void blank_unparsable(buffer_t *buffer) {
     }
 }
 
+/**
+ * Changes a row of the parsed text into a line of the file. A row of the wrapper
+ * gives the first line of the file.
+ *
+ * @param source Source of the row.
+ * @param row    Row in the parsed text, from 0.
+ * @return Line in the file, from FIRST_POSITION.
+ */
+static unsigned long file_line(const source_t *source, uint32_t row) {
+    uint32_t file_row = row < source->wrapper_rows ? 0 : row - source->wrapper_rows;
+    return (unsigned long)file_row + FIRST_POSITION;
+}
+
+// #endregion
+
+// #region Public functions
+
 int load_source(source_t *source) {
     const file_kind_t *kind   = find_file_kind(source->path);
     FILE              *stream = fopen(source->path, "rb");
@@ -186,19 +221,6 @@ int load_source(source_t *source) {
     return error;
 }
 
-/**
- * Changes a row of the parsed text into a line of the file. A row of the wrapper
- * gives the first line of the file.
- *
- * @param source Source of the row.
- * @param row    Row in the parsed text, from 0.
- * @return Line in the file, from FIRST_POSITION.
- */
-static unsigned long file_line(const source_t *source, uint32_t row) {
-    uint32_t file_row = row < source->wrapper_rows ? 0 : row - source->wrapper_rows;
-    return (unsigned long)file_row + FIRST_POSITION;
-}
-
 finding_t *add_finding(source_t *source, const char *rule, TSPoint point) {
     findings_t *list = source->findings;
     list->items = reserve(list->items, sizeof(finding_t), &list->capacity, list->count);
@@ -213,3 +235,5 @@ finding_t *add_finding(source_t *source, const char *rule, TSPoint point) {
     list->count++;
     return finding;
 }
+
+// #endregion

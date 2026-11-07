@@ -5,18 +5,28 @@
  * cases, so each case first sets the state that it needs.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+#include "keymap_introspection.h"
 
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
-#include "keymap_introspection.h"
 #include "layers/layers.h"
 #include "recorded_calls.h"
 #include "status_leds/status_leds.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
 /** Layer state with one layer on */
 #define ONLY_LAYER(layer) ((layer_state_t)(1U << (layer)))
+
+// #endregion
+
+// #region Static functions
 
 /** Pushes the logging combo, as QMK sends the combo keycode */
 static void push_logging_combo(void) {
@@ -119,6 +129,10 @@ static void status_leds_plain_layer_lights_leds_3_and_6(void **state) {
     assert_leds(STATUS_LED_BIT(LEFT_INNER_LED) | STATUS_LED_BIT(RIGHT_OUTER_LED));
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program */
 static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_r4_logging_led_on_while_logging_is_on),
@@ -136,3 +150,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(status_leds_cases, NULL, NULL);
 }
+
+// #endregion

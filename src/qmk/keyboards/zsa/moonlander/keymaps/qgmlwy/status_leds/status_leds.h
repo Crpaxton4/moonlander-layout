@@ -10,7 +10,26 @@
 
 #pragma once
 
+// #region Includes
+
 #include <stdint.h>
+
+// #endregion
+
+// #region Macros
+
+/** Number of status LEDs */
+#define STATUS_LED_COUNT 6
+
+/** LED that is on while logging is on, and that no layer uses */
+#define LOGGING_LED LEFT_OUTER_LED
+
+/** Bit of one LED in a set of LEDs */
+#define STATUS_LED_BIT(led) ((uint8_t)(1U << (led)))
+
+// #endregion
+
+// #region Enumerations
 
 /** Status LEDs, in the order that QMK numbers them from 1, from the left */
 enum status_led {
@@ -22,14 +41,11 @@ enum status_led {
     RIGHT_OUTER_LED  = 5, /**< LED 6, rightmost LED of the right half */
 };
 
-/** Number of status LEDs */
-#define STATUS_LED_COUNT 6
+// #endregion
 
-/** LED that is on while logging is on, and that no layer uses */
-#define LOGGING_LED LEFT_OUTER_LED
-
-/** Bit of one LED in a set of LEDs */
-#define STATUS_LED_BIT(led) ((uint8_t)(1U << (led)))
+// #region Functions
 
 /** Sets each status LED from the logging state and the highest active layer */
 void update_status_leds(void);
+
+// #endregion

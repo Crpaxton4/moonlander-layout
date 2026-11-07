@@ -8,7 +8,13 @@
 
 #pragma once
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
+
+// #endregion
+
+// #region Functions
 
 /**
  * Sends pairs, jump-outs and pair deletes in place of the pushed key, and counts
@@ -40,3 +46,5 @@ void bracket_pairs_take_back_count(void);
 
 /** Removes all open pairs, for a mode that must not make pairs */
 void bracket_pairs_clear(void);
+
+// #endregion

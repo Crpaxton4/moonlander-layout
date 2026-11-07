@@ -6,13 +6,47 @@
  * callbacks directly with the values that the engine gives.
  */
 
+// #region Includes
+
 #include QMK_KEYBOARD_H
 
 #include "layers/layers.h"
 #include "unit_test.h"
 
+// #endregion
+
+// #region Macros
+
+/** Index of the home row key to compare when the prior key is the first one */
+#define SECOND_HOME_ROW_KEY 1
+
+// #endregion
+
+// #region Types
+
+/** Matrix rows that hold the keys of one hand */
+typedef struct {
+    uint8_t first_row; /**< First matrix row */
+    uint8_t last_row;  /**< Last matrix row */
+    char    hand;      /**< Expected hand of each key: 'L', 'R' or '*' */
+} hand_rows_t;
+
+// #endregion
+
+// #region Data
+
 /** Key event of a push, as the engine gives it to the callbacks */
 static keyrecord_t push = {.event = {.pressed = true}};
+
+/** Home row keys, from the left pinky to the right pinky */
+static const uint16_t home_row_mods[] = {
+    LCTL_T(KC_D), LALT_T(KC_S), LGUI_T(KC_T), LSFT_T(KC_N),
+    RSFT_T(KC_A), RGUI_T(KC_E), LALT_T(KC_O), RCTL_T(KC_H),
+};
+
+// #endregion
+
+// #region Static functions
 
 static void tap_hold_r2_tapping_term_of_ctrl_alt_and_gui_keys(void **state) {
     (void)state;
@@ -30,13 +64,6 @@ static void tap_hold_r2_shorter_tapping_term_of_shift_keys(void **state) {
     assert_int_equal(get_tapping_term(LSFT_T(KC_N), &push), SHIFT_TAPPING_TERM);
     assert_int_equal(get_tapping_term(RSFT_T(KC_A), &push), SHIFT_TAPPING_TERM);
 }
-
-/** Matrix rows that hold the keys of one hand */
-typedef struct {
-    uint8_t first_row; /**< First matrix row */
-    uint8_t last_row;  /**< Last matrix row */
-    char    hand;      /**< Expected hand of each key: 'L', 'R' or '*' */
-} hand_rows_t;
 
 /**
  * Fails the test if a key does not have the expected hand.
@@ -100,15 +127,6 @@ static void tap_hold_r5_thumb_keys_combine_with_each_hand(void **state) {
     assert_hand_of_rows(&right_thumbs);
 }
 
-/** Home row keys, from the left pinky to the right pinky */
-static const uint16_t home_row_mods[] = {
-    LCTL_T(KC_D), LALT_T(KC_S), LGUI_T(KC_T), LSFT_T(KC_N),
-    RSFT_T(KC_A), RGUI_T(KC_E), LALT_T(KC_O), RCTL_T(KC_H),
-};
-
-/** Index of the home row key to compare when the prior key is the first one */
-#define SECOND_HOME_ROW_KEY 1
-
 /**
  * Gives the flow tap term of the home row keys after a prior key. Fails the test if
  * two home row keys have different terms. The prior key itself is not compared,
@@ -165,6 +183,10 @@ static void tap_hold_r12_no_flow_tap_on_a_push_of_the_same_key(void **state) {
     }
 }
 
+// #endregion
+
+// #region Test runner
+
 /** Cases of this program, in the order of the spec requirements */
 static const struct CMUnitTest tap_hold_cases[] = {
     cmocka_unit_test(tap_hold_r2_tapping_term_of_ctrl_alt_and_gui_keys),
@@ -182,3 +204,5 @@ int main(int argc, char **argv) {
     select_case(argc, argv);
     return cmocka_run_group_tests(tap_hold_cases, NULL, NULL);
 }
+
+// #endregion
