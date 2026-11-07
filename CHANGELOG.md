@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.8.0...v1.9.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add case modes for identifiers ([#151](https://github.com/Crpaxton4/moonlander-layout/issues/151)) ([811c687](https://github.com/Crpaxton4/moonlander-layout/commit/811c68792909454dd83c3012435ed1c40d4258cf))
+
 ## [1.8.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.7.0...v1.8.0) (2026-11-07)
 
 
