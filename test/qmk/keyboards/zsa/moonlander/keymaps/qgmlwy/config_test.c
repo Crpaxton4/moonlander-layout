@@ -3,11 +3,13 @@
  *
  * Each value has its own case, so a spec that changes one value changes only one
  * case. CONSOLE_ENABLE and COMBO_ENABLE come from rules.mk, which is not C, so no
- * case can read them.
+ * case can read them. mousekey.h comes after config.h, as in the firmware, so a
+ * mouse key value that config.h does not set is QMK's default.
  */
 
 #include "config.h"
 #include "layers/layers.h"
+#include "mousekey.h"
 #include "unit_test.h"
 
 static void config_usb_suspend_wakeup_delay(void **state) {
@@ -15,9 +17,21 @@ static void config_usb_suspend_wakeup_delay(void **state) {
     assert_int_equal(USB_SUSPEND_WAKEUP_DELAY, 0);
 }
 
+static void config_mk_combined(void **state) {
+    (void)state;
+#ifndef MK_COMBINED
+    fail_msg("MK_COMBINED is not defined");
+#endif
+}
+
+static void config_mousekey_move_delta(void **state) {
+    (void)state;
+    assert_int_equal(MOUSEKEY_MOVE_DELTA, 1);
+}
+
 static void config_mousekey_interval(void **state) {
     (void)state;
-    assert_int_equal(MOUSEKEY_INTERVAL, 10);
+    assert_int_equal(MOUSEKEY_INTERVAL, 9);
 }
 
 static void config_mousekey_wheel_delay(void **state) {
@@ -27,12 +41,12 @@ static void config_mousekey_wheel_delay(void **state) {
 
 static void config_mousekey_delay(void **state) {
     (void)state;
-    assert_int_equal(MOUSEKEY_DELAY, 0);
+    assert_int_equal(MOUSEKEY_DELAY, 80);
 }
 
 static void config_mousekey_max_speed(void **state) {
     (void)state;
-    assert_int_equal(MOUSEKEY_MAX_SPEED, 3);
+    assert_int_equal(MOUSEKEY_MAX_SPEED, 20);
 }
 
 static void config_mousekey_time_to_max(void **state) {
@@ -125,6 +139,8 @@ static void config_serial_number(void **state) {
 /** Cases of this program, in the order of config.h */
 static const struct CMUnitTest config_cases[] = {
     cmocka_unit_test(config_usb_suspend_wakeup_delay),
+    cmocka_unit_test(config_mk_combined),
+    cmocka_unit_test(config_mousekey_move_delta),
     cmocka_unit_test(config_mousekey_interval),
     cmocka_unit_test(config_mousekey_wheel_delay),
     cmocka_unit_test(config_mousekey_delay),
