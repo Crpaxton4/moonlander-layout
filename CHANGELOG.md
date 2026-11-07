@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.30](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.29...v1.0.30) (2026-11-07)
+
+
+### Code Refactoring
+
+* **firmware:** use the documented layer-tap form for the copy and paste keys ([#123](https://github.com/Crpaxton4/moonlander-layout/issues/123)) ([91e1960](https://github.com/Crpaxton4/moonlander-layout/commit/91e1960892239324fb0598066bd33c41925b6cfb))
+
 ## [1.0.29](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.28...v1.0.29) (2026-11-07)
 
 
