@@ -1,5 +1,5 @@
 /** @file
- * Tests of the precision key, through the keymap's key event hook.
+ * Tests of the precision key of the nav mode, through the keymap's key event hook.
  *
  * QMK's mouse key code is not in the test build. The cases read QMK's top cursor
  * speed, which that code uses for each movement report.
@@ -57,6 +57,9 @@ static void precision_key_r6_other_keys_keep_top_speed(void **state) {
     mk_max_speed = TOP_SPEED;
     assert_true(process_record_user(QK_MOUSE_CURSOR_RIGHT, &press));
     assert_true(process_record_user(QK_MOUSE_CURSOR_RIGHT, &release));
+    // Thumb key L1 is Space in both modes
+    assert_true(process_record_user(KC_SPACE, &press));
+    assert_true(process_record_user(KC_SPACE, &release));
     assert_int_equal(mk_max_speed, TOP_SPEED);
 }
 

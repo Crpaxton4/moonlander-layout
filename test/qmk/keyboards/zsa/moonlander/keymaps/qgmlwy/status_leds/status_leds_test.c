@@ -138,15 +138,15 @@ static void status_leds_r5_logging_led_is_led_1(void **state) {
     assert_int_equal(LEFT_OUTER_LED, 0);
 }
 
-static void status_leds_arrows_layer_lights_led_4(void **state) {
+static void status_leds_nav_layer_lights_led_4(void **state) {
     (void)state;
-    show_status(false, LAYER_ARROWS);
+    show_status(false, LAYER_NAV);
     assert_leds(STATUS_LED_BIT(RIGHT_INNER_LED));
 }
 
-static void status_leds_arrows_layer_and_logging(void **state) {
+static void status_leds_nav_layer_and_logging(void **state) {
     (void)state;
-    show_status(true, LAYER_ARROWS);
+    show_status(true, LAYER_NAV);
     assert_leds(STATUS_LED_BIT(LOGGING_LED) | STATUS_LED_BIT(RIGHT_INNER_LED));
 }
 
@@ -210,9 +210,9 @@ static void status_leds_r25_ac24_held_backspace_turns_led_3_off(void **state) {
     show_status(false, LAYER_BASE);
 }
 
-static void status_leds_r26_open_pair_with_logging_and_arrows(void **state) {
+static void status_leds_r26_open_pair_with_logging_and_nav(void **state) {
     (void)state;
-    show_status(true, LAYER_ARROWS);
+    show_status(true, LAYER_NAV);
     open_pair();
     assert_leds(STATUS_LED_BIT(LOGGING_LED) | STATUS_LED_BIT(OPEN_PAIR_LED) |
                 STATUS_LED_BIT(RIGHT_INNER_LED));
@@ -230,8 +230,8 @@ static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_r4_logging_led_goes_off_at_idle_off),
     cmocka_unit_test(status_leds_r5_no_layer_uses_the_logging_led),
     cmocka_unit_test(status_leds_r5_logging_led_is_led_1),
-    cmocka_unit_test(status_leds_arrows_layer_lights_led_4),
-    cmocka_unit_test(status_leds_arrows_layer_and_logging),
+    cmocka_unit_test(status_leds_nav_layer_lights_led_4),
+    cmocka_unit_test(status_leds_nav_layer_and_logging),
     cmocka_unit_test(status_leds_special_layer_lights_leds_2_and_5),
     cmocka_unit_test(status_leds_plain_layer_lights_leds_3_and_6),
     cmocka_unit_test(status_leds_r25_open_pair_led_is_led_3),
@@ -239,7 +239,7 @@ static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_r25_ac22_jump_out_turns_led_3_off),
     cmocka_unit_test(status_leds_r25_ac23_led_3_goes_off_after_idle_time),
     cmocka_unit_test(status_leds_r25_ac24_held_backspace_turns_led_3_off),
-    cmocka_unit_test(status_leds_r26_open_pair_with_logging_and_arrows),
+    cmocka_unit_test(status_leds_r26_open_pair_with_logging_and_nav),
 };
 
 int main(int argc, char **argv) {

@@ -119,9 +119,10 @@ static const key_range_t key_ranges[] = {
     {.first = KC_LEFT, .last = KC_LEFT, .key_class = PAIR_KEY_LEFT},
     // Insert, Home, Page Up, Delete, End, Page Down, Down and Up
     {.first = KC_INSERT, .last = KC_UP, .key_class = PAIR_KEY_CLEARING},
+    // Mouse cursor keys, buttons and wheel keys; the speed keys move no cursor
     {
         .first     = QK_MOUSE_CURSOR_UP,
-        .last      = QK_MOUSE_ACCELERATION_2,
+        .last      = QK_MOUSE_WHEEL_RIGHT,
         .key_class = PAIR_KEY_CLEARING,
     },
     // Letters, digits, Space and symbols; the ranges above match the other keys in it
