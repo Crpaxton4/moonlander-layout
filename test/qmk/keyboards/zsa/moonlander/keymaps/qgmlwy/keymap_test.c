@@ -105,7 +105,7 @@ static void keymap_base_left_top_row(void **state) {
                 KC_M,
                 KC_L,
                 KC_W,
-                KC_NO,
+                SNAKE_CASE_KEY,
             },
     };
     assert_row(LAYER_BASE, LEFT_TOP_ROW, &expected);
@@ -122,7 +122,7 @@ static void keymap_base_left_home_row(void **state) {
                 LGUI_T(KC_T),
                 LSFT_T(KC_N),
                 KC_R,
-                KC_NO,
+                CONSTANT_CASE_KEY,
             },
     };
     assert_row(LAYER_BASE, LEFT_HOME_ROW, &expected);
@@ -198,7 +198,7 @@ static void keymap_base_right_top_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
+                CAMEL_CASE_KEY,
                 KC_Y,
                 KC_F,
                 KC_U,
@@ -215,7 +215,7 @@ static void keymap_base_right_home_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_NO,
+                PASCAL_CASE_KEY,
                 KC_I,
                 RSFT_T(KC_A),
                 RGUI_T(KC_E),
