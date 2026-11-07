@@ -60,7 +60,8 @@ their descriptions, run this command:
 make help
 ```
 
-`make compiledb` also writes the compile database to `.build/compile_commands.json`.
+`make compiledb` also writes the compile databases: `.build/compile_commands.json` for
+the firmware and `.build/check_standards/compile_commands.json` for the checker.
 
 ## Checks
 

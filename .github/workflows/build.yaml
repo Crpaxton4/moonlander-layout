@@ -29,7 +29,7 @@ concurrency:
 # A skipped job satisfies its required check, but a `paths:` filter keeps the
 # check pending
 env:
-  FIRMWARE_PATHS: '^src/qmk/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
+  FIRMWARE_PATHS: '^src/(qmk|ci)/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^\.llvm-version$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
   # Keep equal to UV_VERSION in lint.yaml
   UV_VERSION: "0.13.7"
 
@@ -76,6 +76,8 @@ jobs:
       # `qmk compile` never gets a missing submodule, so this list must contain all
       # submodules that the build needs
       QMK_SUBMODULES: "lib/chibios lib/chibios-contrib lib/lufa lib/printf modules/zsa"
+      # Keep equal to JQ_VERSION in setup.sh
+      JQ_VERSION: "1.7.1-3ubuntu0.24.04.2"
       CCACHE_VERSION: "4.14.2"
       CCACHE_SHA256: "b20ff6415151226ac5a10dfd6839700c694bd67d1871c8fddb266d366ff25bfb"
     # Dependabot updates each SHA pin and its release comment on the same line
@@ -181,7 +183,10 @@ jobs:
         if: ${{ !inputs.skip-analysis && (github.event_name == 'push' || steps.ccache-cache.outputs.cache-matched-key != '') }}
         run: .github/scripts/build/install-ccache.sh
 
-      - name: "Build firmware and compile database"
+      - name: "Install jq"
+        run: .github/scripts/build/install-jq.sh
+
+      - name: "Build firmware and compile databases"
         # PR values are empty outside a PR, and the tag is empty outside a release
         env:
           PR_NUMBER: ${{ github.event.pull_request.number || '' }}
