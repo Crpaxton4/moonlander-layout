@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.29](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.28...v1.0.29) (2026-11-07)
+
+
+### Bug Fixes
+
+* **firmware:** trim the unused layers, keys and lighting ([#120](https://github.com/Crpaxton4/moonlander-layout/issues/120)) ([c659ff1](https://github.com/Crpaxton4/moonlander-layout/commit/c659ff1734f47a00c98641c72dcd4c1e9c8b9454))
+
 ## [1.0.28](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.27...v1.0.28) (2026-11-06)
 
 
