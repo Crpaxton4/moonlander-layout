@@ -32,6 +32,9 @@
 /** Tap count of a hold */
 #define NO_TAP 0
 
+/** Hold time in ms of the Backspace of AC24 */
+#define HELD_BACKSPACE_TIME 1000
+
 // #endregion
 
 // #region Static functions
@@ -190,6 +193,23 @@ static void status_leds_r25_ac23_led_3_goes_off_after_idle_time(void **state) {
     assert_leds(0);
 }
 
+static void status_leds_r25_ac24_held_backspace_turns_led_3_off(void **state) {
+    (void)state;
+    // Logging is on, as in the flash test
+    show_status(true, LAYER_BASE);
+    open_pair();
+    send_key_event(KC_A, true);
+    send_key_event(KC_A, false);
+    send_key_event(KC_BACKSPACE, true);
+    advance_fake_clock(HELD_BACKSPACE_TIME);
+    housekeeping_task_user();
+    assert_leds(STATUS_LED_BIT(LOGGING_LED) | STATUS_LED_BIT(OPEN_PAIR_LED));
+    send_key_event(KC_BACKSPACE, false);
+    housekeeping_task_user();
+    assert_leds(STATUS_LED_BIT(LOGGING_LED));
+    show_status(false, LAYER_BASE);
+}
+
 static void status_leds_r26_open_pair_with_logging_and_arrows(void **state) {
     (void)state;
     show_status(true, LAYER_ARROWS);
@@ -218,6 +238,7 @@ static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_r25_ac22_open_pair_lights_led_3),
     cmocka_unit_test(status_leds_r25_ac22_jump_out_turns_led_3_off),
     cmocka_unit_test(status_leds_r25_ac23_led_3_goes_off_after_idle_time),
+    cmocka_unit_test(status_leds_r25_ac24_held_backspace_turns_led_3_off),
     cmocka_unit_test(status_leds_r26_open_pair_with_logging_and_arrows),
 };
 
