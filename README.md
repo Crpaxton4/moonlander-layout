@@ -98,8 +98,7 @@ cmake --list-presets=all
 ```
 
 The checker, the converter and the unit tests use the same strict compiler flags,
-from [`src/ci/strict-c-flags.cmake`](src/ci/strict-c-flags.cmake). Each warning
-stops the build.
+from [`CMakeLists.txt`](CMakeLists.txt). Each warning stops the build.
 
 CMake finds tree-sitter, cmocka and MinGW-w64 in the system directories. To use a
 different directory, for example a `dpkg -x` extraction of the packages, set
