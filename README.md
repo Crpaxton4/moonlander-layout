@@ -15,7 +15,7 @@ build uses.
 | `src/check_standards/`  | The standards checker                          |
 | `src/key_log_capture/`  | The key log capture for Windows                |
 | `test/check_standards/` | The checker tests, one directory for each case |
-| `test/qmk/`             | The keymap tests: only a placeholder file      |
+| `test/qmk/`             | The keymap unit tests                          |
 | `.build/`               | The build output, which git ignores            |
 
 ## Installation
@@ -36,6 +36,7 @@ The script installs these items:
 - Node at the version in [`versions.env`](versions.env), and the npm devDependencies
 - pre-commit and its git hooks
 - The check tools: shellcheck, tree-sitter, clang-tidy and Doxygen
+- The unit test tools: CMake and cmocka
 
 Then the script builds the firmware one time.
 
@@ -126,6 +127,7 @@ To run the checks, use these commands:
 | `make analyze`               | Runs clang-tidy, Doxygen and gcc-strict.  |
 | `make checker-test`          | Tests the standards checker.              |
 | `make checker-clang-tidy`    | Runs clang-tidy on the standards checker. |
+| `make qmk-test`              | Runs the keymap unit tests.               |
 
 The hooks are editorconfig-checker, clang-format, Prettier, shellcheck, shfmt,
 actionlint and the standards checker. Git runs these hooks at each commit.
@@ -146,6 +148,29 @@ The standards checker has two rules for the `.c`, `.h` and `.inc` files:
 
 CI runs all the checks on each PR and on each push to `main`. A PR can merge only if
 these CI checks pass: Validate PR title, Lint, and Build and analyze firmware.
+
+## Unit tests
+
+The keymap unit tests use [cmocka][cmocka] and [CTest][ctest]. The test build compiles
+the keymap sources on the host, with the keycode and type headers of ZSA's
+`qmk_firmware`. The QMK CLI gives the `qmk_firmware` directory (`qmk env QMK_HOME`).
+To use a different directory, set the `QMK_HOME` environment variable.
+
+`make qmk-test` builds the tests in `.build/cmake/` and runs them. To give more
+arguments to ctest, set `QMK_TEST_ARGS`. For example, this command runs only the
+tests with `tap_dance` in their name:
+
+```bash
+make qmk-test QMK_TEST_ARGS='-R tap_dance'
+```
+
+Each cmocka case is one CTest test. The CMake presets in `CMakePresets.json` give the
+build directory and the compile database `.build/cmake/compile_commands.json`. Thus,
+tools that read CMake presets can show, run and debug each test case.
+
+The test code uses the same strict compiler flags as the standards checker, from
+[`strict-c-flags.txt`](strict-c-flags.txt). `make analyze` also runs clang-tidy on the
+test code (`make qmk-test-clang-tidy`).
 
 ## Commits and PRs
 
@@ -173,5 +198,7 @@ name of that file ends in the release tag, for example
 `zsa_moonlander_reva_qgmlwy-v1.0.29.bin`.
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 
+[cmocka]: https://cmocka.org/
+[ctest]: https://cmake.org/cmake/help/latest/manual/ctest.1.html
 [keymapp]: https://www.zsa.io/keymapp
 [hid-listen]: https://www.pjrc.com/teensy/hid_listen.html

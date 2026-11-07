@@ -125,14 +125,8 @@ require_grammar = $(if $(GRAMMAR),,$(error No C grammar in $(GRAMMAR_DIR): \
 	install tree-sitter-c-src))
 
 CFLAGS   ?= -O2
-# Every warning blocks the build. -fanalyzer is GCC's path-based static analysis
-WARNINGS := -std=c11 -Werror -Wall -Wextra -Wpedantic -Wconversion \
-	-Wsign-conversion -Wshadow -Wstrict-prototypes -Wmissing-prototypes \
-	-Wmissing-declarations -Wold-style-definition -Wredundant-decls -Wcast-qual \
-	-Wcast-align -Wbad-function-cast -Wpointer-arith -Wwrite-strings -Wundef \
-	-Wdouble-promotion -Wfloat-equal -Wformat=2 -Wswitch-enum -Wvla -Walloca \
-	-Wnull-dereference -Wduplicated-cond -Wduplicated-branches -Wlogical-op \
-	-Wjump-misses-init -fanalyzer
+# CMakeLists.txt reads the same file, so the unit tests get the same flags
+WARNINGS := $(shell grep -v '^[#]' strict-c-flags.txt)
 
 CHECKER_DIR     := src/check_standards
 CHECKER_TESTS   := test/check_standards
@@ -200,6 +194,44 @@ $(CASE_TESTS): $(CHECKER_BUILD)/test/%: $(CHECKER)
 	@diff -u $(CHECKER_TESTS)/$*/$*.expected $@.out
 
 .PHONY: checker checker-compiledb checker-clang-tidy checker-test $(CASE_TESTS)
+
+##@ Unit tests
+
+# Unit test builds need the cmake and libcmocka-dev versions that versions.env pins.
+# CMakeLists.txt and CMakePresets.json set up the build in .build/cmake/
+
+# Empty for the system, or the directory of a `dpkg -x` extraction of both packages
+UNIT_TEST_TOOLS_ROOT ?=
+# GitHub runners have a newer cmake earlier on PATH, so make calls the pinned one
+CMAKE := $(UNIT_TEST_TOOLS_ROOT)/usr/bin/cmake
+CTEST := $(UNIT_TEST_TOOLS_ROOT)/usr/bin/ctest
+# An extracted cmake needs its libraries, and finds cmocka through the prefix path
+UNIT_TEST_ENVIRONMENT = $(if $(UNIT_TEST_TOOLS_ROOT), \
+	LD_LIBRARY_PATH=$(UNIT_TEST_TOOLS_ROOT)/usr/lib/$(MULTIARCH) \
+	CMAKE_PREFIX_PATH=$(UNIT_TEST_TOOLS_ROOT)/usr)
+
+# More ctest arguments, for example QMK_TEST_ARGS='-R keymap_base' for some cases
+QMK_TEST_ARGS ?=
+
+# CMake asks the QMK CLI for the qmk_firmware checkout, or uses QMK_HOME if set
+qmk-test-compiledb: ## Configure the unit tests and write their compile database
+	$(UNIT_TEST_ENVIRONMENT) $(CMAKE) --preset unit-tests
+
+qmk-test: qmk-test-compiledb ## Build and run the keymap unit tests
+	$(UNIT_TEST_ENVIRONMENT) $(CMAKE) --build --preset unit-tests --parallel $(QMK_JOBS)
+	$(UNIT_TEST_ENVIRONMENT) $(CTEST) --preset unit-tests --label-regex '^qmk$$' \
+		$(QMK_TEST_ARGS)
+
+QMK_TEST_SOURCES := $(shell find test/qmk -name '*.c' | LC_ALL=C sort)
+
+ANALYZE_CHECKS += qmk-test-clang-tidy
+
+# clang-tidy with no file fails, but a run with no test is not a finding
+qmk-test-clang-tidy: qmk-test-compiledb ## Run clang-tidy on the keymap unit tests
+	@$(if $(QMK_TEST_SOURCES),time clang-tidy --quiet -p .build/cmake \
+		$(QMK_TEST_SOURCES),echo "No keymap unit test sources")
+
+.PHONY: qmk-test-compiledb qmk-test qmk-test-clang-tidy
 
 ##@ General
 

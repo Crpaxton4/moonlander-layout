@@ -29,7 +29,7 @@ concurrency:
 # A skipped job satisfies its required check, but a `paths:` filter keeps the
 # check pending. The Doxygen check also covers src/check_standards/
 env:
-  FIRMWARE_PATHS: '^src/(qmk|ci|check_standards)/|^Makefile$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
+  FIRMWARE_PATHS: '^src/(qmk|ci|check_standards)/|^test/|^Makefile$|^CMakeLists\.txt$|^CMakePresets\.json$|^strict-c-flags\.txt$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
 
 jobs:
   changes:
@@ -205,7 +205,15 @@ jobs:
           key: ${{ steps.toolchain-key.outputs.ccache-prefix }}${{ github.run_id }}-${{ github.run_attempt }}
 
       # Steps from here run also after a failed step, so a failed build still runs
-      # the analysis
+      # the unit tests and the analysis
+      - name: "Install unit test tools"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        run: .github/scripts/build/install-unit-test-tools.sh
+
+      - name: "Run unit tests"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        run: make qmk-test
+
       - name: "Install clang-tidy"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         run: .github/scripts/shared/install-clang-tidy.sh
