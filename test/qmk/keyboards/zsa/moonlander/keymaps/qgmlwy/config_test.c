@@ -7,6 +7,7 @@
  */
 
 #include "config.h"
+#include "layers/layers.h"
 #include "unit_test.h"
 
 static void config_usb_suspend_wakeup_delay(void **state) {
@@ -49,6 +50,18 @@ static void config_mousekey_wheel_time_to_max(void **state) {
     assert_int_equal(MOUSEKEY_WHEEL_TIME_TO_MAX, 1);
 }
 
+static void config_moonlander_user_leds(void **state) {
+    (void)state;
+#ifndef MOONLANDER_USER_LEDS
+    fail_msg("MOONLANDER_USER_LEDS is not defined");
+#endif
+}
+
+static void config_combo_only_from_layer(void **state) {
+    (void)state;
+    assert_int_equal(COMBO_ONLY_FROM_LAYER, LAYER_COMBO_POSITIONS);
+}
+
 static void config_serial_number(void **state) {
     (void)state;
     assert_string_equal(SERIAL_NUMBER, "LzzVe/pjxZ7X");
@@ -64,6 +77,8 @@ static const struct CMUnitTest config_cases[] = {
     cmocka_unit_test(config_mousekey_time_to_max),
     cmocka_unit_test(config_mousekey_wheel_max_speed),
     cmocka_unit_test(config_mousekey_wheel_time_to_max),
+    cmocka_unit_test(config_moonlander_user_leds),
+    cmocka_unit_test(config_combo_only_from_layer),
     cmocka_unit_test(config_serial_number),
 };
 

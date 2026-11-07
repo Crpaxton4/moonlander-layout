@@ -23,15 +23,20 @@ enum qmk_function {
     CALLED_LAYER_OFF,         /**< layer_off(), argument: layer */
     CALLED_LAYER_MOVE,        /**< layer_move(), argument: layer */
     CALLED_WAIT_MS,           /**< wait_ms(), argument: milliseconds */
+    CALLED_SEND_KEYBOARD,     /**< Host driver send_keyboard(), argument: first key */
+    CALLED_SEND_NKRO,         /**< Host driver send_nkro(), argument: modifiers */
 };
 
 /** One QMK call: the function and its argument */
 typedef struct {
     enum qmk_function function; /**< Function that the keymap code called */
-    uint32_t          argument; /**< Keycode, layer or milliseconds */
+    uint32_t          argument; /**< Keycode, layer, milliseconds or report byte */
 } qmk_call_t;
 
-/** Empties the log and sets the fake clock to 0 */
+/**
+ * Empties the log, sets the fake clock to 0 and clears the state in fake_state.h.
+ * Layer state goes back to the base layer, and the host driver to the fake driver.
+ */
 void reset_fake_qmk(void);
 
 /**

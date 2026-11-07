@@ -39,3 +39,15 @@ tap_dance_action_t *tap_dance_get(uint16_t slot) {
     }
     return &tap_dance_actions[slot];
 }
+
+uint16_t combo_count(void) {
+    return (uint16_t)ARRAY_SIZE(key_combos);
+}
+
+combo_t *combo_get(uint16_t combo_index) {
+    // Same result as QMK for an index outside the table
+    if (combo_index >= combo_count()) {
+        return NULL;
+    }
+    return &key_combos[combo_index];
+}

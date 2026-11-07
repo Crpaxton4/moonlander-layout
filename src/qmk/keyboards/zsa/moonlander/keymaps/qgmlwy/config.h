@@ -1,6 +1,6 @@
 /** @file
- * Build-time settings for the qgmlwy keymap: USB wakeup, mouse keys and Oryx
- * identification.
+ * Build-time settings for the qgmlwy keymap: USB wakeup, mouse keys, status LEDs,
+ * combos and Oryx identification.
  *
  * Each `#undef` clears a default that the keyboard or QMK may already have set (the
  * keyboard sets several mouse key values), so the value here wins without a
@@ -39,7 +39,22 @@
 #define MOUSEKEY_WHEEL_TIME_TO_MAX 1
 
 /**
- * Layout identifier that Oryx and Keymapp read to recognise this layout.
+ * Keymap sets all six status LEDs, so that only logging uses the logging LED. The
+ * keyboard code then does not show the layer, and the LED_LEVEL key has no effect.
+ */
+#define MOONLANDER_USER_LEDS
+
+/**
+ * QMK finds the combo keys on this layer, LAYER_COMBO_POSITIONS, for each active
+ * layer. Thus a combo is a set of key positions. process_combo.c cannot see the
+ * layer names, so the value is a number. Positions that are not combo keys are
+ * KC_TRANSPARENT on that layer: KC_NO is also the end marker of each combo key
+ * list, so QMK would hold back each push of a KC_NO position as a combo key.
+ */
+#define COMBO_ONLY_FROM_LAYER 2
+
+/**
+ * Layout identifier that Oryx and Keymapp read to identify the layout.
  * It is also the USB serial number string.
  */
 #define SERIAL_NUMBER "LzzVe/pjxZ7X"
