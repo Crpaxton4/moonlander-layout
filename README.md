@@ -38,7 +38,7 @@ The script installs these items:
 - Node at the version in [`versions.env`](versions.env), and the npm devDependencies
 - pre-commit and its git hooks
 - The check tools: shellcheck, tree-sitter, clang-tidy and Doxygen
-- The unit test tools: CMake and cmocka
+- CMake, and cmocka for the unit tests
 - The MinGW-w64 cross compiler, for the Windows build of the key log converter
 
 Then the script builds the firmware one time.
@@ -65,9 +65,44 @@ their descriptions, run this command:
 make help
 ```
 
-`make compiledb` also writes the compile databases: `.build/compile_commands.json` for
-the firmware, `.build/check_standards/compile_commands.json` for the checker and
-`.build/key_log_converter/compile_commands.json` for the key log converter.
+`make compiledb` also writes the compile database `.build/compile_commands.json` for
+the firmware.
+
+## Host programs
+
+[CMake][cmake] builds the standards checker, the key log converter and the keymap unit
+tests. Each CMake preset in `CMakePresets.json` has its build directory in `.build/`:
+
+| Configure preset | Parts                                    | Build directory      |
+| ---------------- | ---------------------------------------- | -------------------- |
+| `dev`            | The checker, the converter and the tests | `.build/cmake/`      |
+| `checker`        | The standards checker                    | `.build/checker/`    |
+| `converter`      | The key log converter                    | `.build/converter/`  |
+| `unit-tests`     | The keymap unit tests                    | `.build/unit-tests/` |
+| `windows`        | The key log converter for Windows        | `.build/windows/`    |
+
+The configure step writes the compile database `compile_commands.json` into the build
+directory. Each workflow preset does the configure step, the build and the tests of
+one configure preset. For example, this command builds all parts in `.build/cmake/`
+and runs all the tests:
+
+```bash
+cmake --workflow --preset test
+```
+
+To see all the presets, run this command:
+
+```bash
+cmake --list-presets=all
+```
+
+The checker, the converter and the unit tests use the same strict compiler flags,
+from [`src/ci/strict-c-flags.cmake`](src/ci/strict-c-flags.cmake). Each warning
+stops the build.
+
+CMake finds tree-sitter, cmocka and MinGW-w64 in the system directories. To use a
+different directory, for example a `dpkg -x` extraction of the packages, set
+`CMAKE_PREFIX_PATH` to its `usr` directory.
 
 ## Key log capture
 
@@ -125,18 +160,26 @@ The script does not delete the log files.
 
 To run the checks, use these commands:
 
-| Command                      | Result                                    |
-| ---------------------------- | ----------------------------------------- |
-| `pre-commit run --all-files` | Runs the hooks.                           |
-| `make analyze`               | Runs clang-tidy, Doxygen and gcc-strict.  |
-| `make checker-test`          | Tests the standards checker.              |
-| `make checker-clang-tidy`    | Runs clang-tidy on the standards checker. |
-| `make qmk-test`              | Runs the keymap unit tests.               |
-| `make converter-test`        | Tests the key log converter.              |
-| `make converter-clang-tidy`  | Runs clang-tidy on the key log converter. |
+| Command                                    | Result                       |
+| ------------------------------------------ | ---------------------------- |
+| `pre-commit run --all-files`               | Runs the hooks.              |
+| `make analyze`                             | Runs the static analysis.    |
+| `cmake --workflow --preset checker-test`   | Tests the standards checker. |
+| `cmake --workflow --preset qmk-test`       | Runs the keymap unit tests.  |
+| `cmake --workflow --preset converter-test` | Tests the key log converter. |
+
+The static analysis runs clang-tidy, Doxygen and gcc-strict. The clang-tidy checks of
+the standards checker and of the key log converter are CMake targets. Each target
+needs the configure step of its preset, for example from the workflow preset above:
+
+```bash
+cmake --build --preset checker --target clang-tidy-checker
+cmake --build --preset converter --target clang-tidy-converter
+```
 
 The hooks are editorconfig-checker, clang-format, Prettier, shellcheck, shfmt,
-actionlint and the standards checker. Git runs these hooks at each commit.
+actionlint and the standards checker. Git runs these hooks at each commit. The
+standards checker hook builds the checker with the `checker` preset.
 
 The QMK build uses `-Wall -Werror`. clang-tidy and `make gcc-strict` add more compiler
 warnings for the keymap files, but not for the QMK files. `make gcc-strict` compiles
@@ -162,21 +205,27 @@ the keymap sources on the host, with the keycode and type headers of ZSA's
 `qmk_firmware`. The QMK CLI gives the `qmk_firmware` directory (`qmk env QMK_HOME`).
 To use a different directory, set the `QMK_HOME` environment variable.
 
-`make qmk-test` builds the tests in `.build/cmake/` and runs them. To give more
-arguments to ctest, set `QMK_TEST_ARGS`. For example, this command runs only the
-tests with `keymap_base` in their name:
+`cmake --workflow --preset qmk-test` builds the tests in `.build/unit-tests/` and runs
+them. `cmake --workflow --preset test` builds and runs them in `.build/cmake/`, with
+the checker and converter tests.
+
+Each cmocka case is one CTest test. Each case directory of the checker tests and of
+the converter tests is also one CTest test. A failed checker or converter test shows
+the diff of each wrong output. The labels `qmk`, `checker` and `converter` select the
+tests of one part. After `cmake --workflow --preset test`, ctest with the `dev` preset
+can get more arguments. For example, these commands run only the tests with
+`keymap_base` in their name, and then only the checker tests:
 
 ```bash
-make qmk-test QMK_TEST_ARGS='-R keymap_base'
+ctest --preset dev -R keymap_base
+ctest --preset dev -L checker
 ```
 
-Each cmocka case is one CTest test. The CMake presets in `CMakePresets.json` give the
-build directory and the compile database `.build/cmake/compile_commands.json`. Thus,
-tools that read CMake presets can show, run and debug each test case.
+The CMake presets give the build directory and the compile database
+`.build/cmake/compile_commands.json`. Thus, tools that read CMake presets can show,
+run and debug each test.
 
-The test code uses the same strict compiler flags as the standards checker, from
-[`strict-c-flags.txt`](strict-c-flags.txt). `make analyze` also runs clang-tidy on the
-test code (`make qmk-test-clang-tidy`).
+`make analyze` also runs clang-tidy on the test code (`make qmk-test-clang-tidy`).
 
 ## Key log converter
 
@@ -186,14 +235,25 @@ files are the input of [carpalx][carpalx], of the `ngrams` tool of
 [keyboard_layout_optimizer][keyboard-layout-optimizer] and of the
 [QMK heatmap tool][qmk-heatmap].
 
-To build the converter, run `make converter`. To build the Windows program
-`.build/key_log_converter/key_log_converter.exe`, run `make converter-windows`.
+To build the converter `.build/converter/key_log_converter`, run these commands:
+
+```bash
+cmake --preset converter
+cmake --build --preset converter
+```
+
+To build the Windows program `.build/windows/key_log_converter.exe`, run this
+command:
+
+```bash
+cmake --workflow --preset windows
+```
 
 The first argument is the output folder, and the folder must exist. The other arguments
 are the log files. For example:
 
 ```bash
-.build/key_log_converter/key_log_converter ~/converted keylog-2026-11-06T0900.log
+.build/converter/key_log_converter ~/converted keylog-2026-11-06T0900.log
 ```
 
 The output files contain the text that you typed, also passwords and other private
@@ -257,16 +317,16 @@ becomes the commit message on `main`. Thus, the PR title must be a
 [Conventional Commit](https://www.conventionalcommits.org/) with a scope from this
 table. A commit-msg hook does the same check on local commits.
 
-| Scope      | Use for                                                            |
-| ---------- | ------------------------------------------------------------------ |
-| `firmware` | the keymap in `src/qmk/keyboards/`                                 |
-| `build`    | `Makefile`, `src/qmk/qmk.json` and `src/qmk/.qmk-ref`              |
-| `ci`       | the files in `.github/`                                            |
-| `setup`    | `setup.sh` and `versions.env`                                      |
-| `tooling`  | the checks, the hooks, the checker and the key log tools           |
-| `repo`     | README, LICENSE, `.gitignore` and the release-please files         |
-| `deps`     | the Dependabot updates of the npm, pre-commit and Actions versions |
-| `main`     | the release PRs that release-please makes                          |
+| Scope      | Use for                                                                |
+| ---------- | ---------------------------------------------------------------------- |
+| `firmware` | the keymap in `src/qmk/keyboards/`                                     |
+| `build`    | `Makefile`, the CMake files, `src/qmk/qmk.json` and `src/qmk/.qmk-ref` |
+| `ci`       | the files in `.github/`                                                |
+| `setup`    | `setup.sh` and `versions.env`                                          |
+| `tooling`  | the checks, the hooks, the checker and the key log tools               |
+| `repo`     | README, LICENSE, `.gitignore` and the release-please files             |
+| `deps`     | the Dependabot updates of the npm, pre-commit and Actions versions     |
+| `main`     | the release PRs that release-please makes                              |
 
 ## Releases
 
@@ -276,6 +336,7 @@ name of that file ends in the release tag, for example
 `zsa_moonlander_reva_qgmlwy-v1.0.29.bin`.
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 
+[cmake]: https://cmake.org/
 [cmocka]: https://cmocka.org/
 [ctest]: https://cmake.org/cmake/help/latest/manual/ctest.1.html
 [keymapp]: https://www.zsa.io/keymapp

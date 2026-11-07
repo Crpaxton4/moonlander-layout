@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-time make checker-test
+time cmake --workflow --preset checker-test

@@ -7,32 +7,164 @@
     },
     "configurePresets": [
         {
-            "name": "unit-tests",
-            "displayName": "Unit tests",
-            "description": "Unit tests of src/, built in .build/cmake/",
+            "name": "base",
+            "hidden": true,
             "generator": "Unix Makefiles",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "dev",
+            "displayName": "Development",
+            "description": "Host programs and unit tests, built in .build/cmake/",
+            "inherits": "base",
             "binaryDir": "${sourceDir}/.build/cmake",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+                "MOONLANDER_PARTS": "firmware;checker;converter;unit-tests"
+            }
+        },
+        {
+            "name": "checker",
+            "displayName": "Standards checker",
+            "description": "Standards checker only, built in .build/checker/",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/.build/checker",
+            "cacheVariables": {
+                "MOONLANDER_PARTS": "checker"
+            }
+        },
+        {
+            "name": "converter",
+            "displayName": "Key log converter",
+            "description": "Key log converter only, built in .build/converter/",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/.build/converter",
+            "cacheVariables": {
+                "MOONLANDER_PARTS": "converter"
+            }
+        },
+        {
+            "name": "unit-tests",
+            "displayName": "Unit tests",
+            "description": "Keymap unit tests only, built in .build/unit-tests/",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/.build/unit-tests",
+            "cacheVariables": {
+                "MOONLANDER_PARTS": "unit-tests"
+            }
+        },
+        {
+            "name": "windows",
+            "displayName": "Windows key log converter",
+            "description": "Key log converter for Windows, built in .build/windows/",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/.build/windows",
+            "toolchainFile": "${sourceDir}/src/ci/mingw-w64-toolchain.cmake",
+            "cacheVariables": {
+                "MOONLANDER_PARTS": "converter"
             }
         }
     ],
     "buildPresets": [
         {
+            "name": "dev",
+            "configurePreset": "dev"
+        },
+        {
+            "name": "checker",
+            "configurePreset": "checker"
+        },
+        {
+            "name": "converter",
+            "configurePreset": "converter"
+        },
+        {
             "name": "unit-tests",
-            "displayName": "Unit tests",
             "configurePreset": "unit-tests"
+        },
+        {
+            "name": "windows",
+            "configurePreset": "windows"
         }
     ],
     "testPresets": [
         {
-            "name": "unit-tests",
-            "displayName": "Unit tests",
-            "configurePreset": "unit-tests",
+            "name": "base",
+            "hidden": true,
             "output": {
                 "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
             }
+        },
+        {
+            "name": "dev",
+            "inherits": "base",
+            "configurePreset": "dev"
+        },
+        {
+            "name": "checker",
+            "inherits": "base",
+            "configurePreset": "checker"
+        },
+        {
+            "name": "converter",
+            "inherits": "base",
+            "configurePreset": "converter"
+        },
+        {
+            "name": "unit-tests",
+            "inherits": "base",
+            "configurePreset": "unit-tests"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "test",
+            "displayName": "All tests",
+            "steps": [
+                { "type": "configure", "name": "dev" },
+                { "type": "build", "name": "dev" },
+                { "type": "test", "name": "dev" }
+            ]
+        },
+        {
+            "name": "checker-test",
+            "displayName": "Standards checker tests",
+            "steps": [
+                { "type": "configure", "name": "checker" },
+                { "type": "build", "name": "checker" },
+                { "type": "test", "name": "checker" }
+            ]
+        },
+        {
+            "name": "converter-test",
+            "displayName": "Key log converter tests",
+            "steps": [
+                { "type": "configure", "name": "converter" },
+                { "type": "build", "name": "converter" },
+                { "type": "test", "name": "converter" }
+            ]
+        },
+        {
+            "name": "qmk-test",
+            "displayName": "Keymap unit tests",
+            "steps": [
+                { "type": "configure", "name": "unit-tests" },
+                { "type": "build", "name": "unit-tests" },
+                { "type": "test", "name": "unit-tests" }
+            ]
+        },
+        {
+            "name": "windows",
+            "displayName": "Windows key log converter",
+            "steps": [
+                { "type": "configure", "name": "windows" },
+                { "type": "build", "name": "windows" }
+            ]
         }
     ]
 }

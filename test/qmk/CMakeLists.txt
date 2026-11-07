@@ -1,7 +1,37 @@
 # Keymap tests compile the keymap sources on the host against QMK's own keycode and
 # type headers, so each keycode value is the value that the firmware uses
 
-# `make qmk-test` filters on this label
+find_package(cmocka 1.1.7 REQUIRED CONFIG)
+
+# add_cmocka_test(<test source> [LIBRARIES <library>...])
+#
+# Builds one test program from the test source and adds one CTest test for each
+# cmocka_unit_test*() case in the source, so a test runner shows each case on its own.
+# Each CTest test gives its case name as the first argument, and the test program
+# runs only the case with that name. A change to the test source runs the configure
+# step again, so a new case gets its CTest test at the next build
+function(add_cmocka_test test_source)
+    cmake_parse_arguments(PARSE_ARGV 1 test "" "" LIBRARIES)
+    get_filename_component(program ${test_source} NAME_WE)
+    add_executable(${program} ${test_source})
+    target_link_libraries(${program} PRIVATE ${test_LIBRARIES} cmocka::cmocka)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${test_source})
+
+    # clang-format can put the case name on the line after the macro name
+    set(case_pattern "cmocka_unit_test[a-z_]*\\([ \t\n]*([a-z0-9_]+)")
+    file(READ ${test_source} source_text)
+    string(REGEX MATCHALL "${case_pattern}" case_entries "${source_text}")
+    foreach(case_entry IN LISTS case_entries)
+        string(REGEX REPLACE "${case_pattern}" "\\1" case "${case_entry}")
+        add_test(NAME ${case} COMMAND ${program} ${case})
+        # cmocka passes when no case matches the name, so a run of no case fails
+        set_tests_properties(${case} PROPERTIES
+            FAIL_REGULAR_EXPRESSION "Running 0 test\\(s\\)"
+            LABELS ${program})
+    endforeach()
+endfunction()
+
+# `ctest -L qmk` selects the keymap unit tests with this label
 set_property(DIRECTORY PROPERTY LABELS qmk)
 
 # QMK CLI knows the qmk_firmware checkout that the firmware build uses: the CLI
