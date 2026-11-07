@@ -1,5 +1,14 @@
 fail_fast: false
 default_install_hook_types: [pre-commit, commit-msg]
+# Owners of these files (release-please, npm and a third party) set their format,
+# so no hook checks them
+exclude: |
+  (?x)(
+    ^CHANGELOG\.md$|
+    ^\.release-please-manifest\.json$|
+    ^package-lock\.json$|
+    ^LICENSE$
+  )
 # CI runs the manual stage (lint.yaml), so each check hook has both stages
 
 repos:
@@ -11,21 +20,12 @@ repos:
         language: system
         stages: [commit-msg]
 
-  # Owners of these files (release-please, npm and a third party) set their
-  # format
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
     rev: 3.11.1
     hooks:
       - id: editorconfig-checker
         name: editorconfig-checker
         stages: [pre-commit, manual]
-        exclude: |
-          (?x)(
-            ^CHANGELOG\.md$|
-            ^\.release-please-manifest\.json$|
-            ^package-lock\.json$|
-            ^LICENSE$
-          )
 
   # Keep the rev equal to .llvm-version
   - repo: https://github.com/pre-commit/mirrors-clang-format
