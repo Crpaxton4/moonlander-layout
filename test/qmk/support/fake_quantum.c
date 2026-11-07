@@ -216,6 +216,14 @@ void layer_move(uint8_t layer) {
     record_call(CALLED_LAYER_MOVE, layer);
 }
 
+bool layer_state_is(uint8_t layer) {
+    // Same result as QMK: a layer state of 0 still has the base layer on
+    if (layer_state == 0) {
+        return layer == 0;
+    }
+    return (layer_state & ((layer_state_t)LOWEST_BIT << layer)) != 0;
+}
+
 void wait_ms(uint32_t milliseconds) {
     record_call(CALLED_WAIT_MS, milliseconds);
     fake_clock_milliseconds += milliseconds;
