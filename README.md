@@ -76,6 +76,62 @@ for `keymap.c`. `.build/cmake/compile_commands.json` is the compile database of 
 host programs and the unit tests. For IntelliSense in VS Code, set the
 `C_Cpp.default.compileCommands` setting to these two files.
 
+## Profiling debug build
+
+The profiling debug build measures the time that the keymap code takes on the
+keyboard. It writes the results on the QMK console, as the key event log does. The
+normal firmware does not contain the profiling code.
+
+No CMake preset builds the debug firmware. To build it, run these commands in the
+root directory of the repository:
+
+```bash
+QMK_USERSPACE="$PWD/src/qmk" qmk compile -kb zsa/moonlander/reva -km qgmlwy \
+    -e DEBUG_PROFILE=yes
+mv -f src/qmk/zsa_moonlander_reva_qgmlwy.bin .build/zsa_moonlander_reva_qgmlwy-debug.bin
+```
+
+QMK copies the firmware file into `src/qmk/`, and the second command moves it into
+`.build/`. Flash `.build/zsa_moonlander_reva_qgmlwy-debug.bin` with
+[Keymapp][keymapp]. To go back to the normal firmware, run
+`cmake --workflow --preset firmware` and flash its file.
+
+### Toggle key
+
+In the debug firmware, the key at (4,0) switches profiling on and off. It is the
+leftmost key of the bottom row of the left half. In the normal firmware, this key
+does nothing. Profiling is off when the keyboard starts. When profiling goes on, all
+the values go back to zero.
+
+### Profile records
+
+While profiling is on, the keyboard writes the records in this table. Each record is
+one line, with decimal numbers. `<time>` is the time since power-up in ms. The key
+log capture also saves these records.
+
+| Record                                               | When                    |
+| ---------------------------------------------------- | ----------------------- |
+| `KL,C,<time>,<cpu_hz>`                               | When profiling goes on  |
+| `KL,P,<time>,<name>,<calls>,<cycle_sum>,<cycle_max>` | Each 5 s, for each call |
+| `KL,R,<time>,<scan_count>,<interval_ms>`             | Each 5 s, after `KL,P`  |
+| `KL,H,<time>,<stack_free_bytes>`                     | Each 5 s, after `KL,R`  |
+
+- `KL,C` gives the core clock in Hz.
+- `KL,P` gives the calls, the sum of their cycles and the cycles of the slowest call.
+- `KL,R` gives the matrix scans and the length of the interval in ms.
+- `KL,H` gives the lowest number of free bytes on the main stack since power-up.
+
+The values of `KL,P` and `KL,R` are for the last interval of 5 s only.
+
+The measured calls are `record_user`, which is all of `process_record_user()`, and
+each record handler in call order: `key_log`, `plain_mode`, `case_modes`,
+`bracket_pairs`, `special_mode`, `symbol_holds` and `precision_key`.
+
+The cycle counter of the Cortex-M4 core gives the cycles. Each value also contains
+the cost of the measurement. A call of an empty handler gives 7 to 15 cycles. The
+cycles of `record_user` also contain the measurement of each record handler that it
+calls, about 100 cycles for each handler.
+
 ## Host programs
 
 [CMake][cmake] builds the standards checker, the key log converter and the keymap unit
@@ -273,6 +329,10 @@ The keymap unit tests use [cmocka][cmocka] and [CTest][ctest]. The test build co
 the keymap sources on the host, with the keycode and type headers of ZSA's
 `qmk_firmware`. The QMK CLI gives the `qmk_firmware` directory (`qmk env QMK_HOME`).
 To use a different directory, set the `QMK_HOME` environment variable.
+
+The profiling tests compile the keymap sources a second time, with `DEBUG_PROFILE`
+defined, as the profiling debug build does. A fake gives the cycles, because the host
+has no cycle counter.
 
 `cmake --workflow --preset qmk-test` builds the tests in `.build/unit-tests/` and runs
 them. `cmake --workflow --preset test` builds and runs them in `.build/cmake/`, with
