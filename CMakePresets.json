@@ -1,0 +1,38 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 28,
+        "patch": 3
+    },
+    "configurePresets": [
+        {
+            "name": "unit-tests",
+            "displayName": "Unit tests",
+            "description": "Unit tests of src/, built in .build/cmake/",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/.build/cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "unit-tests",
+            "displayName": "Unit tests",
+            "configurePreset": "unit-tests"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "unit-tests",
+            "displayName": "Unit tests",
+            "configurePreset": "unit-tests",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}
