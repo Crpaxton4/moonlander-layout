@@ -232,8 +232,11 @@ if("converter" IN_LIST MOONLANDER_PARTS)
         ${CONVERTER_DIR}/counters.c
         ${CONVERTER_DIR}/hid_usage.c
         ${CONVERTER_DIR}/main.c
+        ${CONVERTER_DIR}/markdown.c
         ${CONVERTER_DIR}/outputs.c
+        ${CONVERTER_DIR}/profile.c
         ${CONVERTER_DIR}/record.c
+        ${CONVERTER_DIR}/report.c
         ${CONVERTER_DIR}/support.c)
 
     # Program is at the top of the build directory, also in the Windows build

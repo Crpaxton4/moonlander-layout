@@ -4,6 +4,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -64,8 +65,46 @@ enum {
     OUTPUT_FIELD_COUNT = OUTPUT_FIELD_FIRST_KEY + REPORT_KEY_COUNT, /**< Fields */
 };
 
+/** Field positions of a clock record */
+enum {
+    CLOCK_FIELD_CPU_HZ = FIELD_TIME + 1, /**< Core clock in Hz */
+    CLOCK_FIELD_COUNT,                   /**< Fields of a clock record */
+};
+
+/** Field positions of a handler record */
+enum {
+    HANDLER_FIELD_NAME = FIELD_TIME + 1, /**< Handler name */
+    HANDLER_FIELD_CALLS,                 /**< Calls in the interval */
+    HANDLER_FIELD_CYCLE_SUM,             /**< CPU cycles of all calls */
+    HANDLER_FIELD_CYCLE_MAX,             /**< CPU cycles of the slowest call */
+    HANDLER_FIELD_COUNT,                 /**< Fields of a handler record */
+};
+
+/** Field positions of a scan record */
+enum {
+    SCANS_FIELD_SCAN_COUNT = FIELD_TIME + 1, /**< Matrix scans in the interval */
+    SCANS_FIELD_INTERVAL_MS,                 /**< Interval length in milliseconds */
+    SCANS_FIELD_COUNT,                       /**< Fields of a scan record */
+};
+
+/** Field positions of a stack record */
+enum {
+    STACK_FIELD_FREE_BYTES = FIELD_TIME + 1, /**< Lowest free main stack */
+    STACK_FIELD_COUNT,                       /**< Fields of a stack record */
+};
+
 /** Most fields of a record type */
 #define MAX_FIELD_COUNT INPUT_FIELD_COUNT
+
+/** Base of a decimal number field */
+#define DECIMAL_BASE 10
+
+/** Base of a hexadecimal number field */
+#define HEX_BASE 16
+
+/** Characters of a handler name. Other characters can break the Markdown report */
+#define NAME_CHARACTERS \
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 
 /** Field count that split_fields() gives for a line with too many fields */
 #define TOO_MANY_FIELDS (MAX_FIELD_COUNT + 1)
@@ -91,6 +130,9 @@ typedef enum {
     FORMAT_DECIMAL_BYTE, /**< Decimal number up to 255 */
     FORMAT_HEX_KEYCODE,  /**< Hexadecimal number up to FFFF */
     FORMAT_DECIMAL_FLAG, /**< 0 or 1 */
+    FORMAT_DECIMAL,      /**< Decimal 32-bit number */
+    FORMAT_POSITIVE,     /**< Decimal 32-bit number that is not 0, thus a divisor */
+    FORMAT_NAME,         /**< Handler name of NAME_CHARACTERS */
     FORMAT_COUNT,        /**< Number of formats */
 } field_format_t;
 
@@ -100,36 +142,130 @@ typedef struct {
     field_value_t value; /**< Value of the word */
 } word_t;
 
-/** Rules of one field format. A format has words or a number base */
-typedef struct {
-    const word_t *words;      /**< Permitted words, or NULL for a number */
-    size_t        word_count; /**< Items of words */
-    int           base;       /**< strtoull() base of a number */
-    field_value_t maximum;    /**< Largest permitted number */
-} format_rule_t;
+/** Rules of one field format, declared before field_parser_t because it uses them */
+typedef struct format_rule format_rule_t;
+
+/**
+ * Parses one field.
+ *
+ * @param rule  Rules of the field format.
+ * @param field Field that gets its value.
+ * @return true for a valid field.
+ */
+typedef bool field_parser_t(const format_rule_t *rule, field_t *field);
+
+/** Rules of one field format: a parser and its words, number range or name length */
+struct format_rule {
+    field_parser_t *parse;   /**< Parser of the field */
+    const word_t   *words;   /**< Words of parse_word(), up to a NULL text */
+    field_value_t   minimum; /**< Smallest permitted number */
+    field_value_t   maximum; /**< Largest permitted number or name length */
+};
+
+/**
+ * Parses a number field. strtoull() accepts a sign and leading blanks, so the
+ * function first checks for a digit.
+ *
+ * @param rule  Range of the number.
+ * @param field Field that gets its value.
+ * @param base  strtoull() base of the number.
+ * @return true for a number that has only digits and is in the range.
+ */
+static bool parse_number(const format_rule_t *rule, field_t *field, int base) {
+    if (!isxdigit((unsigned char)field->text[0])) {
+        return false;
+    }
+    char *end    = NULL;
+    errno        = 0;
+    field->value = strtoull(field->text, &end, base);
+    if (errno != 0 || *end != '\0' || field->value < rule->minimum) {
+        return false;
+    }
+    return field->value <= rule->maximum;
+}
+
+/**
+ * Parses a decimal number field.
+ *
+ * @param rule  Range of the number.
+ * @param field Field that gets its value.
+ * @return true for a decimal number in the range.
+ */
+static bool parse_decimal(const format_rule_t *rule, field_t *field) {
+    return parse_number(rule, field, DECIMAL_BASE);
+}
+
+/**
+ * Parses a hexadecimal number field.
+ *
+ * @param rule  Range of the number.
+ * @param field Field that gets its value.
+ * @return true for a hexadecimal number in the range.
+ */
+static bool parse_hex(const format_rule_t *rule, field_t *field) {
+    return parse_number(rule, field, HEX_BASE);
+}
+
+/**
+ * Checks a name field. The field keeps its text, and its value is not used.
+ *
+ * @param rule  Longest permitted name.
+ * @param field Field with the name.
+ * @return true for a name of NAME_CHARACTERS that is not empty and not too long.
+ */
+static bool parse_name(const format_rule_t *rule, field_t *field) {
+    size_t length = strlen(field->text);
+    if (length == 0 || length > rule->maximum) {
+        return false;
+    }
+    return strspn(field->text, NAME_CHARACTERS) == length;
+}
+
+/**
+ * Parses a word field.
+ *
+ * @param rule  Permitted words.
+ * @param field Field that gets its value.
+ * @return true for a permitted word.
+ */
+static bool parse_word(const format_rule_t *rule, field_t *field) {
+    for (const word_t *word = rule->words; word->text != NULL; word++) {
+        if (strcmp(word->text, field->text) == 0) {
+            field->value = word->value;
+            return true;
+        }
+    }
+    return false;
+}
 
 /** Words of a state record, with logging_state_t values */
 static const word_t state_words[] = {
     {"on", LOGGING_ON},
     {"off", LOGGING_OFF},
     {"idle-off", LOGGING_IDLE_OFF},
+    {NULL, 0},
 };
 
 /** Words of an input record action */
 static const word_t action_words[] = {
     {"d", true},
     {"u", false},
+    {NULL, 0},
 };
 
 /** Format rules, indexed by field_format_t */
 static const format_rule_t format_rules[FORMAT_COUNT] = {
-    [FORMAT_TIME]   = {.base = 10, .maximum = UINT32_MAX},
-    [FORMAT_STATE]  = {.words = state_words, .word_count = COUNT_OF(state_words)},
-    [FORMAT_ACTION] = {.words = action_words, .word_count = COUNT_OF(action_words)},
-    [FORMAT_DECIMAL_BYTE] = {.base = 10, .maximum = UINT8_MAX},
-    [FORMAT_HEX_BYTE]     = {.base = 16, .maximum = UINT8_MAX},
-    [FORMAT_HEX_KEYCODE]  = {.base = 16, .maximum = UINT16_MAX},
-    [FORMAT_DECIMAL_FLAG] = {.base = 10, .maximum = true},
+    [FORMAT_TIME]         = {.parse = parse_decimal, .maximum = UINT32_MAX},
+    [FORMAT_STATE]        = {.parse = parse_word, .words = state_words},
+    [FORMAT_ACTION]       = {.parse = parse_word, .words = action_words},
+    [FORMAT_DECIMAL_BYTE] = {.parse = parse_decimal, .maximum = UINT8_MAX},
+    [FORMAT_HEX_BYTE]     = {.parse = parse_hex, .maximum = UINT8_MAX},
+    [FORMAT_HEX_KEYCODE]  = {.parse = parse_hex, .maximum = UINT16_MAX},
+    [FORMAT_DECIMAL_FLAG] = {.parse = parse_decimal, .maximum = true},
+    // Formats of the profiling records
+    [FORMAT_DECIMAL]  = {.parse = parse_decimal, .maximum = UINT32_MAX},
+    [FORMAT_POSITIVE] = {.parse = parse_decimal, .minimum = 1, .maximum = UINT32_MAX},
+    [FORMAT_NAME]     = {.parse = parse_name, .maximum = HANDLER_NAME_SIZE - 1},
 };
 
 /** Formats of the state record fields */
@@ -156,6 +292,34 @@ static const field_format_t input_formats[INPUT_FIELD_COUNT] = {
 static const field_format_t output_formats[OUTPUT_FIELD_COUNT] = {
     [FIELD_TIME]        = FORMAT_TIME,
     [OUTPUT_FIELD_MODS] = FORMAT_HEX_BYTE,
+};
+
+/** Formats of the clock record fields */
+static const field_format_t clock_formats[CLOCK_FIELD_COUNT] = {
+    [FIELD_TIME]         = FORMAT_TIME,
+    [CLOCK_FIELD_CPU_HZ] = FORMAT_POSITIVE,
+};
+
+/** Formats of the handler record fields */
+static const field_format_t handler_formats[HANDLER_FIELD_COUNT] = {
+    [FIELD_TIME]              = FORMAT_TIME,
+    [HANDLER_FIELD_NAME]      = FORMAT_NAME,
+    [HANDLER_FIELD_CALLS]     = FORMAT_DECIMAL,
+    [HANDLER_FIELD_CYCLE_SUM] = FORMAT_DECIMAL,
+    [HANDLER_FIELD_CYCLE_MAX] = FORMAT_DECIMAL,
+};
+
+/** Formats of the scan record fields */
+static const field_format_t scans_formats[SCANS_FIELD_COUNT] = {
+    [FIELD_TIME]              = FORMAT_TIME,
+    [SCANS_FIELD_SCAN_COUNT]  = FORMAT_DECIMAL,
+    [SCANS_FIELD_INTERVAL_MS] = FORMAT_POSITIVE,
+};
+
+/** Formats of the stack record fields */
+static const field_format_t stack_formats[STACK_FIELD_COUNT] = {
+    [FIELD_TIME]             = FORMAT_TIME,
+    [STACK_FIELD_FREE_BYTES] = FORMAT_DECIMAL,
 };
 
 /**
@@ -215,11 +379,62 @@ static void store_output(const field_t *fields, record_t *record) {
     }
 }
 
+/**
+ * Copies the values of a clock record.
+ *
+ * @param fields Fields by field position.
+ * @param record Record that gets the values.
+ */
+static void store_clock(const field_t *fields, record_t *record) {
+    record->cpu_hz = (uint32_t)fields[CLOCK_FIELD_CPU_HZ].value;
+}
+
+/**
+ * Copies the values of a handler record. The parser checked the name length, so
+ * the name fits.
+ *
+ * @param fields Fields by field position.
+ * @param record Record that gets the values.
+ */
+static void store_handler(const field_t *fields, record_t *record) {
+    handler_interval_t *handler = &record->handler;
+    const char         *name    = fields[HANDLER_FIELD_NAME].text;
+    snprintf(handler->name, sizeof(handler->name), "%s", name);
+    handler->calls     = (uint32_t)fields[HANDLER_FIELD_CALLS].value;
+    handler->cycle_sum = (uint32_t)fields[HANDLER_FIELD_CYCLE_SUM].value;
+    handler->cycle_max = (uint32_t)fields[HANDLER_FIELD_CYCLE_MAX].value;
+}
+
+/**
+ * Copies the values of a scan record.
+ *
+ * @param fields Fields by field position.
+ * @param record Record that gets the values.
+ */
+static void store_scans(const field_t *fields, record_t *record) {
+    record->scans.scan_count  = (uint32_t)fields[SCANS_FIELD_SCAN_COUNT].value;
+    record->scans.interval_ms = (uint32_t)fields[SCANS_FIELD_INTERVAL_MS].value;
+}
+
+/**
+ * Copies the values of a stack record.
+ *
+ * @param fields Fields by field position.
+ * @param record Record that gets the values.
+ */
+static void store_stack(const field_t *fields, record_t *record) {
+    record->stack_free_bytes = (uint32_t)fields[STACK_FIELD_FREE_BYTES].value;
+}
+
 /** Layouts of the record types */
 static const record_layout_t layouts[RECORD_TYPE_COUNT] = {
     {"S", RECORD_STATE, STATE_FIELD_COUNT, state_formats, store_state},
     {"I", RECORD_INPUT, INPUT_FIELD_COUNT, input_formats, store_input},
     {"O", RECORD_OUTPUT, OUTPUT_FIELD_COUNT, output_formats, store_output},
+    {"C", RECORD_CLOCK, CLOCK_FIELD_COUNT, clock_formats, store_clock},
+    {"P", RECORD_HANDLER, HANDLER_FIELD_COUNT, handler_formats, store_handler},
+    {"R", RECORD_SCANS, SCANS_FIELD_COUNT, scans_formats, store_scans},
+    {"H", RECORD_STACK, STACK_FIELD_COUNT, stack_formats, store_stack},
 };
 
 /**
@@ -243,41 +458,6 @@ static size_t split_fields(char *line, field_t *fields) {
 }
 
 /**
- * Parses a number field. strtoull() accepts a sign and leading blanks, so the
- * function first checks for a digit.
- *
- * @param rule  Base and maximum of the number.
- * @param field Field that gets its value.
- * @return true for a number that has only digits and is not too large.
- */
-static bool parse_number(const format_rule_t *rule, field_t *field) {
-    if (!isxdigit((unsigned char)field->text[0])) {
-        return false;
-    }
-    char *end    = NULL;
-    errno        = 0;
-    field->value = strtoull(field->text, &end, rule->base);
-    return errno == 0 && *end == '\0' && field->value <= rule->maximum;
-}
-
-/**
- * Parses a word field.
- *
- * @param rule  Permitted words.
- * @param field Field that gets its value.
- * @return true for a permitted word.
- */
-static bool parse_word(const format_rule_t *rule, field_t *field) {
-    for (size_t index = 0; index < rule->word_count; index++) {
-        if (strcmp(rule->words[index].text, field->text) == 0) {
-            field->value = rule->words[index].value;
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
  * Parses one field.
  *
  * @param format Format of the field.
@@ -286,10 +466,7 @@ static bool parse_word(const format_rule_t *rule, field_t *field) {
  */
 static bool parse_field(field_format_t format, field_t *field) {
     const format_rule_t *rule = &format_rules[format];
-    if (rule->words != NULL) {
-        return parse_word(rule, field);
-    }
-    return parse_number(rule, field);
+    return rule->parse(rule, field);
 }
 
 /**

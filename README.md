@@ -337,6 +337,8 @@ The converter writes these files into the output folder:
 | `usage.csv`       | The pushes of each position and layer                          |
 | `corrections.csv` | Correction percent, then the Backspace count of each position  |
 | `shortcuts.csv`   | The count of each shortcut                                     |
+| `profile.csv`     | The calls and the times of each record handler                 |
+| `report.md`       | A summary of the usage, the profiling and the data quality     |
 
 The converter also writes the counts of files, sessions, records, records outside
 sessions and ignored lines to standard output.
@@ -345,8 +347,9 @@ sessions and ignored lines to standard output.
 
 A session starts at the state record `on`. It stops at the state record `off` or
 `idle-off`, or at the end of the file. If the time of a record is less than the time of
-the record before it, a new session starts. Only the input and output records of a
-session go into the outputs.
+the record before it, a new session starts. Only the input, output and profiling
+records of a session go into the outputs, but a clock record applies also outside a
+session.
 
 The converter ignores and counts each line that is not a complete record. It removes
 the [hid_listen][hid-listen] status text in front of a record, for example
@@ -378,6 +381,64 @@ position in the same session.
 
 The output files have LF line breaks on all systems, thus the corpus has the same bytes
 on Windows and on Linux. Standard output on Windows has CR LF line breaks.
+
+### Profiling records
+
+The converter also reads four profiling record types. All numbers are decimal and have
+a maximum of 32 bits:
+
+| Record  | Fields                                                  |
+| ------- | ------------------------------------------------------- |
+| Clock   | `KL,C,<time>,<cpu_hz>`                                  |
+| Handler | `KL,P,<time>,<handler>,<calls>,<cycle_sum>,<cycle_max>` |
+| Scan    | `KL,R,<time>,<scan_count>,<interval_ms>`                |
+| Stack   | `KL,H,<time>,<stack_free_bytes>`                        |
+
+The values `cpu_hz` and `interval_ms` are not 0. A handler name has 1 to 31 letters,
+digits or underscores. The converter ignores and counts each line that does not obey
+these rules.
+
+The firmware writes a clock record when profiling changes to on. The keyboard has one
+clock, thus the last clock record that the converter reads gives the times of all
+handler records. The converter uses a clock record also outside a session. If the files
+have no clock record, each time is `-`, but the counts and the cycles stay.
+
+`profile.csv` has one line for each handler, in the order of the first handler
+records. The converter adds the calls and the cycles of all handler records, also from
+different sessions and files. These sums are whole numbers, thus they are exact. The
+average time of a call is the cycle sum divided by the calls and by the clock, rounded
+to 1 ns. The worst interval is the first handler record with the largest `cycle_max`.
+The columns `worst session` and `worst ms` give the number of its session and its time
+field, which is the end of the interval. A value that the logs cannot give, for example
+an average of 0 calls, is `-`.
+
+The interval of a scan record is the `interval_ms` before its time field, with the time
+of the record. An interval with an input record is a typing interval. All other
+intervals are idle intervals. The time with profiling on is the `interval_ms` sum of
+the scan records of all sessions.
+
+### Report
+
+`report.md` has three sections. The number formats and the sort orders are fixed. Thus,
+the same logs give the same bytes on Windows and on Linux, and the file passes the
+Prettier check. Equal counts are in name order.
+
+The usage section gives the files, the sessions and the logged time. The logged time of
+a session is from its first record to its last record. The section also gives the key
+pushes of the input records, the keys per minute of logged time and the corrections per
+100 keys, which is the correction percent. Then it gives the 10 largest counts of the
+new keys, of the heatmap lines and of the shortcuts.
+
+The profiling section gives the calls of each handler, the average and the maximum
+time of one call, and the share of a scan. The share of a scan is the average call as a
+percent of the average scan time. The average scan time is the `interval_ms` of all scan
+records divided by their `scan_count`. The section also gives the clock, the scans per
+second of the idle intervals and of the typing intervals, and the lowest free stack of
+all stack records. If no session has a profiling record, the section has only one line.
+
+The data quality section gives the ignored lines, the records outside sessions and the
+time with profiling on. It also gives the handler records with no clock record before
+them in their file. A log that starts after profiling changed to on has these records.
 
 ## Commits and PRs
 

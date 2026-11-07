@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "counters.h"
+#include "profile.h"
 #include "record.h"
 
 /** Counts that the converter writes to standard output */
@@ -21,12 +22,16 @@ typedef struct {
     size_t ignored_lines;            /**< Lines that are not complete records */
 } summary_t;
 
-/** State of one log file. Each file starts with no session */
+/** State of one log file. Each file starts with no session and no clock */
 typedef struct {
-    bool     in_session; /**< true between a state record on and off */
-    bool     has_time;   /**< false before the first record */
-    uint32_t time;       /**< Time of the record before */
-    report_t previous;   /**< Report of the output record before */
+    bool     in_session;      /**< true between a state record on and off */
+    bool     has_time;        /**< false before the first record */
+    uint32_t time;            /**< Time of the record before */
+    report_t previous;        /**< Report of the output record before */
+    uint32_t session_start;   /**< Time of the first record of the session */
+    bool     has_clock;       /**< true after a clock record, until a restart */
+    bool     has_input;       /**< false before the first input record */
+    uint32_t last_input_time; /**< Time of the last input record in a session */
 } stream_t;
 
 /** Outputs and totals of a run */
@@ -41,7 +46,12 @@ typedef struct {
     position_counts_t usage;             /**< Pushes per position and layer */
     position_counts_t corrections;       /**< Backspace pushes after each position */
     recent_pushes_t   recent_pushes;     /**< Last push of each position */
-    shortcut_counts_t shortcuts;         /**< Pushes of each shortcut */
+    named_counts_t    shortcuts;         /**< Pushes of each shortcut */
+    named_counts_t    keys;              /**< New keys of each key name */
+    named_counts_t    heatmap_rows;      /**< Pushes of each heatmap line */
+    count_t           key_pushes;        /**< Pushes of all input records */
+    count_t           logged_ms;         /**< Time of all sessions */
+    profile_t         profile;           /**< Profiling totals */
     summary_t         summary;           /**< Counts for standard output */
 } converter_t;
 

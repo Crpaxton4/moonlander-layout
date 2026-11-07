@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "outputs.h"
+#include "report.h"
 #include "support.h"
 
 /** Windows also accepts this separator */
@@ -17,6 +18,14 @@
 
 /** Hundredths in one percent */
 #define HUNDREDTHS_PER_PERCENT 100ULL
+
+/** Decimals of an average cycle count */
+#define CYCLE_DECIMALS 2
+
+/** First line of the profile file */
+#define PROFILE_HEADER                                                   \
+    "handler,calls,average cycles,maximum cycles,average us,maximum us," \
+    "worst session,worst ms\n"
 
 /** Half of the whole goes into the sum before the division, so that it rounds */
 #define ROUNDING_DIVISOR 2ULL
@@ -127,11 +136,47 @@ static void write_correction_lines(FILE *file, converter_t *converter) {
  * @param converter Totals of the run.
  */
 static void write_shortcut_lines(FILE *file, converter_t *converter) {
-    sort_shortcut_counts(&converter->shortcuts);
+    sort_named_counts(&converter->shortcuts);
     fputs("shortcut,count\n", file);
     for (size_t index = 0; index < converter->shortcuts.count; index++) {
-        const shortcut_count_t *item = &converter->shortcuts.items[index];
+        const named_count_t *item = &converter->shortcuts.items[index];
         fprintf(file, "%s,%llu\n", item->name, item->count);
+    }
+}
+
+/**
+ * Writes the line of one handler.
+ *
+ * @param file    Open output file.
+ * @param profile Profiling totals with the clock of the run.
+ * @param index   Index of the handler in the handler table.
+ */
+static void write_handler_line(FILE *file, const profile_t *profile, size_t index) {
+    const handler_totals_t *handler = &profile->handlers.items[index];
+    char                    average_cycles[NUMBER_TEXT_SIZE];
+    char                    average_time[NUMBER_TEXT_SIZE];
+    char                    maximum_time[NUMBER_TEXT_SIZE];
+    ratio_t cycles = {.part = handler->cycle_sum, .whole = handler->calls};
+    format_ratio(average_cycles, cycles, CYCLE_DECIMALS);
+    format_microseconds(average_time, average_call_time(profile, handler));
+    format_microseconds(maximum_time, slowest_call_time(profile, handler));
+    fprintf(file, "%s,%llu,%s,%llu,%s,%s,%zu,%lu\n", handler->name, handler->calls,
+            average_cycles, handler->cycle_max, average_time, maximum_time,
+            handler->worst_session, (unsigned long)handler->worst_time);
+}
+
+/**
+ * Writes the totals of each handler, in the order of the first handler records.
+ *
+ * @param file      Open output file.
+ * @param converter Totals of the run.
+ */
+static void write_profile_lines(FILE *file, converter_t *converter) {
+    const profile_t       *profile  = &converter->profile;
+    const handler_table_t *handlers = &profile->handlers;
+    fputs(PROFILE_HEADER, file);
+    for (size_t index = 0; index < handlers->count; index++) {
+        write_handler_line(file, profile, index);
     }
 }
 
@@ -141,11 +186,13 @@ typedef struct {
     count_writer_t *writer; /**< Writer of the lines */
 } count_file_t;
 
-/** Count files in the order of their writes */
+/** Count files in the order of their writes. The report uses the sorted tables */
 static const count_file_t count_files[] = {
     {OUTPUT_USAGE, write_usage_lines},
     {OUTPUT_CORRECTIONS, write_correction_lines},
     {OUTPUT_SHORTCUTS, write_shortcut_lines},
+    {OUTPUT_PROFILE, write_profile_lines},
+    {OUTPUT_REPORT, write_report},
 };
 
 bool write_count_files(converter_t *converter, const char *folder) {
