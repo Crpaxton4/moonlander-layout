@@ -288,6 +288,26 @@ static void key_event_log_r11_driver_stays_in_place(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
+static void key_event_log_special_mode_r10_combo_keeps_logging_off(void **state) {
+    (void)state;
+    start_with_logging(false);
+    layer_state = ONLY_LAYER(LAYER_SPECIAL);
+    assert_false(send_key_event(LOGGING_TOGGLE, true));
+    assert_false(send_key_event(LOGGING_TOGGLE, false));
+    assert_false(key_event_log_is_on());
+    assert_console_text("");
+}
+
+static void key_event_log_special_mode_r10_combo_keeps_logging_on(void **state) {
+    (void)state;
+    start_with_logging(true);
+    advance_fake_clock(EVENT_INTERVAL);
+    layer_state = ONLY_LAYER(LAYER_SPECIAL);
+    assert_false(send_key_event(LOGGING_TOGGLE, true));
+    assert_true(key_event_log_is_on());
+    assert_console_text("");
+}
+
 /** Cases of this program; the power-up case is first, for a run of all cases */
 static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r1_off_at_power_up),
@@ -307,6 +327,8 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r10_no_records_while_off),
     cmocka_unit_test(key_event_log_r11_reports_reach_the_host_while_off),
     cmocka_unit_test(key_event_log_r11_driver_stays_in_place),
+    cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_off),
+    cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_on),
 };
 
 int main(int argc, char **argv) {

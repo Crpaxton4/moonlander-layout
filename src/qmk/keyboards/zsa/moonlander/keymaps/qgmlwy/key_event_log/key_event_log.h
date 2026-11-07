@@ -15,7 +15,7 @@
 
 /**
  * Writes an input record of a key event while logging is on, and switches logging
- * on or off for the logging combo.
+ * on or off for the logging combo while the special mode is off.
  *
  * Runs first in process_record_user(), so it sees each key event.
  *

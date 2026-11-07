@@ -12,6 +12,7 @@ enum layer {
     LAYER_BASE            = 0, /**< QGMLWY alphas with mouse keys bottom right */
     LAYER_ARROWS          = 1, /**< Base layer with arrows in place of mouse movement */
     LAYER_COMBO_POSITIONS = 2, /**< Never on; QMK finds the combo keys on this layer */
+    LAYER_SPECIAL         = 3, /**< Digits and symbols; KC_NO stops lower layers */
 };
 
 /**

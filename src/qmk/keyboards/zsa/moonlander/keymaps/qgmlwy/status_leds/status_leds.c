@@ -13,6 +13,8 @@ static const uint8_t layer_leds[] = {
     [LAYER_BASE]            = 0,
     [LAYER_ARROWS]          = STATUS_LED_BIT(RIGHT_INNER_LED),
     [LAYER_COMBO_POSITIONS] = 0,
+    [LAYER_SPECIAL] =
+        STATUS_LED_BIT(LEFT_MIDDLE_LED) | STATUS_LED_BIT(RIGHT_MIDDLE_LED),
 };
 
 /**
