@@ -32,31 +32,50 @@ target_include_directories(qmk_headers SYSTEM INTERFACE
     ${qmk_firmware}/quantum/keymap_extras
     ${qmk_firmware}/quantum/process_keycode
     ${qmk_firmware}/quantum/sequencer
-    ${qmk_firmware}/platforms)
+    ${qmk_firmware}/platforms
+    ${qmk_firmware}/tmk_core/protocol)
 
 # Keymap sources include their own headers by paths from this directory
 set(KEYMAP_DIR ${PROJECT_SOURCE_DIR}/src/qmk/keyboards/zsa/moonlander/keymaps/qgmlwy)
 
-# Recording QMK functions, and cmocka with the case selection
-add_library(fake_qmk STATIC support/fake_quantum.c support/unit_test.c)
+# cmocka with the case selection
+add_library(unit_test STATIC support/unit_test.c)
+target_include_directories(unit_test PUBLIC support)
+target_link_libraries(unit_test PUBLIC cmocka::cmocka)
+
+# Recording QMK functions
+add_library(fake_qmk STATIC support/fake_quantum.c)
 target_include_directories(fake_qmk PUBLIC support ${KEYMAP_DIR})
 target_compile_definitions(fake_qmk PUBLIC QMK_KEYBOARD_H="fake_keyboard.h"
-    # Same feature as TAP_DANCE_ENABLE in rules.mk
-    TAP_DANCE_ENABLE)
-target_link_libraries(fake_qmk PUBLIC qmk_headers cmocka::cmocka)
+    # Same features as COMBO_ENABLE and TAP_DANCE_ENABLE in rules.mk
+    COMBO_ENABLE TAP_DANCE_ENABLE)
+target_link_libraries(fake_qmk PUBLIC qmk_headers unit_test)
 
-# Same keymap sources as rules.mk. keymap_introspection.c compiles keymap.c
+# Logic of the keymap modules includes no QMK header, so its tests need no fake
+add_library(keymap_logic STATIC
+    ${KEYMAP_DIR}/key_event_log/key_event_log_logic.c)
+target_include_directories(keymap_logic PUBLIC ${KEYMAP_DIR})
+
+# Same keymap sources as rules.mk, with the logic sources in keymap_logic.
+# keymap_introspection.c compiles keymap.c
 add_library(qgmlwy_keymap STATIC
     support/keymap_introspection.c
-    ${KEYMAP_DIR}/dual_function/dual_function.c
+    ${KEYMAP_DIR}/tap_dance/tap_dance.c
     ${KEYMAP_DIR}/tap_dance/dances.c
-    ${KEYMAP_DIR}/tap_dance/tap_dance.c)
+    ${KEYMAP_DIR}/dual_function/dual_function.c
+    ${KEYMAP_DIR}/key_event_log/key_event_log.c
+    ${KEYMAP_DIR}/status_leds/status_leds.c)
 target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
-target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk)
+target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk keymap_logic)
 
 set(KEYMAP_TESTS keyboards/zsa/moonlander/keymaps/qgmlwy)
 add_cmocka_test(${KEYMAP_TESTS}/config_test.c LIBRARIES fake_qmk)
 add_cmocka_test(${KEYMAP_TESTS}/keymap_test.c LIBRARIES qgmlwy_keymap)
+add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_logic_test.c
+    LIBRARIES keymap_logic unit_test)
+add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_test.c
+    LIBRARIES qgmlwy_keymap)
+add_cmocka_test(${KEYMAP_TESTS}/status_leds/status_leds_test.c LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/dual_function/dual_function_test.c
     LIBRARIES qgmlwy_keymap)
 add_cmocka_test(${KEYMAP_TESTS}/tap_dance/tap_dance_test.c LIBRARIES qgmlwy_keymap)
