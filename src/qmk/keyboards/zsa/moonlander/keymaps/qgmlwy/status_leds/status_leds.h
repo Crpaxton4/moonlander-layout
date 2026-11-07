@@ -1,6 +1,6 @@
 /** @file
- * Six status LEDs of the Moonlander: one for logging, the others for the highest
- * active layer.
+ * Six status LEDs of the Moonlander: one for logging, one for an open bracket or
+ * quote pair, and the others for the highest active layer.
  *
  * MOONLANDER_USER_LEDS stops the keyboard code from setting the LEDs, and the
  * keyboard then does not call layer_state_set_user(). Thus the housekeeping task
@@ -24,6 +24,9 @@
 /** LED that is on while logging is on, and that no layer uses */
 #define LOGGING_LED LEFT_OUTER_LED
 
+/** LED that is on while a bracket or quote pair is open */
+#define OPEN_PAIR_LED LEFT_INNER_LED
+
 /** Bit of one LED in a set of LEDs */
 #define STATUS_LED_BIT(led) ((uint8_t)(1U << (led)))
 
@@ -45,7 +48,7 @@ enum status_led {
 
 // #region Functions
 
-/** Sets each status LED from the logging state and the highest active layer */
+/** Sets each status LED from the module states and the highest active layer */
 void update_status_leds(void);
 
 // #endregion
