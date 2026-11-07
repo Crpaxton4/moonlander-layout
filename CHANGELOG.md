@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.11.1...v1.12.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add a profiling debug build with a toggle key ([#169](https://github.com/Crpaxton4/moonlander-layout/issues/169)) ([20412db](https://github.com/Crpaxton4/moonlander-layout/commit/20412db4e6340b45ae788e143e5482b00fc85a73))
+
 ## [1.11.1](https://github.com/Crpaxton4/moonlander-layout/compare/v1.11.0...v1.11.1) (2026-11-07)
 
 
