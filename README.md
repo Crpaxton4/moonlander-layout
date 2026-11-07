@@ -254,7 +254,18 @@ The standards checker has two rules for the `.c`, `.h` and `.inc` files:
     - An `if` or a `case` contains no control flow.
 
 CI runs all the checks on each PR and on each push to `main`. A PR can merge only if
-these CI checks pass: Validate PR title, Lint, and Build and analyze firmware.
+these CI checks pass:
+
+- `Build` builds the firmware, the compile databases, all host programs and the tests.
+- `Test` runs all the CTest tests on the programs from the `Build` job.
+- `Analyze` runs the static analysis on the compile databases from the `Build` job.
+- `Lint` runs the hooks.
+- `Validate PR title` checks the PR title.
+
+The `Build` job runs one time in each CI run. It also builds the key log converter for
+Windows. The `Test` and `Analyze` jobs start when the `Build` job is complete, and they
+run at the same time. If a PR changes no file that the build, the tests or the analysis
+use, CI skips these three jobs. A skipped job passes its check.
 
 ## Unit tests
 
@@ -389,8 +400,9 @@ table. A commit-msg hook does the same check on local commits.
 ## Releases
 
 When a merge changes `src/qmk/`, release-please makes a release PR. The release PR
-merges automatically. CI then attaches the firmware file to the GitHub release. The
-name of that file ends in the release tag, for example
+merges automatically. CI then builds only the firmware, with no test and no analysis,
+and attaches the firmware file to the GitHub release. The name of that file ends in the
+release tag, for example
 `zsa_moonlander_reva_qgmlwy-v1.0.29.bin`.
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 

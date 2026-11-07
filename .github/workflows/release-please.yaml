@@ -47,7 +47,7 @@ jobs:
     if: needs.release-please.outputs.release_created == 'true'
     uses: ./.github/workflows/build.yaml
     with:
-      skip-analysis: true
+      firmware-only: true
       release-tag: ${{ needs.release-please.outputs.tag_name }}
 
   publish:

@@ -152,8 +152,8 @@ jobs:
       - name: "Check shellcheck"
         run: .github/scripts/lint/check-shellcheck.sh
 
-      # Runner image does not contain the tree-sitter packages. The firmware job uses
-      # the same cache key
+      # Runner image does not contain the tree-sitter packages. The Build and Analyze
+      # jobs use the same cache key
       - name: "Compute tree-sitter cache key"
         id: tree-sitter-key
         run: .github/scripts/shared/compute-tree-sitter-cache-key.sh
@@ -188,30 +188,12 @@ jobs:
           path: ${{ runner.temp }}/tree-sitter-debs
           key: ${{ steps.tree-sitter-key.outputs.key }}
 
-      # check-standards hook builds the checker with CMake. cmocka comes with the
-      # same script as in the firmware job
-      - name: "Install CMake and cmocka"
-        run: .github/scripts/shared/install-unit-test-tools.sh
+      # check-standards hook builds the checker with CMake
+      - name: "Install CMake"
+        run: .github/scripts/lint/install-cmake.sh
 
       - name: "Run pre-commit"
         run: .github/scripts/lint/run-pre-commit.sh
-
-      # Runs also after a failed hook
-      - name: "Test check-standards"
-        if: ${{ !cancelled() }}
-        run: .github/scripts/lint/test-check-standards.sh
-
-      - name: "Test key log converter"
-        if: ${{ !cancelled() }}
-        run: cmake --workflow --preset converter-test
-
-      # Runner image does not contain MinGW-w64
-      - name: "Install MinGW-w64"
-        if: ${{ !cancelled() }}
-        run: .github/scripts/lint/install-mingw.sh
-      - name: "Build key log converter for Windows"
-        if: ${{ !cancelled() }}
-        run: cmake --workflow --preset windows
 
       - name: "Summarize timings"
         if: ${{ !cancelled() }}
