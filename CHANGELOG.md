@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.32...v1.1.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** write key event records on the qmk console ([#143](https://github.com/Crpaxton4/moonlander-layout/issues/143)) ([a80644c](https://github.com/Crpaxton4/moonlander-layout/commit/a80644c84f9bda70f6f55fe493627f050c017583))
+
 ## [1.0.32](https://github.com/Crpaxton4/moonlander-layout/compare/v1.0.31...v1.0.32) (2026-11-07)
 
 
