@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.7.0...v1.8.0) (2026-11-07)
+
+
+### Features
+
+* **firmware:** add a toggled arrows mode with home and end ([#150](https://github.com/Crpaxton4/moonlander-layout/issues/150)) ([ebd1775](https://github.com/Crpaxton4/moonlander-layout/commit/ebd1775ea2c5bc318d8ba801312eb27a53242159))
+
 ## [1.7.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.6.0...v1.7.0) (2026-11-07)
 
 
