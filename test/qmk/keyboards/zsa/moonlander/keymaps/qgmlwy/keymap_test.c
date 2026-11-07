@@ -266,7 +266,7 @@ static void keymap_base_right_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [RIGHT_LARGE_THUMB]  = TO(LAYER_ARROWS),
+                [RIGHT_LARGE_THUMB]  = TG(LAYER_ARROWS),
                 [RIGHT_OUTER_THUMB]  = QK_MOUSE_BUTTON_1,
                 [RIGHT_MIDDLE_THUMB] = QK_MOUSE_BUTTON_2,
                 [RIGHT_INNER_THUMB]  = QK_MOUSE_BUTTON_3,
@@ -436,7 +436,7 @@ static void keymap_arrows_right_bottom_letter_row(void **state) {
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
                 KC_TRANSPARENT,
-                KC_TRANSPARENT,
+                KC_HOME,
             },
     };
     assert_row(LAYER_ARROWS, RIGHT_BOTTOM_LETTER_ROW, &expected);
@@ -453,7 +453,7 @@ static void keymap_arrows_right_bottom_row(void **state) {
                 KC_UP,
                 KC_DOWN,
                 KC_RIGHT,
-                KC_TRANSPARENT,
+                KC_END,
             },
     };
     assert_row(LAYER_ARROWS, RIGHT_BOTTOM_ROW, &expected);
@@ -464,7 +464,7 @@ static void keymap_arrows_right_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [RIGHT_LARGE_THUMB]  = TO(LAYER_BASE),
+                [RIGHT_LARGE_THUMB]  = KC_TRANSPARENT,
                 [RIGHT_OUTER_THUMB]  = KC_TRANSPARENT,
                 [RIGHT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [RIGHT_INNER_THUMB]  = KC_TRANSPARENT,
