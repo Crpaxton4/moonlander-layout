@@ -8,7 +8,7 @@
 
 #include "rules.h"
 
-/// argv index of the first file. argv[0] is the program name
+/** argv index of the first file. argv[0] is the program name */
 #define FIRST_FILE_ARGUMENT 1
 
 /**

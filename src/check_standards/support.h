@@ -7,40 +7,40 @@
 #include <stddef.h>
 #include <stdio.h>
 
-/// Bytes of a finding message, with its terminator. A longer message is cut
+/** Bytes of a finding message, with its terminator. A longer message is cut */
 #define MESSAGE_SIZE 160
 
-/// tree-sitter counts lines and columns from 0, but a finding counts from 1
+/** tree-sitter counts lines and columns from 0, but a finding counts from 1 */
 #define FIRST_POSITION 1
 
-/// Characters that indent a line or separate the words of a line
+/** Characters that indent a line or separate the words of a line */
 #define BLANKS " \t"
 
-/// Number of items in an array. A pointer gives a wrong result
+/** Number of items in an array. A pointer gives a wrong result */
 #define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
 
-/// append() keeps the bytes NUL-terminated, but append_stream() does not
+/** append() keeps the bytes NUL-terminated, but append_stream() does not */
 typedef struct {
-    char  *data;     ///< Bytes, or NULL before the first append
-    size_t length;   ///< Bytes in use, without a terminator
-    size_t capacity; ///< Bytes that data can hold
+    char  *data;     /**< Bytes, or NULL before the first append */
+    size_t length;   /**< Bytes in use, without a terminator */
+    size_t capacity; /**< Bytes that data can hold */
 } buffer_t;
 
-/// Rule violation at one position of a file
+/** Rule violation at one position of a file */
 typedef struct {
-    size_t        sequence; ///< Report order, the last sort key for a stable sort
-    unsigned long line;     ///< Line from FIRST_POSITION
-    unsigned long column;   ///< Column in bytes, not characters, from FIRST_POSITION
-    const char   *path;     ///< File as the command line gives it
-    const char   *rule;     ///< Rule name that the output shows
-    char          message[MESSAGE_SIZE]; ///< Text that describe() writes
+    size_t        sequence; /**< Report order, the last sort key for a stable sort */
+    unsigned long line;     /**< Line from FIRST_POSITION */
+    unsigned long column;   /**< Column in bytes, not characters, from FIRST_POSITION */
+    const char   *path;     /**< File as the command line gives it */
+    const char   *rule;     /**< Rule name that the output shows */
+    char          message[MESSAGE_SIZE]; /**< Text that describe() writes */
 } finding_t;
 
-/// Findings of each file are in sort order after the check of that file
+/** Findings of each file are in sort order after the check of that file */
 typedef struct {
-    finding_t *items;    ///< Findings, or NULL before the first finding
-    size_t     count;    ///< Findings in use
-    size_t     capacity; ///< Findings that items can hold
+    finding_t *items;    /**< Findings, or NULL before the first finding */
+    size_t     count;    /**< Findings in use */
+    size_t     capacity; /**< Findings that items can hold */
 } findings_t;
 
 /**

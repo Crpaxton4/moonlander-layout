@@ -8,13 +8,13 @@
 
 #include "rules.h"
 
-/// Control flow levels that a function body can have
+/** Control flow levels that a function body can have */
 #define MAX_NESTING_DEPTH 2
 
-/// Bytes of source text that a parse-error message quotes, so that lines stay short
+/** Bytes of source text that a parse-error message quotes, so that lines stay short */
 #define QUOTE_LENGTH 40
 
-/// Start of a Doxygen block comment
+/** Start of a Doxygen block comment */
 #define DOC_COMMENT_OPEN "/**"
 
 /**
@@ -23,51 +23,51 @@
  */
 #define COMMENT_CLOSE "*/"
 
-/// Doxygen command that documents a file
+/** Doxygen command that documents a file */
 #define FILE_COMMAND "@file"
 
-/// Characters that end the file name after FILE_COMMAND
+/** Characters that end the file name after FILE_COMMAND */
 #define WHITESPACE " \t\r\n"
 
-/// Bit of a construct kind in a construct_t::may_contain mask
+/** Bit of a construct kind in a construct_t::may_contain mask */
 #define BIT(kind) (1U << (kind))
 
-/// Control flow constructs that the nesting rule knows, as indexes of constructs
+/** Control flow constructs that the nesting rule knows, as indexes of constructs */
 typedef enum {
-    KIND_FUNCTION, ///< Function definition
-    KIND_IF,       ///< `if` statement and its `else if` chain
-    KIND_FOR,      ///< `for` loop
-    KIND_WHILE,    ///< `while` loop
-    KIND_DO,       ///< `do` loop
-    KIND_SWITCH,   ///< `switch` statement
-    KIND_CASE,     ///< `case` or `default` label of a switch
-    KIND_TERNARY,  ///< `?:` expression
-    KIND_GOTO,     ///< `goto` statement
-    KIND_COUNT,    ///< Number of kinds
+    KIND_FUNCTION, /**< Function definition */
+    KIND_IF,       /**< `if` statement and its `else if` chain */
+    KIND_FOR,      /**< `for` loop */
+    KIND_WHILE,    /**< `while` loop */
+    KIND_DO,       /**< `do` loop */
+    KIND_SWITCH,   /**< `switch` statement */
+    KIND_CASE,     /**< `case` or `default` label of a switch */
+    KIND_TERNARY,  /**< `?:` expression */
+    KIND_GOTO,     /**< `goto` statement */
+    KIND_COUNT,    /**< Number of kinds */
 } construct_kind_t;
 
-/// Mask of a construct that can contain no control flow
+/** Mask of a construct that can contain no control flow */
 #define NOTHING 0U
 
-/// Mask of a switch, which contains only its cases
+/** Mask of a switch, which contains only its cases */
 #define CASES BIT(KIND_CASE)
 
-/// Mask of a loop body, which can contain no while, do or switch
+/** Mask of a loop body, which can contain no while, do or switch */
 #define LOOP_BODY (BIT(KIND_IF) | BIT(KIND_FOR) | BIT(KIND_TERNARY) | BIT(KIND_GOTO))
 
-/// Mask of a function body, which can contain all constructs except a case
+/** Mask of a function body, which can contain all constructs except a case */
 #define FUNCTION_BODY (LOOP_BODY | BIT(KIND_WHILE) | BIT(KIND_DO) | BIT(KIND_SWITCH))
 
-/// Control flow construct, with the constructs that it can contain
+/** Control flow construct, with the constructs that it can contain */
 typedef struct {
-    const char *node_type;       ///< tree-sitter node type
-    const char *label;           ///< Name that the messages show
-    const char *continues_under; ///< Parent type of a chain, as for `else if`, or NULL
-    unsigned    may_contain;     ///< BIT() mask of the constructs in its body
-    int         levels;          ///< Nesting levels that the construct adds
+    const char *node_type;       /**< tree-sitter node type */
+    const char *label;           /**< Name that the messages show */
+    const char *continues_under; /**< Parent type of an `else if` chain, or NULL */
+    unsigned    may_contain;     /**< BIT() mask of the constructs in its body */
+    int         levels;          /**< Nesting levels that the construct adds */
 } construct_t;
 
-/// Constructs, indexed by construct_kind_t
+/** Constructs, indexed by construct_kind_t */
 static const construct_t constructs[KIND_COUNT] = {
     [KIND_FUNCTION] = {"function_definition", "function", NULL, FUNCTION_BODY, 0},
     [KIND_IF]       = {"if_statement", "if", "else_clause", NOTHING, 1},
@@ -80,25 +80,25 @@ static const construct_t constructs[KIND_COUNT] = {
     [KIND_GOTO]     = {"goto_statement", "goto", NULL, NOTHING, 1},
 };
 
-/// Innermost construct around a node, and the nesting depth there
+/** Innermost construct around a node, and the nesting depth there */
 typedef struct {
-    const construct_t *construct; ///< Innermost construct, or NULL outside functions
-    int                depth;     ///< Nesting levels around the node
+    const construct_t *construct; /**< Innermost construct, or NULL outside functions */
+    int                depth;     /**< Nesting levels around the node */
 } scope_t;
 
-/// Parent node of the nodes that the walk visits
+/** Parent node of the nodes that the walk visits */
 typedef struct {
-    source_t   *source; ///< Source of the tree
-    const char *type;   ///< tree-sitter node type of the parent
-    scope_t     scope;  ///< Scope of the children
+    source_t   *source; /**< Source of the tree */
+    const char *type;   /**< tree-sitter node type of the parent */
+    scope_t     scope;  /**< Scope of the children */
 } parent_t;
 
-/// Node that the walk gives to each rule
+/** Node that the walk gives to each rule */
 typedef struct {
-    source_t          *source; ///< Source of the node
-    TSNode             node;   ///< Node that the rules check
-    const construct_t *opens;  ///< Construct that the node opens, or NULL
-    scope_t            scope;  ///< Scope around the node
+    source_t          *source; /**< Source of the node */
+    TSNode             node;   /**< Node that the rules check */
+    const construct_t *opens;  /**< Construct that the node opens, or NULL */
+    scope_t            scope;  /**< Scope around the node */
 } visit_t;
 
 /**
@@ -109,23 +109,23 @@ typedef struct {
  */
 typedef void rule_visitor_t(const char *rule, const visit_t *visit);
 
-/// Rule that the walk runs on each node
+/** Rule that the walk runs on each node */
 typedef struct {
-    const char     *name;  ///< Rule name that the output shows
-    rule_visitor_t *visit; ///< Check of one node
+    const char     *name;  /**< Rule name that the output shows */
+    rule_visitor_t *visit; /**< Check of one node */
 } rule_t;
 
-/// Parts of the comment at the start of a file
+/** Parts of the comment at the start of a file */
 typedef struct {
-    const char *body;     ///< Text after DOC_COMMENT_OPEN, or NULL
-    const char *body_end; ///< Start of COMMENT_CLOSE, or NULL
-    const char *command;  ///< FILE_COMMAND in the body, or NULL
+    const char *body;     /**< Text after DOC_COMMENT_OPEN, or NULL */
+    const char *body_end; /**< Start of COMMENT_CLOSE, or NULL */
+    const char *command;  /**< FILE_COMMAND in the body, or NULL */
 } docstring_t;
 
-/// Check of a file docstring, with the message for a failure
+/** Check of a file docstring, with the message for a failure */
 typedef struct {
-    bool (*passes)(const docstring_t *docstring); ///< True if the docstring passes
-    const char *message;                          ///< Message for a failure
+    bool (*passes)(const docstring_t *docstring); /**< True if the docstring passes */
+    const char *message;                          /**< Message for a failure */
 } docstring_check_t;
 
 /**
@@ -231,7 +231,7 @@ static bool has_description(const docstring_t *docstring) {
     return has_alphanumeric(name + strcspn(name, WHITESPACE), docstring->body_end);
 }
 
-/// Each check needs the checks before it, so keep this order
+/** Each check needs the checks before it, so keep this order */
 static const docstring_check_t docstring_checks[] = {
     {opens_doc_comment, "file does not begin with a /** comment"},
     {is_closed, "the opening /** comment is not closed"},
@@ -330,7 +330,7 @@ static void check_parse_error(const char *rule, const visit_t *visit) {
     }
 }
 
-/// Rules in the order of their findings at the same position
+/** Rules in the order of their findings at the same position */
 static const rule_t rules[] = {
     {"file-docstring", check_file_docstring},
     {"nesting", check_nesting},

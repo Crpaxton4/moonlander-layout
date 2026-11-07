@@ -10,13 +10,13 @@
 
 #include "support.h"
 
-/// Bytes that each fread() call asks for
+/** Bytes that each fread() call asks for */
 #define READ_CHUNK_SIZE 4096
 
-/// Capacity multiplier for a full array, so that appends stay fast on average
+/** Capacity multiplier for a full array, so that appends stay fast on average */
 #define GROWTH_FACTOR 2
 
-/// Items added to each new capacity, so that small arrays do not grow often
+/** Items added to each new capacity, so that small arrays do not grow often */
 #define MIN_CAPACITY 16
 
 void *reserve(void *items, size_t item_size, size_t *capacity, size_t count) {
