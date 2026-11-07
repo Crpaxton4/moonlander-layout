@@ -1,6 +1,6 @@
 /** @file
  * Build-time settings for the qgmlwy keymap: USB wakeup, mouse keys, status LEDs,
- * combos and Oryx identification.
+ * combos, tap-hold keys and Oryx identification.
  *
  * Each `#undef` clears a default that the keyboard or QMK may already have set (the
  * keyboard sets several mouse key values), so the value here wins without a
@@ -52,6 +52,31 @@
  * list, so QMK would hold back each push of a KC_NO position as a combo key.
  */
 #define COMBO_ONLY_FROM_LAYER 2
+
+/** Time in ms that a tap-hold key waits for its release before it holds */
+#define TAPPING_TERM 250
+
+/** get_tapping_term() gives the term of each key, for the shorter Shift term */
+#define TAPPING_TERM_PER_KEY
+
+/** Tapping term in ms of the two Shift home row keys */
+#define SHIFT_TAPPING_TERM 200
+
+/**
+ * A tap of another key during the tapping term holds the tap-hold key. The keymap
+ * does not use HOLD_ON_OTHER_KEY_PRESS or RETRO_TAPPING, because with home row mods
+ * they send modifiers in normal typing.
+ */
+#define PERMISSIVE_HOLD
+
+/** Tap-hold key and a key of the same hand give two letters, not a modifier */
+#define CHORDAL_HOLD
+
+/** Time in ms after a letter in which a tap-hold key only taps */
+#define FLOW_TAP_TERM 150
+
+/** Tap and then hold of a tap-hold key holds it, and does not repeat the tap */
+#define QUICK_TAP_TERM 0
 
 /**
  * Layout identifier that Oryx and Keymapp read to identify the layout.

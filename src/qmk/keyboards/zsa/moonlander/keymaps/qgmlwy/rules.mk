@@ -9,7 +9,7 @@ SPACE_CADET_ENABLE = no
 
 SRC += tap_dance/tap_dance.c
 SRC += tap_dance/dances.c
-SRC += dual_function/dual_function.c
+SRC += tap_hold/tap_hold.c
 SRC += key_event_log/key_event_log_logic.c
 SRC += key_event_log/key_event_log.c
 SRC += status_leds/status_leds.c

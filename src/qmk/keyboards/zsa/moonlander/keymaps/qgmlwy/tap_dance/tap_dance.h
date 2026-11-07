@@ -16,12 +16,11 @@
  * definition in `dances`.
  */
 enum tap_dance_codes {
-    DANCE_CTRL_OR_GUI,
-    DANCE_LEFT_BRACKETS,
-    DANCE_RIGHT_BRACKETS,
-    DANCE_MIDDLE_CLICK_OR_WHEEL,
-    DANCE_RIGHT_CLICK_OR_WHEEL,
-    DANCE_COUNT, /**< Number of tap dance slots; sizes `dances` */
+    DANCE_LEFT_BRACKETS,         /**< (3,13): opening brackets */
+    DANCE_RIGHT_BRACKETS,        /**< (4,13): closing brackets */
+    DANCE_MIDDLE_CLICK_OR_WHEEL, /**< R3: middle click, or wheel down or left */
+    DANCE_RIGHT_CLICK_OR_WHEEL,  /**< R2: right click, or wheel up or right */
+    DANCE_COUNT,                 /**< Number of tap dance slots; sizes `dances` */
 };
 
 /**
