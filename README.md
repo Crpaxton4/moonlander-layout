@@ -67,11 +67,12 @@ the firmware and `.build/check_standards/compile_commands.json` for the checker.
 
 To run the checks, use these commands:
 
-| Command                      | Result                       |
-| ---------------------------- | ---------------------------- |
-| `pre-commit run --all-files` | Runs the hooks.              |
-| `make analyze`               | Runs clang-tidy and Doxygen. |
-| `make checker-test`          | Tests the standards checker. |
+| Command                      | Result                                    |
+| ---------------------------- | ----------------------------------------- |
+| `pre-commit run --all-files` | Runs the hooks.                           |
+| `make analyze`               | Runs clang-tidy and Doxygen.              |
+| `make checker-test`          | Tests the standards checker.              |
+| `make checker-clang-tidy`    | Runs clang-tidy on the standards checker. |
 
 The hooks are editorconfig-checker, clang-format, Prettier, shellcheck, shfmt,
 actionlint and the standards checker. Git runs these hooks at each commit.

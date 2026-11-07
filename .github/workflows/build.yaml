@@ -208,7 +208,7 @@ jobs:
       # the analysis
       - name: "Install clang-tidy"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
-        run: .github/scripts/build/install-clang-tidy.sh
+        run: .github/scripts/shared/install-clang-tidy.sh
 
       - name: "Install Doxygen"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
