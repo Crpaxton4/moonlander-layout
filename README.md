@@ -70,12 +70,17 @@ To run the checks, use these commands:
 | Command                      | Result                                    |
 | ---------------------------- | ----------------------------------------- |
 | `pre-commit run --all-files` | Runs the hooks.                           |
-| `make analyze`               | Runs clang-tidy and Doxygen.              |
+| `make analyze`               | Runs clang-tidy, Doxygen and gcc-strict.  |
 | `make checker-test`          | Tests the standards checker.              |
 | `make checker-clang-tidy`    | Runs clang-tidy on the standards checker. |
 
 The hooks are editorconfig-checker, clang-format, Prettier, shellcheck, shfmt,
 actionlint and the standards checker. Git runs these hooks at each commit.
+
+The QMK build uses `-Wall -Werror`. clang-tidy and `make gcc-strict` add more compiler
+warnings for the keymap files, but not for the QMK files. `make gcc-strict` compiles
+the keymap files again with the QMK gcc. In that compilation, the QMK headers are
+system headers, thus gcc shows no findings in them.
 
 The standards checker has two rules for the `.c`, `.h` and `.inc` files:
 

@@ -72,6 +72,32 @@ doxygen: ## Run the Doxygen check
 	@mkdir -p .build
 	@time doxygen Doxyfile
 
+# gcc-strict start
+
+ANALYZE_CHECKS += gcc-strict
+
+# QMK's build cannot get these flags, because keymap.c compiles as a part of a
+# QMK file
+GCC_STRICT_FLAGS := -Wextra -Wconversion -Wsign-conversion -Wshadow \
+	-Wmissing-prototypes -Wmissing-declarations -Wcast-qual -Wcast-align \
+	-Wpointer-arith -Wwrite-strings -Wundef -Wduplicated-cond \
+	-Wduplicated-branches -Wlogical-op -Wnull-dereference -Wjump-misses-init \
+	-Wdouble-promotion -Wformat=2 -Wswitch-enum -Woverride-init \
+	-Wredundant-decls -Wold-style-definition -Wbad-function-cast \
+	-Wfloat-equal -Wvla -Walloca -fanalyzer
+GCC_STRICT_DATABASE := .build/gcc-strict/compile_commands.json
+
+gcc-strict: ## Run gcc with more warnings on the keymap (needs the compile database)
+	@mkdir -p $(dir $(GCC_STRICT_DATABASE))
+	@jq --arg userspace $(QMK_USERSPACE) \
+		--arg flags "$(GCC_STRICT_FLAGS)" -f src/ci/gcc-strict-entries.jq \
+		.build/compile_commands.json >$(GCC_STRICT_DATABASE)
+	@time GCC_STRICT_DATABASE=$(GCC_STRICT_DATABASE) src/ci/run-gcc-strict.sh
+
+.PHONY: gcc-strict
+
+# gcc-strict end
+
 # Only this inner make continues after a failed check, so the firmware build
 # still stops at its first error
 analyze: compiledb ## Run all static analysis checks
