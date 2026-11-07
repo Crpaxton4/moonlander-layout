@@ -1,11 +1,14 @@
 ---
 # clang-diagnostic-* entries let the ExtraArgsBefore warnings pass the -*
-# filter. bugprone-signed-bitwise reports each use of the QMK keycode macros
+# filter. bugprone-signed-bitwise reports each use of the QMK keycode macros.
+# DeprecatedOrUnsafeBufferHandling asks for the C11 Annex K _s functions, which
+# glibc and newlib do not have
 Checks: >-
     -*,
     bugprone-*,
     -bugprone-signed-bitwise,
     clang-analyzer-*,
+    -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
     readability-function-size,
     readability-function-cognitive-complexity,
     readability-magic-numbers,
