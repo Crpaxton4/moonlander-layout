@@ -1,5 +1,5 @@
 /** @file
- * Count tables of the converter: pushes per position, recent pushes and shortcuts
+ * Count tables of the converter: pushes per position, recent pushes and names
  */
 
 #pragma once
@@ -18,6 +18,9 @@
 
 /** Layer of each correction count, because that table has no layers */
 #define CORRECTION_LAYER 0
+
+/** Bytes of the longest name of a name count, with its terminator */
+#define COUNT_NAME_SIZE SHORTCUT_NAME_SIZE
 
 /** Number of pushes or corrections */
 typedef unsigned long long count_t;
@@ -54,18 +57,18 @@ typedef struct {
     size_t         capacity; /**< Items that the array can hold */
 } recent_pushes_t;
 
-/** Count of one shortcut */
+/** Count of one name: a shortcut, a key or a heatmap row */
 typedef struct {
-    char    name[SHORTCUT_NAME_SIZE]; /**< Name from write_shortcut_name() */
-    count_t count;                    /**< Pushes */
-} shortcut_count_t;
+    char    name[COUNT_NAME_SIZE]; /**< Name, cut to COUNT_NAME_SIZE - 1 bytes */
+    count_t count;                 /**< Pushes */
+} named_count_t;
 
-/** Counts of shortcuts, in no order until sort_shortcut_counts() */
+/** Counts of names, in no order until sort_named_counts() */
 typedef struct {
-    shortcut_count_t *items;    /**< Counts, or NULL before the first count */
-    size_t            count;    /**< Items in use */
-    size_t            capacity; /**< Items that the array can hold */
-} shortcut_counts_t;
+    named_count_t *items;    /**< Counts, or NULL before the first count */
+    size_t         count;    /**< Items in use */
+    size_t         capacity; /**< Items that the array can hold */
+} named_counts_t;
 
 /**
  * Finds the count of a position and layer, and adds a zero count if none exists.
@@ -101,16 +104,16 @@ void sort_position_counts(position_counts_t *counts);
 void set_recent_push(recent_pushes_t *pushes, position_t position, uint32_t time);
 
 /**
- * Adds one to the shortcut count of a name.
+ * Adds one to the count of a name.
  *
  * @param counts Table of counts.
- * @param name   Shortcut name.
+ * @param name   Name.
  */
-void add_shortcut_count(shortcut_counts_t *counts, const char *name);
+void add_named_count(named_counts_t *counts, const char *name);
 
 /**
- * Sorts shortcuts from the largest count. Equal counts are in name order.
+ * Sorts names from the largest count. Equal counts are in name order.
  *
  * @param counts Table of counts.
  */
-void sort_shortcut_counts(shortcut_counts_t *counts);
+void sort_named_counts(named_counts_t *counts);

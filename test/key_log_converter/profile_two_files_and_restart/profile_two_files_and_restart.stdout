@@ -1,0 +1,6 @@
+files: 2
+sessions: 3
+records: 32
+records outside sessions: 0
+ignored lines: 2
+exit 0

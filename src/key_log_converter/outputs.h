@@ -24,6 +24,12 @@
 /** Pushes of each shortcut */
 #define OUTPUT_SHORTCUTS "shortcuts.csv"
 
+/** Calls and times of each record handler */
+#define OUTPUT_PROFILE "profile.csv"
+
+/** Markdown summary of the usage, the profiling and the data quality */
+#define OUTPUT_REPORT "report.md"
+
 /**
  * Writes the errno message of a failed file operation to standard error.
  *
@@ -50,8 +56,8 @@ FILE *open_output(const char *folder, const char *name);
 bool close_output(FILE *file, const char *name);
 
 /**
- * Writes the usage, correction and shortcut files. Each table gets its zero counts
- * and its sort order first.
+ * Writes the usage, correction, shortcut and profile files, then the report. Each
+ * table gets its zero counts and its sort order first.
  *
  * @param converter Totals of the run.
  * @param folder    Output folder.

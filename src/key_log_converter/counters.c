@@ -1,5 +1,5 @@
 /** @file
- * Count tables with a linear search. A log has a few hundred positions at most
+ * Count tables with a linear search. A log has a few hundred positions or names
  */
 
 #include <stdbool.h>
@@ -114,47 +114,47 @@ void set_recent_push(recent_pushes_t *pushes, position_t position, uint32_t time
 }
 
 /**
- * Finds the count of a shortcut, and adds a zero count if none exists.
+ * Finds the count of a name, and adds a zero count if none exists.
  *
  * @param counts Table of counts.
- * @param name   Shortcut name.
+ * @param name   Name.
  * @return Count in the table. The next add can move it.
  */
-static shortcut_count_t *find_shortcut(shortcut_counts_t *counts, const char *name) {
+static named_count_t *find_named_count(named_counts_t *counts, const char *name) {
     for (size_t index = 0; index < counts->count; index++) {
         if (strcmp(counts->items[index].name, name) == 0) {
             return &counts->items[index];
         }
     }
-    counts->items = reserve(counts->items, sizeof(shortcut_count_t), &counts->capacity,
-                            counts->count);
-    shortcut_count_t *item = &counts->items[counts->count++];
+    counts->items =
+        reserve(counts->items, sizeof(named_count_t), &counts->capacity, counts->count);
+    named_count_t *item = &counts->items[counts->count++];
     snprintf(item->name, sizeof(item->name), "%s", name);
     item->count = 0;
     return item;
 }
 
-void add_shortcut_count(shortcut_counts_t *counts, const char *name) {
-    find_shortcut(counts, name)->count++;
+void add_named_count(named_counts_t *counts, const char *name) {
+    find_named_count(counts, name)->count++;
 }
 
 /**
- * Orders shortcut counts from the largest count, then by name, for qsort().
+ * Orders name counts from the largest count, then by name, for qsort().
  *
- * @param first  First shortcut_count_t.
- * @param second Second shortcut_count_t.
+ * @param first  First named_count_t.
+ * @param second Second named_count_t.
  * @return Negative, 0 or positive, as qsort() requires.
  */
-static int compare_shortcut_counts(const void *first, const void *second) {
-    const shortcut_count_t *one   = first;
-    const shortcut_count_t *other = second;
-    int                     order = compare_numbers(other->count, one->count);
+static int compare_named_counts(const void *first, const void *second) {
+    const named_count_t *one   = first;
+    const named_count_t *other = second;
+    int                  order = compare_numbers(other->count, one->count);
     return order != 0 ? order : strcmp(one->name, other->name);
 }
 
-void sort_shortcut_counts(shortcut_counts_t *counts) {
-    size_t item_size = sizeof(shortcut_count_t);
+void sort_named_counts(named_counts_t *counts) {
+    size_t item_size = sizeof(named_count_t);
     if (counts->count > 0) {
-        qsort(counts->items, counts->count, item_size, compare_shortcut_counts);
+        qsort(counts->items, counts->count, item_size, compare_named_counts);
     }
 }
