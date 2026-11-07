@@ -143,6 +143,10 @@ checker-compiledb: | $(CHECKER_BUILD) ## Write the checker compile database
 	$(file >$(CHECKER_BUILD)/compile_commands.json,$(checker_database))
 	jq -e 'length > 0' $(CHECKER_BUILD)/compile_commands.json >/dev/null
 
+# Not in analyze, because the firmware CI job has no tree-sitter headers
+checker-clang-tidy: checker-compiledb ## Run clang-tidy on the standards checker
+	@time clang-tidy --quiet -p $(CHECKER_BUILD) $(CHECKER_SOURCES)
+
 # Generated code, so the build ignores its warnings
 $(CHECKER_BUILD)/grammar.o: $(GRAMMAR) | $(CHECKER_BUILD)
 	$(require_grammar)
@@ -169,7 +173,7 @@ $(CASE_TESTS): $(CHECKER_BUILD)/test/%: $(CHECKER)
 	@{ $(CHECKER) $(call arguments,$*); echo "exit $$?"; } >$@.out
 	@diff -u $(CHECKER_TESTS)/$*/$*.expected $@.out
 
-.PHONY: checker checker-compiledb checker-test $(CASE_TESTS)
+.PHONY: checker checker-compiledb checker-clang-tidy checker-test $(CASE_TESTS)
 
 ##@ General
 

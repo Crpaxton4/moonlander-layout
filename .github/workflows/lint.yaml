@@ -95,6 +95,8 @@ jobs:
         run: .github/scripts/shared/check-uv-version.sh
       - name: "Install pre-commit"
         run: .github/scripts/lint/install-pre-commit.sh
+      - name: "Install clang-tidy"
+        run: .github/scripts/shared/install-clang-tidy.sh
 
       - name: "Compute pre-commit cache key"
         id: pre-commit-key
@@ -194,6 +196,11 @@ jobs:
       - name: "Test check-standards"
         if: ${{ !cancelled() }}
         run: .github/scripts/lint/test-check-standards.sh
+
+      # Only this job has the tree-sitter headers that the checker includes
+      - name: "Run clang-tidy on check-standards"
+        if: ${{ !cancelled() }}
+        run: make checker-clang-tidy
 
       - name: "Summarize timings"
         if: ${{ !cancelled() }}

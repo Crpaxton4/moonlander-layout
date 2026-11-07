@@ -18,7 +18,8 @@ Checks: >-
     clang-diagnostic-documentation-unknown-command
 WarningsAsErrors: "*"
 
-HeaderFilterRegex: "/src/qmk/keyboards/"
+# Header paths are absolute for the firmware, but relative for the checker
+HeaderFilterRegex: "(^|/)src/(qmk/keyboards|check_standards)/"
 
 # clang stops on these gcc flags. -Werror bypasses Checks, and the macro causes a
 # finding that HeaderFilterRegex cannot exclude
