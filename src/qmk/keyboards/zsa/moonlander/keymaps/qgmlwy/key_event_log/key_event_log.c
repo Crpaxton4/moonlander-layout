@@ -16,6 +16,7 @@
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
+#include "special_mode/special_mode.h"
 
 // #endregion
 
@@ -140,15 +141,20 @@ static void end_idle_logging(void) {
  * change, so the combo gets no input record.
  *
  * Logging combo must not operate in the special mode, but QMK finds combos on each
- * layer. Thus the special mode stops the change here.
+ * layer. Thus the special mode stops the change here, and the push counts in the
+ * special mode.
  *
  * @param record Event of the combo keycode.
  * @return False, so the combo sends no key.
  */
 static bool toggle_logging(const keyrecord_t *record) {
-    if (record->event.pressed && !layer_state_is(LAYER_SPECIAL)) {
-        write_state_record(logging_toggle(&logging, timer_read32()));
+    if (!record->event.pressed) {
+        return false;
+    } else if (layer_state_is(LAYER_SPECIAL)) {
+        special_mode_count_taken_push();
+        return false;
     }
+    write_state_record(logging_toggle(&logging, timer_read32()));
     return false;
 }
 

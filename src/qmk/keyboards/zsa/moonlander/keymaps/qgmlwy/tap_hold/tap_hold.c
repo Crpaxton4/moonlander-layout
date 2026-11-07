@@ -8,6 +8,7 @@
 
 #include QMK_KEYBOARD_H
 
+#include "keycodes/keycodes.h"
 #include "layers/layers.h"
 
 // #endregion
@@ -69,6 +70,21 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
         return SHIFT_TAPPING_TERM;
     }
     return TAPPING_TERM;
+}
+
+/**
+ * Tells if a tap of another key during the tapping term holds a tap-hold key.
+ *
+ * Special mode key taps in that case, so a fast roll of the mode key and a digit
+ * gives the one-shot. Only a hold past the tapping term locks the special mode.
+ *
+ * @param keycode Keycode of the tap-hold key.
+ * @param record  Push of the tap-hold key; unused.
+ * @return False for the special mode key, true for the other keys.
+ */
+bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
+    (void)record;
+    return keycode != SPECIAL_MODE_KEY;
 }
 
 /**

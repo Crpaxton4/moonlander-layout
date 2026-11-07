@@ -379,6 +379,25 @@ static void key_event_log_special_mode_r10_combo_keeps_logging_on(void **state) 
     assert_console_text("");
 }
 
+static void key_event_log_special_mode_r10_combo_ends_one_shot(void **state) {
+    (void)state;
+    start_with_logging(false);
+    // Tap of the special mode key; QMK gives both events a tap count of 1
+    keyrecord_t mode_key = {.event = {.pressed = true}, .tap = {.count = ONE_TAP}};
+    process_record_user(SPECIAL_MODE_KEY, &mode_key);
+    mode_key.event.pressed = false;
+    process_record_user(SPECIAL_MODE_KEY, &mode_key);
+    layer_state = ONLY_LAYER(LAYER_SPECIAL);
+    // Combo is a push, so it uses up the one-shot and does not change the logging
+    assert_false(send_key_event(LOGGING_TOGGLE, true));
+    assert_false(key_event_log_is_on());
+    static const qmk_call_t expected[] = {
+        {.function = CALLED_LAYER_ON, .argument = LAYER_SPECIAL},
+        {.function = CALLED_LAYER_OFF, .argument = LAYER_SPECIAL},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
 // #endregion
 
 // #region Test runner
@@ -405,6 +424,7 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r11_driver_stays_in_place),
     cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_off),
     cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_on),
+    cmocka_unit_test(key_event_log_special_mode_r10_combo_ends_one_shot),
 };
 
 int main(int argc, char **argv) {

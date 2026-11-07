@@ -960,13 +960,46 @@ static void bracket_pairs_special_mode_parentheses_are_plain_characters(void **s
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
-/** Starts the special mode with its mode key, then empties the call log */
+/** Locks the special mode with a hold of its mode key, then empties the call log */
 static void start_special_mode(void) {
     start_case();
     send_key_event(SPECIAL_MODE_KEY, true);
     send_key_event(SPECIAL_MODE_KEY, false);
     reset_fake_qmk();
     layer_state = SPECIAL_MODE_ON;
+}
+
+/**
+ * Taps the special mode key, which turns the special layer on for one push. Special
+ * mode takes both events, so the host gets no key.
+ */
+static void tap_special_mode_key(void) {
+    keyrecord_t push    = {.event = {.pressed = true}, .tap = {.count = ONE_TAP}};
+    keyrecord_t release = {.event = {.pressed = false}, .tap = {.count = ONE_TAP}};
+    assert_false(process_record_user(SPECIAL_MODE_KEY, &push));
+    assert_false(process_record_user(SPECIAL_MODE_KEY, &release));
+    layer_state = SPECIAL_MODE_ON;
+}
+
+static void bracket_pairs_r16_r17_one_shot_backticks_make_a_pair(void **state) {
+    (void)state;
+    start_case();
+    uint16_t backtick = keycode_of(backtick_key);
+    // Each one-shot ends at the backtick, which the bracket pairs take
+    tap_special_mode_key();
+    type_key(backtick);
+    layer_state = 0;
+    type_key(KC_A);
+    tap_special_mode_key();
+    type_key(backtick);
+    static const qmk_call_t expected[] = {
+        {CALLED_LAYER_ON, LAYER_SPECIAL},  {CALLED_TAP_CODE16, KC_GRAVE},
+        {CALLED_TAP_CODE16, KC_GRAVE},     {CALLED_TAP_CODE16, KC_LEFT},
+        {CALLED_LAYER_OFF, LAYER_SPECIAL}, {CALLED_TAP_CODE16, KC_A},
+        {CALLED_LAYER_ON, LAYER_SPECIAL},  {CALLED_TAP_CODE16, KC_RIGHT},
+        {CALLED_LAYER_OFF, LAYER_SPECIAL},
+    };
+    assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
 static void bracket_pairs_taken_push_keeps_special_mode_on(void **state) {
@@ -1525,6 +1558,7 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r16_backtick_only_in_special_mode),
     cmocka_unit_test(bracket_pairs_single_quote_is_one_character),
     cmocka_unit_test(bracket_pairs_special_mode_parentheses_are_plain_characters),
+    cmocka_unit_test(bracket_pairs_r16_r17_one_shot_backticks_make_a_pair),
     cmocka_unit_test(bracket_pairs_taken_push_keeps_special_mode_on),
     cmocka_unit_test(bracket_pairs_jump_out_tab_keeps_special_mode_on),
     cmocka_unit_test(bracket_pairs_r4_space_that_ends_special_mode_types_nothing),

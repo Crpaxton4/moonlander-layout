@@ -11,6 +11,7 @@
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
 #include "plain_mode/plain_mode.h"
+#include "special_mode/special_mode.h"
 
 // #endregion
 
@@ -42,11 +43,14 @@ static void toggle_plain_mode(void) {
 bool process_plain_mode(uint16_t keycode, keyrecord_t *record) {
     if (keycode != PLAIN_MODE_TOGGLE) {
         return true;
+    } else if (!record->event.pressed) {
+        return false;
+    } else if (layer_state_is(LAYER_SPECIAL)) {
+        // QMK finds combos on each layer, so the special mode stops the combo here
+        special_mode_count_taken_push();
+        return false;
     }
-    // QMK finds combos on each layer, so the special mode stops the combo here
-    if (record->event.pressed && !layer_state_is(LAYER_SPECIAL)) {
-        toggle_plain_mode();
-    }
+    toggle_plain_mode();
     return false;
 }
 

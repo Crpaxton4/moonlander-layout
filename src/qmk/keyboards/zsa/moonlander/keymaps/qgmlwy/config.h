@@ -106,11 +106,12 @@
 #define SHIFT_TAPPING_TERM 200
 
 /**
- * A tap of another key during the tapping term holds the tap-hold key. The keymap
+ * A tap of another key during the tapping term holds the tap-hold key, except the
+ * special mode key: get_permissive_hold() gives the setting of each key. The keymap
  * does not use HOLD_ON_OTHER_KEY_PRESS or RETRO_TAPPING, because with home row mods
  * they send modifiers in normal typing.
  */
-#define PERMISSIVE_HOLD
+#define PERMISSIVE_HOLD_PER_KEY
 
 /** Tap-hold key and a key of the same hand give two letters, not a modifier */
 #define CHORDAL_HOLD

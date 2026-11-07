@@ -35,6 +35,14 @@
 /** Key at (1,7): a tap starts or ends camelCase, and a hold sends F7 */
 #define CAMEL_CASE_KEY KEY_HOLD(KC_F7)
 
+/**
+ * Key at (2,0): a tap turns the special mode on for one push, or ends the mode. A
+ * hold locks the mode on. The key is a layer-tap key of the base layer with no tap
+ * key, so the tapping term and chordal hold apply. Special mode takes each tap and
+ * each hold, so the layer action never occurs.
+ */
+#define SPECIAL_MODE_KEY LT(LAYER_BASE, KC_NO)
+
 // #endregion
 
 // #region Enumerations
@@ -44,13 +52,12 @@ enum custom_keycode {
     LOGGING_COMBO_LEFT_POSITION = SAFE_RANGE, /**< Combo key at (1,6), never sent */
     LOGGING_COMBO_RIGHT_POSITION,             /**< Combo key at (1,7), never sent */
     LOGGING_TOGGLE,                           /**< Logging combo: logging on or off */
-    SPECIAL_MODE_KEY,  /**< (2,0): special mode on, or off on the special layer */
-    CONSTANT_CASE_KEY, /**< Starts or ends CONSTANT_CASE */
-    PASCAL_CASE_KEY,   /**< Starts or ends PascalCase */
-    PLAIN_MODE_COMBO_LEFT_POSITION,  /**< Combo key at (2,6), never sent */
-    PLAIN_MODE_COMBO_RIGHT_POSITION, /**< Combo key at (2,7), never sent */
-    PLAIN_MODE_TOGGLE,               /**< Plain-mode combo: plain mode on or off */
-    PROFILING_TOGGLE, /**< (3,0) in the profiling debug build: profiling on or off */
+    CONSTANT_CASE_KEY,                        /**< Starts or ends CONSTANT_CASE */
+    PASCAL_CASE_KEY,                          /**< Starts or ends PascalCase */
+    PLAIN_MODE_COMBO_LEFT_POSITION,           /**< Combo key at (2,6), never sent */
+    PLAIN_MODE_COMBO_RIGHT_POSITION,          /**< Combo key at (2,7), never sent */
+    PLAIN_MODE_TOGGLE, /**< Plain-mode combo: plain mode on or off */
+    PROFILING_TOGGLE,  /**< (3,0) in the profiling debug build: profiling on or off */
 };
 
 // #endregion
