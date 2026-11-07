@@ -1,0 +1,164 @@
+/** @file
+ * Output file paths and the count files
+ */
+
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "outputs.h"
+#include "support.h"
+
+/** Windows also accepts this separator */
+#define PATH_SEPARATOR "/"
+
+/** Percent as hundredths, so that the output has two decimals and no float */
+#define HUNDREDTHS_PER_WHOLE 10000ULL
+
+/** Hundredths in one percent */
+#define HUNDREDTHS_PER_PERCENT 100ULL
+
+/** Half of the whole goes into the sum before the division, so that it rounds */
+#define ROUNDING_DIVISOR 2ULL
+
+/**
+ * Writes the lines of one count file.
+ *
+ * @param file      Open output file.
+ * @param converter Totals of the run.
+ */
+typedef void count_writer_t(FILE *file, converter_t *converter);
+
+void report_file_error(const char *path) {
+    fprintf(stderr, "key_log_converter: %s: %s\n", path, strerror(errno));
+}
+
+FILE *open_output(const char *folder, const char *name) {
+    size_t size = strlen(folder) + strlen(PATH_SEPARATOR) + strlen(name) + sizeof("");
+    char  *path = malloc(size);
+    if (path == NULL) {
+        perror("key_log_converter");
+        abort();
+    }
+    snprintf(path, size, "%s%s%s", folder, PATH_SEPARATOR, name);
+    FILE *file = fopen(path, "wb");
+    if (file == NULL) {
+        report_file_error(path);
+    }
+    free(path);
+    return file;
+}
+
+bool close_output(FILE *file, const char *name) {
+    if (file == NULL) {
+        return true;
+    }
+    bool written = ferror(file) == 0;
+    if (fclose(file) != 0 || !written) {
+        report_file_error(name);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Writes the push count of each position and layer. Each layer up to the highest
+ * layer of the pushes lists all matrix positions.
+ *
+ * @param file      Open output file.
+ * @param converter Totals of the run.
+ */
+static void write_usage_lines(FILE *file, converter_t *converter) {
+    for (unsigned layer = 0; layer <= converter->highest_layer; layer++) {
+        add_matrix_positions(&converter->usage, (uint8_t)layer);
+    }
+    sort_position_counts(&converter->usage);
+    fputs("row,col,layer,pushes\n", file);
+    for (size_t index = 0; index < converter->usage.count; index++) {
+        const position_count_t *item = &converter->usage.items[index];
+        fprintf(file, "%u,%u,%u,%llu\n", (unsigned)item->key.position.row,
+                (unsigned)item->key.position.col, (unsigned)item->key.layer,
+                item->count);
+    }
+}
+
+/**
+ * Gives a part as a percent of a whole, rounded to hundredths.
+ *
+ * @param part  Counted part.
+ * @param whole Total, 0 gives 0.
+ * @return Percent in hundredths.
+ */
+static count_t percent_hundredths(count_t part, count_t whole) {
+    if (whole == 0) {
+        return 0;
+    }
+    return (part * HUNDREDTHS_PER_WHOLE + whole / ROUNDING_DIVISOR) / whole;
+}
+
+/**
+ * Writes the correction totals, then the Backspace count of each position.
+ *
+ * @param file      Open output file.
+ * @param converter Totals of the run.
+ */
+static void write_correction_lines(FILE *file, converter_t *converter) {
+    count_t percent =
+        percent_hundredths(converter->correction_pushes, converter->character_pushes);
+    add_matrix_positions(&converter->corrections, CORRECTION_LAYER);
+    sort_position_counts(&converter->corrections);
+    fprintf(file, "metric,value\nbackspace and delete pushes,%llu\n",
+            converter->correction_pushes);
+    fprintf(file, "character pushes,%llu\n", converter->character_pushes);
+    fprintf(file, "correction percent,%llu.%02llu\n", percent / HUNDREDTHS_PER_PERCENT,
+            percent % HUNDREDTHS_PER_PERCENT);
+    fputs("row,col,backspace pushes less than 1 s after a push\n", file);
+    for (size_t index = 0; index < converter->corrections.count; index++) {
+        const position_count_t *item = &converter->corrections.items[index];
+        fprintf(file, "%u,%u,%llu\n", (unsigned)item->key.position.row,
+                (unsigned)item->key.position.col, item->count);
+    }
+}
+
+/**
+ * Writes the count of each shortcut.
+ *
+ * @param file      Open output file.
+ * @param converter Totals of the run.
+ */
+static void write_shortcut_lines(FILE *file, converter_t *converter) {
+    sort_shortcut_counts(&converter->shortcuts);
+    fputs("shortcut,count\n", file);
+    for (size_t index = 0; index < converter->shortcuts.count; index++) {
+        const shortcut_count_t *item = &converter->shortcuts.items[index];
+        fprintf(file, "%s,%llu\n", item->name, item->count);
+    }
+}
+
+/** Count file and the function that writes its lines */
+typedef struct {
+    const char     *name;   /**< File name in the output folder */
+    count_writer_t *writer; /**< Writer of the lines */
+} count_file_t;
+
+/** Count files in the order of their writes */
+static const count_file_t count_files[] = {
+    {OUTPUT_USAGE, write_usage_lines},
+    {OUTPUT_CORRECTIONS, write_correction_lines},
+    {OUTPUT_SHORTCUTS, write_shortcut_lines},
+};
+
+bool write_count_files(converter_t *converter, const char *folder) {
+    bool success = true;
+    for (size_t index = 0; index < COUNT_OF(count_files); index++) {
+        FILE *file = open_output(folder, count_files[index].name);
+        if (file == NULL) {
+            return false;
+        }
+        count_files[index].writer(file, converter);
+        if (!close_output(file, count_files[index].name)) {
+            success = false;
+        }
+    }
+    return success;
+}
