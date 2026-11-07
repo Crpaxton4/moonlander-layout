@@ -73,6 +73,12 @@
             "configurePreset": "dev"
         },
         {
+            "name": "analyze",
+            "configurePreset": "dev",
+            "targets": ["analyze"],
+            "nativeToolOptions": ["--keep-going"]
+        },
+        {
             "name": "checker",
             "configurePreset": "checker"
         },
@@ -122,6 +128,14 @@
         }
     ],
     "workflowPresets": [
+        {
+            "name": "analyze",
+            "displayName": "Static analysis",
+            "steps": [
+                { "type": "configure", "name": "dev" },
+                { "type": "build", "name": "analyze" }
+            ]
+        },
         {
             "name": "test",
             "displayName": "All tests",

@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # A skipped job satisfies its required check, but a `paths:` filter keeps the
-# check pending. The Doxygen check also covers src/check_standards/ and
+# check pending. The analysis also covers src/check_standards/ and
 # src/key_log_converter/
 env:
   FIRMWARE_PATHS: '^src/(qmk|ci|check_standards|key_log_converter)/|^test/|^Makefile$|^CMakeLists\.txt$|^CMakePresets\.json$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/workflows/build\.yaml$|^\.github/scripts/(build|shared)/'
@@ -222,6 +222,46 @@ jobs:
       - name: "Install Doxygen"
         if: ${{ !cancelled() && !inputs.skip-analysis }}
         run: .github/scripts/build/install-doxygen.sh
+
+      # Analysis configures all parts, and the checker part needs tree-sitter. The
+      # Lint job uses the same cache key
+      - name: "Compute tree-sitter cache key"
+        id: tree-sitter-key
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        run: .github/scripts/shared/compute-tree-sitter-cache-key.sh
+      - name: "Restore tree-sitter packages"
+        id: tree-sitter-cache
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tree-sitter-debs
+          key: ${{ steps.tree-sitter-key.outputs.key }}
+
+      - name: "Download tree-sitter packages"
+        if: ${{ !cancelled() && !inputs.skip-analysis && steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: .github/scripts/shared/download-tree-sitter-packages.sh
+
+      - name: "Verify tree-sitter versions"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: .github/scripts/shared/verify-tree-sitter-versions.sh
+
+      - name: "Unpack tree-sitter"
+        if: ${{ !cancelled() && !inputs.skip-analysis }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+        run: .github/scripts/shared/unpack-tree-sitter.sh
+
+      # Save before the analysis, so a failed check does not discard them
+      - name: "Save tree-sitter packages"
+        if: ${{ !cancelled() && !inputs.skip-analysis && steps.tree-sitter-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tree-sitter-debs
+          key: ${{ steps.tree-sitter-key.outputs.key }}
 
       - name: "Run static analysis"
         if: ${{ !cancelled() && !inputs.skip-analysis }}

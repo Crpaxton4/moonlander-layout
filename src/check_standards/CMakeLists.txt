@@ -37,3 +37,4 @@ add_custom_target(clang-tidy-checker
         "-DCHECK_COMMAND=clang-tidy;--quiet;-p;${CMAKE_BINARY_DIR};${CHECKER_SOURCES}"
         -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
     VERBATIM)
+add_dependencies(analyze clang-tidy-checker)

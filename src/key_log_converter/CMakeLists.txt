@@ -19,3 +19,4 @@ add_custom_target(clang-tidy-converter
         "-DCHECK_COMMAND=clang-tidy;--quiet;-p;${CMAKE_BINARY_DIR};${CONVERTER_SOURCES}"
         -P ${PROJECT_SOURCE_DIR}/src/ci/timed-check.cmake
     VERBATIM)
+add_dependencies(analyze clang-tidy-converter)
