@@ -88,6 +88,29 @@
                 "MOONLANDER_COVERAGE": "ON",
                 "MOONLANDER_PARTS": "checker;converter;unit-tests"
             }
+        },
+        {
+            "name": "mutation",
+            "displayName": "Mutation testing",
+            "description": "Host programs and unit tests with Mull mutants, built with clang in .build/mutation/",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/.build/mutation",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "clang-18",
+                "MOONLANDER_MUTATION": "ON",
+                "MOONLANDER_PARTS": "checker;converter;unit-tests"
+            }
+        },
+        {
+            "name": "mutation-diff",
+            "displayName": "Mutation testing of the changes",
+            "description": "Mutation build that runs only the mutants on lines that differ from origin/main, in .build/mutation-diff/",
+            "inherits": "mutation",
+            "binaryDir": "${sourceDir}/.build/mutation-diff",
+            "cacheVariables": {
+                "MUTATION_DIFF_REF": "origin/main"
+            }
         }
     ],
     "buildPresets": [
@@ -151,6 +174,16 @@
             "configurePreset": "coverage",
             "targets": ["coverage-gate"],
             "nativeToolOptions": ["--keep-going"]
+        },
+        {
+            "name": "mutation",
+            "configurePreset": "mutation",
+            "targets": ["mutation"]
+        },
+        {
+            "name": "mutation-diff",
+            "configurePreset": "mutation-diff",
+            "targets": ["mutation"]
         }
     ],
     "testPresets": [
@@ -302,6 +335,22 @@
                 { "type": "build", "name": "coverage" },
                 { "type": "test", "name": "coverage" },
                 { "type": "build", "name": "coverage-gate" }
+            ]
+        },
+        {
+            "name": "mutation",
+            "displayName": "Mutation testing of all code under test",
+            "steps": [
+                { "type": "configure", "name": "mutation" },
+                { "type": "build", "name": "mutation" }
+            ]
+        },
+        {
+            "name": "mutation-diff",
+            "displayName": "Mutation testing of the changes, then the mutation gate",
+            "steps": [
+                { "type": "configure", "name": "mutation-diff" },
+                { "type": "build", "name": "mutation-diff" }
             ]
         }
     ]

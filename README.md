@@ -39,6 +39,7 @@ The script installs these items:
 - pre-commit and its git hooks
 - The check tools: shellcheck, tree-sitter, clang-tidy and Doxygen
 - gcovr for the test coverage reports
+- clang 18 and [Mull][mull] for the mutation tests
 - CMake, and cmocka for the unit tests
 - The MinGW-w64 cross compiler, for the Windows build of the key log converter
 
@@ -186,15 +187,17 @@ that the function calls.
 tests, and runs the static analysis. Each CMake preset in `CMakePresets.json` has its
 build directory in `.build/`:
 
-| Configure preset | Parts                             | Build directory      |
-| ---------------- | --------------------------------- | -------------------- |
-| `dev`            | All parts and the static analysis | `.build/cmake/`      |
-| `firmware`       | The firmware                      | `.build/firmware/`   |
-| `checker`        | The standards checker             | `.build/checker/`    |
-| `converter`      | The key log converter             | `.build/converter/`  |
-| `unit-tests`     | The keymap unit tests             | `.build/unit-tests/` |
-| `windows`        | The key log converter for Windows | `.build/windows/`    |
-| `coverage`       | The tests, with gcov counters     | `.build/coverage/`   |
+| Configure preset | Parts                             | Build directory         |
+| ---------------- | --------------------------------- | ----------------------- |
+| `dev`            | All parts and the static analysis | `.build/cmake/`         |
+| `firmware`       | The firmware                      | `.build/firmware/`      |
+| `checker`        | The standards checker             | `.build/checker/`       |
+| `converter`      | The key log converter             | `.build/converter/`     |
+| `unit-tests`     | The keymap unit tests             | `.build/unit-tests/`    |
+| `windows`        | The key log converter for Windows | `.build/windows/`       |
+| `coverage`       | The tests, with gcov counters     | `.build/coverage/`      |
+| `mutation`       | The tests, with Mull mutants      | `.build/mutation/`      |
+| `mutation-diff`  | Mutants of the changes only       | `.build/mutation-diff/` |
 
 The configure step writes the compile database `compile_commands.json` into the build
 directory. Each workflow preset does the configure step and the build of one configure
@@ -245,6 +248,8 @@ runs one command:
 | `make qmk-test`         | `cmake --workflow --preset qmk-test`          |
 | `make windows`          | `cmake --workflow --preset windows`           |
 | `make coverage`         | `cmake --workflow --preset coverage`          |
+| `make mutation`         | `cmake --workflow --preset mutation`          |
+| `make mutation-diff`    | `cmake --workflow --preset mutation-diff`     |
 | `make compiledb`        | `cmake --workflow --preset compile-databases` |
 | `make clean`            | `cmake --build --preset dev --target clean`   |
 | `make help`             | `cmake --list-presets=all`                    |
@@ -319,6 +324,7 @@ To run the checks, use these commands:
 | `cmake --workflow --preset qmk-test`       | Runs the keymap unit tests.           |
 | `cmake --workflow --preset converter-test` | Tests the key log converter.          |
 | `cmake --workflow --preset coverage`       | Measures the test coverage.           |
+| `cmake --workflow --preset mutation-diff`  | Tests the tests of the changes.       |
 
 The static analysis reads the compile databases and builds no program. The keymap
 checks read the compile databases of the firmware and of the debug firmware, so run
@@ -383,7 +389,8 @@ The `Test` and `Analyze` jobs start when the `Build` job is complete, and they r
 the same time. If a PR changes no file that the build, the tests or the analysis
 use, CI skips these three jobs. A skipped job passes its check.
 
-CI also runs the Test coverage check on each PR and on each push to `main`.
+CI also runs the Test coverage check on each PR and on each push to `main`, and the
+Mutation safety gate check on each PR.
 
 ## Unit tests
 
@@ -401,11 +408,12 @@ them. `cmake --workflow --preset test` builds and runs them in `.build/cmake/`, 
 the checker and converter tests.
 
 Each cmocka case is one CTest test. Each case directory of the checker tests and of
-the converter tests is also one CTest test. A failed checker or converter test shows
-the diff of each wrong output. The labels `qmk`, `checker` and `converter` select the
-tests of one part. After `cmake --workflow --preset test`, ctest with the `dev` preset
-can get more arguments. For example, these commands run only the tests with
-`keymap_base` in their name, and then only the checker tests:
+the converter tests is also one CTest test. Such a test runs in its own folder in the
+build directory, with a copy of its input files. A failed checker or converter test
+shows the diff of each wrong output. The labels `qmk`, `checker` and `converter`
+select the tests of one part. After `cmake --workflow --preset test`, ctest with the
+`dev` preset can get more arguments. For example, these commands run only the tests
+with `keymap_base` in their name, and then only the checker tests:
 
 ```bash
 ctest --preset dev -R keymap_base
@@ -462,6 +470,114 @@ The CMake Tools extension of VS Code can show the coverage of each line after it
 the tests with coverage. To use it, select the `coverage` configure preset. Then set
 `cmake.postRunCoverageTarget` to `coverage-report`, and set `cmake.coverageInfoFiles`
 to `${workspaceFolder}/.build/coverage/report/coverage.info`.
+
+## Mutation testing
+
+[Mull][mull] makes small changes in the code under test. Each change is a mutant. Mull
+runs the tests for each mutant. If a test fails, the test kills the mutant. If all
+tests pass, the mutant survives, thus the tests do not check the behaviour that the
+mutant changes.
+
+The mutation tests include the same code as the test coverage. `src/ci/mull.yml` gives
+the code under test and the mutation operators.
+
+Mull adds the mutants while clang compiles the code. Thus, the mutation presets build
+with clang 18 in their own build directories. These builds use the strict compiler
+flags of the GCC builds, but not the flags that only GCC has: `-Wduplicated-cond`,
+`-Wduplicated-branches`, `-Wlogical-op`, `-Wjump-misses-init` and `-fanalyzer`. The
+builds also use AddressSanitizer and UndefinedBehaviorSanitizer. Thus, a mutant that
+reads outside an object or causes undefined behaviour stops the test.
+
+| Workflow preset | Mutants                          | Result                     |
+| --------------- | -------------------------------- | -------------------------- |
+| `mutation`      | All the mutants                  | A report only              |
+| `mutation-diff` | The mutants on the changed lines | Fails if a mutant survives |
+
+The `mutation-diff` preset compares the work tree with `origin/main`. To compare with a
+different git ref, set the cache variable `MUTATION_DIFF_REF`. For example, these
+commands compare with the last commit:
+
+```bash
+cmake --preset mutation-diff -DMUTATION_DIFF_REF=HEAD
+cmake --build --preset mutation-diff
+```
+
+The `mutation` target runs Mull one time for each program: the standards checker, the
+key log converter and each unit test program. Each run uses the CTest tests of its
+program. Then `mull-reporter` merges the results. If a test of one program kills a
+mutant, the mutant is killed. The target writes these files into `report/` in the
+build directory:
+
+| File              | Contents                                         |
+| ----------------- | ------------------------------------------------ |
+| `mutation.txt`    | The surviving mutants                            |
+| `mutation.html`   | The Mutation Testing Elements report, for people |
+| `mutation.json`   | The Mutation Testing Elements data               |
+| `mutation.sqlite` | The Mull data of all the runs                    |
+
+### Tests that write files
+
+A mutant of a program that writes files can change the path of an output file. For
+example, a mutant can make a path buffer too short. The program then writes to the
+first part of the path. If the path is absolute, that part can be a folder outside the
+build directory, for example the repository root.
+
+Thus, each checker test and each converter test runs in its own folder in the build
+directory, for example `test/key_log_converter/<case>/`. The test copies its input
+files into that folder, at their paths from the repository root. The program gets only
+relative paths. The converter writes its outputs into
+`test/key_log_converter/<case>/output/` in that folder. The first part of a relative
+path is also in that folder. A new test of a program that writes files must also give
+the program only relative paths.
+
+### Mutation safety gate
+
+The Mutation safety gate workflow runs on each PR to `main`. The PR checkout is a merge
+commit, and its first parent is the base branch. The gate runs only the mutants on the
+lines that are different from the first parent, thus only the mutants of the PR. Each
+surviving mutant fails the gate. A PR that does not change the code under test has no
+mutants and passes.
+
+The job summary shows each surviving mutant, and an annotation shows it at its line
+in the PR. The artifact `mutation-report` contains the report folder.
+
+### Fix a surviving mutant
+
+The log and `mutation.txt` show each surviving mutant in this format:
+
+```text
+.../case_modes.c:83:28: warning: Survived: Replaced <= with < [cxx_le_to_lt]
+    if (key >= KC_A && key <= KC_Z) {
+```
+
+The first line gives the path of the file, the line and the column of the mutant, the
+change, and the mutation operator. The output shows the full path, but the example
+shows only the file name. The next line shows the source line. Then a line with a `^`
+shows the column.
+
+To fix a surviving mutant, do these steps:
+
+1. Find the behaviour that the change breaks.
+2. Write a test that checks that behaviour.
+3. Make the change by hand, and make sure that the test fails. Then remove the change.
+4. Run `cmake --workflow --preset mutation-diff` again.
+
+Do these steps again until no mutant survives. In the example, the mutant makes Z a
+key that is not a letter. No test types Z in a case mode, thus no test sees the
+change. A test that types Z in a case mode kills the mutant.
+
+If no test can see the change, the mutant is equivalent: the changed code has the same
+behaviour. An equivalent mutant often shows code that has no function, for example a
+condition that is always true. Remove that code. If the code must stay, put the
+comment `// mull-ignore-next: <operator>` on the line above it. The review of the PR
+then shows this decision.
+
+Mull does not remove a call through a function pointer, for example a call of a
+handler from a table. Thus, a `cxx_remove_void_call` mutant of such a call always
+survives. Put `// mull-ignore-next: cxx_remove_void_call` on the line above that call.
+
+A mutant on a line that no test runs also survives. The coverage report shows that
+line as not run.
 
 ## Key log converter
 
@@ -638,6 +754,7 @@ release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 [cmocka]: https://cmocka.org/
 [ctest]: https://cmake.org/cmake/help/latest/manual/ctest.1.html
 [gcovr]: https://gcovr.com/
+[mull]: https://mull-project.com/
 [keymapp]: https://www.zsa.io/keymapp
 [carpalx]: http://mkweb.bcgsc.ca/carpalx/
 [keyboard-layout-optimizer]: https://github.com/dariogoetz/keyboard_layout_optimizer
