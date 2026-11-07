@@ -25,8 +25,9 @@ Checks: >-
 WarningsAsErrors: "*"
 
 # Header paths are absolute for the firmware and the unit tests, but relative for
-# the checker
-HeaderFilterRegex: "(^|/)(src/(qmk/keyboards|check_standards)|test/qmk)/"
+# the checker and the converter
+HeaderFilterRegex: >-
+    (^|/)(src/(qmk/keyboards|check_standards|key_log_converter)|test/qmk)/
 
 # clang stops on these gcc flags. -Werror bypasses Checks, and the macro causes a
 # finding that HeaderFilterRegex cannot exclude

@@ -202,6 +202,21 @@ jobs:
         if: ${{ !cancelled() }}
         run: make checker-clang-tidy
 
+      - name: "Test key log converter"
+        if: ${{ !cancelled() }}
+        run: make converter-test
+      - name: "Run clang-tidy on key log converter"
+        if: ${{ !cancelled() }}
+        run: make converter-clang-tidy
+
+      # Runner image does not contain MinGW-w64
+      - name: "Install MinGW-w64"
+        if: ${{ !cancelled() }}
+        run: .github/scripts/lint/install-mingw.sh
+      - name: "Build key log converter for Windows"
+        if: ${{ !cancelled() }}
+        run: make converter-windows
+
       - name: "Summarize timings"
         if: ${{ !cancelled() }}
         run: .github/scripts/lint/summarize-hook-timings.sh
