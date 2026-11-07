@@ -1,4 +1,4 @@
-# Host programs, unit tests and static analysis of the programs in src/.
+# Firmware, host programs, unit tests and static analysis of the programs in src/.
 # CMakePresets.json gives the build directories and the settings, so CI, the hooks
 # and editors that read presets use the same builds
 cmake_minimum_required(VERSION 3.28)
@@ -79,13 +79,49 @@ add_custom_target(doxygen
 add_dependencies(analyze doxygen)
 
 # ----------------------------------------------------------------------------------
-# Firmware checks: clang-tidy-keymap and gcc-strict
+# Firmware: firmware, compile-databases, clang-tidy-keymap and gcc-strict
 # ----------------------------------------------------------------------------------
 
-# make still builds the firmware and its compile database, so the firmware part has
-# only the keymap checks. Each one stops if that database is missing
+# QMK builds keymaps only with its own make build, so the firmware targets start the
+# QMK CLI. Each target finds qmk on PATH when it runs, so the configure step needs no
+# QMK tool. The firmware targets are not in the all target, so a build of the host
+# programs needs no QMK toolchain
 if("firmware" IN_LIST MOONLANDER_PARTS)
+    # QMK runs one job if nothing sets the number of jobs
+    cmake_host_system_information(RESULT processor_count
+        QUERY NUMBER_OF_LOGICAL_CORES)
+    set(QMK_JOBS ${processor_count} CACHE STRING "Number of jobs of the QMK build")
+
+    set(BUILD_FIRMWARE ${CMAKE_COMMAND} -DREPOSITORY=${PROJECT_SOURCE_DIR})
+    add_custom_target(firmware
+        COMMAND ${BUILD_FIRMWARE} "-DQMK_ARGUMENTS=userspace-compile;-j;${QMK_JOBS}"
+            -P ${PROJECT_SOURCE_DIR}/src/ci/build-firmware.cmake
+        VERBATIM)
+
+    # QMK writes its compile database into src/qmk/ and has no option for the
+    # location. The configure step writes the compile databases of the host programs
+    # and the unit tests, so this target writes only the keymap database
     set(KEYMAP_DATABASE ${PROJECT_SOURCE_DIR}/.build/compile_commands.json)
+    set(QMK_DATABASE ${PROJECT_SOURCE_DIR}/src/qmk/compile_commands.json)
+    set(qmk_compile_arguments compile -j ${QMK_JOBS} --compiledb
+        -kb zsa/moonlander/reva -km qgmlwy)
+    set(keymap_directory
+        ${PROJECT_SOURCE_DIR}/src/qmk/keyboards/zsa/moonlander/keymaps/qgmlwy)
+    add_custom_target(compile-databases
+        COMMAND ${BUILD_FIRMWARE} "-DQMK_ARGUMENTS=${qmk_compile_arguments}"
+            -P ${PROJECT_SOURCE_DIR}/src/ci/build-firmware.cmake
+        COMMAND ${CMAKE_COMMAND} -DQMK_DATABASE=${QMK_DATABASE}
+            -DKEYMAP_C=${keymap_directory}/keymap.c
+            -DCOMPILE_DATABASE=${KEYMAP_DATABASE}
+            -P ${PROJECT_SOURCE_DIR}/src/ci/keymap-compile-database.cmake
+        VERBATIM)
+
+    # Each firmware file name contains the commit, so clean cannot name the firmware
+    # files. clean removes the keymap database
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${KEYMAP_DATABASE} ${QMK_DATABASE})
+
+    # Each keymap check stops if the keymap database is missing
     set(REQUIRE_KEYMAP_DATABASE ${CMAKE_COMMAND} -DCOMPILE_DATABASE=${KEYMAP_DATABASE}
         -P ${PROJECT_SOURCE_DIR}/src/ci/require-keymap-database.cmake)
     file(GLOB_RECURSE KEYMAP_SOURCES CONFIGURE_DEPENDS

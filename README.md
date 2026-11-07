@@ -47,26 +47,34 @@ Then the script builds the firmware one time.
 
 To build and flash the firmware, do these steps:
 
-1. Run `make`. It prints the name of the new firmware file.
+1. Run `cmake --workflow --preset firmware`. It prints the name of the new file.
 2. Flash that file from `.build/` with [Keymapp][keymapp].
 
 The name of each firmware file ends in the commit of the build, for example
 `zsa_moonlander_reva_qgmlwy-2bcdfa9.bin`. If `src/qmk/` has changes with no commit,
 the name also ends in `-dirty-` and the first 8 digits of the SHA-256 hash of the file.
-`make` keeps the older firmware files in `.build/`. `make clean` removes them.
+The build keeps the older firmware files in `.build/`. To remove all the build output,
+also the firmware files, delete `.build/`.
 
 The firmware of a PR build in CI has the PR number and the commit in its name, for
-example `zsa_moonlander_reva_qgmlwy-pr117-1243469.bin`.
+example `zsa_moonlander_reva_qgmlwy-pr117-1243469.bin`. CI sets the environment
+variable `FIRMWARE_SUFFIX`, which replaces the commit in the name.
 
-The `Makefile` in the root directory has more targets. To see all the targets and
-their descriptions, run this command:
+CMake starts the QMK CLI, and QMK builds the firmware with its own build. The
+`firmware` preset builds in `.build/firmware/` and needs only CMake and the QMK tools.
+QMK uses one job for each processor. To use a different number of jobs, set the CMake
+cache variable `QMK_JOBS`, for example `cmake --preset firmware -DQMK_JOBS=4`.
+
+This command builds the firmware and writes the compile databases:
 
 ```bash
-make help
+cmake --workflow --preset compile-databases
 ```
 
-`make compiledb` also writes the compile database `.build/compile_commands.json` for
-the firmware.
+`.build/compile_commands.json` is the compile database of the firmware, with an entry
+for `keymap.c`. `.build/cmake/compile_commands.json` is the compile database of the
+host programs and the unit tests. For IntelliSense in VS Code, set the
+`C_Cpp.default.compileCommands` setting to these two files.
 
 ## Host programs
 
@@ -77,6 +85,7 @@ build directory in `.build/`:
 | Configure preset | Parts                             | Build directory      |
 | ---------------- | --------------------------------- | -------------------- |
 | `dev`            | All parts and the static analysis | `.build/cmake/`      |
+| `firmware`       | The firmware                      | `.build/firmware/`   |
 | `checker`        | The standards checker             | `.build/checker/`    |
 | `converter`      | The key log converter             | `.build/converter/`  |
 | `unit-tests`     | The keymap unit tests             | `.build/unit-tests/` |
@@ -91,6 +100,13 @@ all parts in `.build/cmake/` and runs all the tests:
 cmake --workflow --preset test
 ```
 
+This command builds the firmware, the compile databases, the host programs and the
+unit tests in `.build/cmake/`, and then runs the static analysis:
+
+```bash
+cmake --workflow --preset all
+```
+
 To see all the presets, run this command:
 
 ```bash
@@ -103,6 +119,31 @@ from [`CMakeLists.txt`](CMakeLists.txt). Each warning stops the build.
 CMake finds tree-sitter, cmocka and MinGW-w64 in the system directories. To use a
 different directory, for example a `dpkg -x` extraction of the packages, set
 `CMAKE_PREFIX_PATH` to its `usr` directory.
+
+## Make aliases
+
+CMake and CTest do all the builds, the tests and the checks. The `Makefile` in the
+root directory only gives short aliases for the commands in a terminal. Each alias
+runs one command:
+
+| Alias                   | Command                                       |
+| ----------------------- | --------------------------------------------- |
+| `make`, `make firmware` | `cmake --workflow --preset firmware`          |
+| `make build`            | `cmake --workflow --preset build`             |
+| `make analyze`          | `cmake --workflow --preset analyze`           |
+| `make all`              | `cmake --workflow --preset all`               |
+| `make test`             | `cmake --workflow --preset test`              |
+| `make checker-test`     | `cmake --workflow --preset checker-test`      |
+| `make converter-test`   | `cmake --workflow --preset converter-test`    |
+| `make qmk-test`         | `cmake --workflow --preset qmk-test`          |
+| `make windows`          | `cmake --workflow --preset windows`           |
+| `make compiledb`        | `cmake --workflow --preset compile-databases` |
+| `make clean`            | `cmake --build --preset dev --target clean`   |
+| `make help`             | `cmake --list-presets=all`                    |
+
+The `build` workflow builds the firmware, the compile databases, the host programs and
+the unit tests, and runs no check. The `clean` target of the `dev` preset removes the
+build output of `dev` and the compile database of the firmware.
 
 ## Key log capture
 
@@ -160,17 +201,20 @@ The script does not delete the log files.
 
 To run the checks, use these commands:
 
-| Command                                    | Result                       |
-| ------------------------------------------ | ---------------------------- |
-| `pre-commit run --all-files`               | Runs the hooks.              |
-| `cmake --workflow --preset analyze`        | Runs the static analysis.    |
-| `cmake --workflow --preset checker-test`   | Tests the standards checker. |
-| `cmake --workflow --preset qmk-test`       | Runs the keymap unit tests.  |
-| `cmake --workflow --preset converter-test` | Tests the key log converter. |
+| Command                                    | Result                                |
+| ------------------------------------------ | ------------------------------------- |
+| `pre-commit run --all-files`               | Runs the hooks.                       |
+| `cmake --workflow --preset all`            | Does the build and then the analysis. |
+| `cmake --workflow --preset analyze`        | Runs the static analysis.             |
+| `cmake --workflow --preset checker-test`   | Tests the standards checker.          |
+| `cmake --workflow --preset qmk-test`       | Runs the keymap unit tests.           |
+| `cmake --workflow --preset converter-test` | Tests the key log converter.          |
 
-The static analysis reads the compile databases and builds no program. Before the
-analysis, run `make compiledb`, because the keymap checks read the compile database of
-the firmware. The analysis runs these checks, and each check is a CMake target:
+The static analysis reads the compile databases and builds no program. The keymap
+checks read the compile database of the firmware, so run the `compile-databases` or
+the `build` workflow before the `analyze` workflow. The `all` workflow does the build
+and then the analysis. The analysis runs these checks, and each check
+is a CMake target:
 
 | Target                  | Check                                                |
 | ----------------------- | ---------------------------------------------------- |

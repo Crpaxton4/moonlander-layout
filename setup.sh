@@ -22,9 +22,6 @@ sudo apt-get install -y unzip
 # actionlint and the shellcheck pre-commit hook both run this binary
 sudo apt-get install -y "shellcheck=$SHELLCHECK_VERSION"
 
-# make compiledb adds the keymap.c entry with jq
-sudo apt-get install -y "jq=$JQ_VERSION"
-
 # windows CMake preset builds the key log converter with this cross compiler
 sudo apt-get install -y "gcc-mingw-w64-x86-64-win32=$MINGW_VERSION"
 
@@ -105,4 +102,4 @@ git -C "$QMK_HOME" checkout --detach "$QMK_COMMIT"
 git -C "$QMK_HOME" submodule update --init --recursive
 qmk config user.overlay_dir="$REPO_DIR/src/qmk"
 
-make -C "$REPO_DIR"
+cmake --workflow --preset firmware

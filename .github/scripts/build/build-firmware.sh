@@ -13,4 +13,7 @@ if [ -n "$RELEASE_TAG" ]; then
 elif [ -n "$PR_NUMBER" ]; then
     export FIRMWARE_SUFFIX="-pr$PR_NUMBER-${PR_HEAD_SHA:0:7}"
 fi
-make compiledb
+# Firmware preset configures only the firmware part, so this step needs no
+# tree-sitter and no cmocka. The compile database build also builds the firmware
+cmake --preset firmware
+cmake --build --preset firmware --target compile-databases
