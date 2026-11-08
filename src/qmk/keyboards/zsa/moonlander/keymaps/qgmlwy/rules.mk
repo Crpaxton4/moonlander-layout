@@ -19,6 +19,7 @@ SRC += case_modes/case_modes.c
 SRC += bracket_pairs/bracket_pairs_logic.c
 SRC += bracket_pairs/bracket_pairs.c
 SRC += plain_mode/plain_mode.c
+SRC += combos/combos.c
 
 # Profiling debug build: qmk compile -e DEBUG_PROFILE=yes. The normal firmware
 # compiles no profiling source, so its bytes stay the same

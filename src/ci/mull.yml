@@ -1,0 +1,9 @@
+# Mull plugin reads this file when clang compiles each source of a mutation build.
+# CMake copies it into the build directory, where the plugin finds it. A change of
+# this file needs a new build directory, because CMake does not compile again
+mutators:
+  - cxx_all
+# Only the code under test gets mutants: not the tests, the fake QMK functions, the
+# QMK headers or the tree-sitter grammar
+includePaths:
+  - "/src/(qmk/keyboards|check_standards|key_log_converter)/"

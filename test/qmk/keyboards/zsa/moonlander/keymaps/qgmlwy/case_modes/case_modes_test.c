@@ -560,34 +560,6 @@ static void case_modes_r6_precision_key_ends_mode(void **state) {
     assert_host_got(" x");
 }
 
-static void case_modes_nav_mode_snake_case_key_has_no_hold(void **state) {
-    (void)state;
-    start_case();
-    // Key of the nav mode is not a tap-hold key, so each push starts the mode
-    assert_false(push_key(NAV_SNAKE_CASE_KEY, NOT_A_TAP));
-    assert_recorded_calls(NULL, 0);
-    type_text("max retry");
-    assert_host_got("max_retry");
-}
-
-static void case_modes_nav_mode_camel_case_key_has_no_hold(void **state) {
-    (void)state;
-    start_case();
-    assert_false(push_key(NAV_CAMEL_CASE_KEY, NOT_A_TAP));
-    assert_recorded_calls(NULL, 0);
-    type_text("max retry");
-    assert_host_got("maxRetry");
-}
-
-static void case_modes_nav_mode_key_ends_mode_of_default_mode_key(void **state) {
-    (void)state;
-    start_case();
-    assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
-    assert_false(push_key(NAV_SNAKE_CASE_KEY, NOT_A_TAP));
-    type_text("a b");
-    assert_host_got("a b");
-}
-
 // #endregion
 
 // #region Test runner
@@ -621,9 +593,6 @@ static const struct CMUnitTest case_modes_cases[] = {
     cmocka_unit_test(case_modes_sent_keys_count_in_bracket_pairs),
     cmocka_unit_test(case_modes_r6_nav_key_ends_mode),
     cmocka_unit_test(case_modes_r6_precision_key_ends_mode),
-    cmocka_unit_test(case_modes_nav_mode_snake_case_key_has_no_hold),
-    cmocka_unit_test(case_modes_nav_mode_camel_case_key_has_no_hold),
-    cmocka_unit_test(case_modes_nav_mode_key_ends_mode_of_default_mode_key),
 };
 
 int main(int argc, char **argv) {
