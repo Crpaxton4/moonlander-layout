@@ -371,7 +371,7 @@ jobs:
       # branch. A diff ref of a manual run can be any commit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ inputs.diff-ref && '0' || '2' }}
           persist-credentials: false
       - name: "Load versions"
         run: .github/scripts/shared/load-versions.sh
@@ -444,7 +444,7 @@ jobs:
       # parent of the checkout
       - name: "Run mutation gate"
         env:
-          MUTATION_DIFF_REF: 6e6e3c8
+          MUTATION_DIFF_REF: ${{ inputs.diff-ref || 'HEAD^1' }}
         run: .github/scripts/mutation/run-mutation-gate.sh
 
       - uses: ./.github/actions/ccache-save
