@@ -116,4 +116,13 @@ void wait_ms(uint32_t milliseconds);
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record);
 
+/**
+ * Keymap hook that QMK calls after the action of each key event that
+ * process_record_user() let pass.
+ *
+ * @param keycode Keycode of the key event.
+ * @param record  Key event.
+ */
+void post_process_record_user(uint16_t keycode, keyrecord_t *record);
+
 // #endregion

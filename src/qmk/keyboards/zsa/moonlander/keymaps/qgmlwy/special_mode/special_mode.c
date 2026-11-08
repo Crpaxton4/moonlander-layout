@@ -36,6 +36,9 @@ static const whitespace_key_t whitespace_keys[] = {
 /** State of the mode that is on, or of the last mode */
 static special_mode_t mode;
 
+/** True from the push that ends a one-shot until QMK has run its action */
+static bool one_shot_ends_after_action;
+
 // #endregion
 
 // #region Static functions
@@ -88,11 +91,13 @@ bool process_special_mode(uint16_t keycode, keyrecord_t *record) {
     enum special_mode_push_result result = special_mode_push(&mode, key_class(keycode));
     if (result == SPECIAL_MODE_STAYS_ON) {
         return true;
-    }
-    layer_off(LAYER_SPECIAL);
-    if (result == SPECIAL_MODE_ENDS_AFTER_KEY) {
+    } else if (result == SPECIAL_MODE_ENDS_AFTER_KEY) {
+        // A layer_off() here gave the push the action of the base layer, for example
+        // the GUI hold of T in place of %
+        one_shot_ends_after_action = true;
         return true;
     }
+    layer_off(LAYER_SPECIAL);
     // Bracket pairs ran first and counted the Space, which the host does not get
     bracket_pairs_take_back_count();
     return false;
@@ -105,6 +110,16 @@ void special_mode_count_taken_push(void) {
     if (special_mode_push(&mode, SPECIAL_MODE_OTHER_KEY) != SPECIAL_MODE_STAYS_ON) {
         layer_off(LAYER_SPECIAL);
     }
+}
+
+void post_process_special_mode(uint16_t keycode, keyrecord_t *record) {
+    (void)keycode;
+    (void)record;
+    if (!one_shot_ends_after_action) {
+        return;
+    }
+    one_shot_ends_after_action = false;
+    layer_off(LAYER_SPECIAL);
 }
 
 // #endregion
