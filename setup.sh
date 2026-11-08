@@ -32,6 +32,26 @@ sudo apt-get install -y build-essential "libtree-sitter-dev=$TREE_SITTER_VERSION
 # CMake builds the host programs and the unit tests. The unit tests use cmocka
 sudo apt-get install -y "cmake=$CMAKE_VERSION" "libcmocka-dev=$CMOCKA_VERSION"
 
+# mutation presets build with clang, its sanitizers and the Mull plugin. The Mull
+# packages come from the GitHub release of Mull, so the script checks their hashes.
+# The plugin package names the LLVM release of the clang package
+LLVM_RELEASE="${CLANG_VERSION#*:}"
+LLVM_RELEASE="${LLVM_RELEASE%%-*}"
+LLVM_MAJOR="${LLVM_RELEASE%%.*}"
+MULL_URL="https://github.com/mull-project/mull/releases/download/$MULL_VERSION"
+MULL_DIR="$(mktemp -d)"
+curl -fsSL -o "$MULL_DIR/mull.deb" "$MULL_URL/Mull-$MULL_VERSION-ubuntu-amd64-24.04.deb"
+curl -fsSL -o "$MULL_DIR/mull-plugin.deb" \
+    "$MULL_URL/Mull-$LLVM_MAJOR-$MULL_VERSION-LLVM-$LLVM_RELEASE-ubuntu-amd64-24.04.deb"
+sha256sum -c - <<EOF
+$MULL_SHA256  $MULL_DIR/mull.deb
+$MULL_PLUGIN_SHA256  $MULL_DIR/mull-plugin.deb
+EOF
+sudo apt-get install -y "clang-$LLVM_MAJOR=$CLANG_VERSION" \
+    "libclang-rt-$LLVM_MAJOR-dev=$CLANG_VERSION" \
+    "$MULL_DIR/mull.deb" "$MULL_DIR/mull-plugin.deb"
+rm -rf "$MULL_DIR"
+
 QMK_COMMITS_URL="https://api.github.com/repos/qmk/qmk_firmware/commits\
 ?path=util/env-bootstrap.sh&per_page=1"
 QMK_BOOTSTRAP_URL="https://raw.githubusercontent.com/qmk/qmk_firmware/\

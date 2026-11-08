@@ -1,0 +1,5 @@
+# mull-runner reads this file in each Mull run of a mutation build. An empty ref runs
+# all mutants. A ref runs only the mutants on the lines that differ between the work
+# tree and the ref
+gitDiffRef: "@MUTATION_DIFF_REF@"
+gitProjectRoot: "@PROJECT_SOURCE_DIR@"

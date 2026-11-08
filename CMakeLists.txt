@@ -53,13 +53,18 @@ set(STRICT_C_FLAGS
     -Wswitch-enum
     -Wvla
     -Walloca
-    -Wnull-dereference
-    -Wduplicated-cond
-    -Wduplicated-branches
-    -Wlogical-op
-    -Wjump-misses-init
-    # GCC path-based static analysis
-    -fanalyzer)
+    -Wnull-dereference)
+# clang does not know these GCC flags, and the mutation build uses clang
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    list(APPEND STRICT_C_FLAGS
+        # Control flow
+        -Wduplicated-cond
+        -Wduplicated-branches
+        -Wlogical-op
+        -Wjump-misses-init
+        # GCC path-based static analysis
+        -fanalyzer)
+endif()
 
 # gcov counters make the programs slower and larger, so only the coverage preset
 # adds them. The GCC analyzer reads the counter code as out-of-bounds accesses. The
@@ -73,6 +78,34 @@ if(MOONLANDER_COVERAGE)
 endif()
 add_compile_options(${STRICT_C_FLAGS})
 enable_testing()
+
+# Mull puts its mutants into the programs while clang compiles them, so only the
+# mutation presets load the Mull plugin of clang. With the sanitizers, a mutant that
+# reads outside an object or causes undefined behaviour stops the test. Without them,
+# such a mutant can survive by chance
+option(MOONLANDER_MUTATION "Add Mull mutants to the host programs and the unit tests"
+    OFF)
+if(MOONLANDER_MUTATION)
+    if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        message(FATAL_ERROR "Mutation build needs clang, not ${CMAKE_C_COMPILER_ID}")
+    endif()
+    # Each Mull package puts the plugin of its LLVM release in the lib directory next
+    # to the bin directory of mull-runner
+    find_program(MULL_RUNNER mull-runner REQUIRED)
+    find_program(MULL_REPORTER mull-reporter REQUIRED)
+    string(REGEX MATCH "^[0-9]+" llvm_major "${CMAKE_C_COMPILER_VERSION}")
+    cmake_path(GET MULL_RUNNER PARENT_PATH mull_bin_directory)
+    cmake_path(GET mull_bin_directory PARENT_PATH mull_prefix)
+    set(MULL_PLUGIN ${mull_prefix}/lib/mull-ir-frontend-${llvm_major})
+    if(NOT EXISTS ${MULL_PLUGIN})
+        message(FATAL_ERROR "No Mull plugin for LLVM ${llvm_major} at ${MULL_PLUGIN}")
+    endif()
+    set(sanitizers -fsanitize=address,undefined)
+    # Mull finds each mutant from the command line that the debug data records
+    add_compile_options(-fpass-plugin=${MULL_PLUGIN} -grecord-command-line
+        ${sanitizers} -fno-sanitize-recover=all)
+    add_link_options(${sanitizers})
+endif()
 
 # Each check target of a part adds itself to analyze. A check reads only the sources
 # and a compile database, so analyze builds no program. Each check finds its tool on
@@ -260,7 +293,8 @@ if("checker" IN_LIST MOONLANDER_PARTS)
     # Each case directory holds <case>.expected, the expected checker output with the
     # exit status. Arguments are the .c, .h and .inc files of the case in sort order.
     # Names end in _first, _second or _third to set an order. Paths in the output
-    # start at the repository root, so the case runs there
+    # start at the repository root. The case runs in its own folder in the build
+    # directory, with a copy of these files at the same relative paths
     set(CHECKER_TESTS_DIR ${PROJECT_SOURCE_DIR}/test/check_standards)
     file(GLOB checker_expectations CONFIGURE_DEPENDS ${CHECKER_TESTS_DIR}/*/*.expected)
     foreach(expected_file IN LISTS checker_expectations)
@@ -272,10 +306,11 @@ if("checker" IN_LIST MOONLANDER_PARTS)
         add_test(NAME check_standards.${case}
             COMMAND ${CMAKE_COMMAND} -DPROGRAM=$<TARGET_FILE:check_standards>
                 "-DPROGRAM_ARGUMENTS=${case_files}"
-                -DOUTPUT_DIRECTORY=${CMAKE_BINARY_DIR}/test/check_standards/${case}
+                -DSOURCE_DIRECTORY=${PROJECT_SOURCE_DIR} "-DINPUT_FILES=${case_files}"
+                -DRUN_DIRECTORY=${CMAKE_BINARY_DIR}/test/check_standards/${case}
+                -DOUTPUT_DIRECTORY=output
                 -DEXPECTED_FILES=${expected_file} -DACTUAL_FILES=stdout
-                -P ${PROJECT_SOURCE_DIR}/src/ci/run-fixture.cmake
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+                -P ${PROJECT_SOURCE_DIR}/src/ci/run-fixture.cmake)
         set_tests_properties(check_standards.${case} PROPERTIES LABELS checker)
     endforeach()
 endif()
@@ -316,8 +351,10 @@ if("converter" IN_LIST MOONLANDER_PARTS)
 
     # Each case directory holds its logs as <case>*.log in sort order and the expected
     # outputs as <case>.<output>, where <output> is a file name in the output folder of
-    # the run. stdout and stderr are outputs too. Paths in the output start at the
-    # repository root, so the case runs there
+    # the run. stdout and stderr are outputs too. The case runs in its own folder in the
+    # build directory, with a copy of the logs at their paths from the repository root.
+    # The output folder is a relative path in that folder. Its long path lets a case
+    # fail for a mutant that makes the path buffer too short
     set(CONVERTER_TESTS_DIR ${PROJECT_SOURCE_DIR}/test/key_log_converter)
     file(GLOB converter_stdouts CONFIGURE_DEPENDS ${CONVERTER_TESTS_DIR}/*/*.stdout)
     foreach(case_stdout IN LISTS converter_stdouts)
@@ -337,14 +374,15 @@ if("converter" IN_LIST MOONLANDER_PARTS)
             list(APPEND actual_names ${actual_name})
         endforeach()
 
-        set(output_directory ${CMAKE_BINARY_DIR}/test/key_log_converter/${case})
+        set(output_directory test/key_log_converter/${case}/output)
         add_test(NAME key_log_converter.${case}
             COMMAND ${CMAKE_COMMAND} -DPROGRAM=$<TARGET_FILE:key_log_converter>
                 "-DPROGRAM_ARGUMENTS=${output_directory};${case_logs}"
+                -DSOURCE_DIRECTORY=${PROJECT_SOURCE_DIR} "-DINPUT_FILES=${case_logs}"
+                -DRUN_DIRECTORY=${CMAKE_BINARY_DIR}/test/key_log_converter/${case}
                 -DOUTPUT_DIRECTORY=${output_directory}
                 "-DEXPECTED_FILES=${expected_files}" "-DACTUAL_FILES=${actual_names}"
-                -P ${PROJECT_SOURCE_DIR}/src/ci/run-fixture.cmake
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+                -P ${PROJECT_SOURCE_DIR}/src/ci/run-fixture.cmake)
         set_tests_properties(key_log_converter.${case} PROPERTIES LABELS converter)
     endforeach()
 endif()
@@ -387,6 +425,8 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         target_link_libraries(${program} PRIVATE ${test_LIBRARIES} cmocka::cmocka)
         set_property(DIRECTORY ${PROJECT_SOURCE_DIR} APPEND PROPERTY
             CMAKE_CONFIGURE_DEPENDS ${test_source})
+        # Mutation testing runs the cases of each test program on their own
+        set_property(GLOBAL APPEND PROPERTY UNIT_TEST_PROGRAMS ${program})
 
         # clang-format can put the case name on the line after the macro name
         set(case_pattern "cmocka_unit_test[a-z_]*\\([ \t\n]*([a-z0-9_]+)")
@@ -611,4 +651,82 @@ if(MOONLANDER_COVERAGE)
         DIRECTORY src/check_standards/ MINIMUM_LINES 97 MINIMUM_BRANCHES 90)
     add_coverage_area(converter PART converter TITLE "key log converter"
         DIRECTORY src/key_log_converter/ MINIMUM_LINES 96 MINIMUM_BRANCHES 86)
+endif()
+
+# ----------------------------------------------------------------------------------
+# Mutation testing
+# ----------------------------------------------------------------------------------
+
+# mutation runs the tests once for each mutant. A mutant is a small change of the code
+# under test, and a failed test kills it. A mutant that no test kills shows behaviour
+# that the tests do not check. With MUTATION_DIFF_REF, only the mutants on the lines
+# that differ from that git ref run, and each surviving mutant fails the target.
+# Without it, all mutants run and the target only reports the result
+if(MOONLANDER_MUTATION)
+    set(MUTATION_DIFF_REF "" CACHE STRING
+        "Git ref of the diff mutation run; empty runs all mutants")
+    set(compile_config ${CMAKE_BINARY_DIR}/mull.yml)
+    set(runner_config ${CMAKE_BINARY_DIR}/mull-runner.yml)
+    configure_file(${PROJECT_SOURCE_DIR}/src/ci/mull.yml ${compile_config} COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/src/ci/mull-runner.yml.in ${runner_config}
+        @ONLY)
+    set(MUTATION_REPORT_DIR ${CMAKE_BINARY_DIR}/report)
+    set(MUTATION_DATABASE ${MUTATION_REPORT_DIR}/mutation.sqlite)
+    if(MUTATION_DIFF_REF STREQUAL "")
+        set(reporter_options --allow-surviving)
+    else()
+        set(reporter_options "")
+    endif()
+
+    # Mull finds the mutants in the program, then runs the CTest tests of that program
+    # for each mutant. All runs write into one database. mull-reporter then counts a
+    # mutant as killed if the tests of one program kill it
+    set(run_mull ${CMAKE_COMMAND} -E env MULL_CONFIG=${runner_config} ${MULL_RUNNER}
+        --reporters SQLite --report-dir ${MUTATION_REPORT_DIR} --report-name mutation
+        --allow-surviving --test-program ${CMAKE_CTEST_COMMAND})
+    set(test_options --test-dir ${CMAKE_BINARY_DIR} --stop-on-failure --label-regex)
+    # Report of an earlier run must not hide a run with no mutant
+    set(mutation_commands
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${MUTATION_REPORT_DIR})
+    set(mutation_programs "")
+
+    # add_mutation_subject(<program> <label> [ONE_AT_A_TIME])
+    #
+    # Adds a Mull run of the program, with the CTest tests that have the label. Mull
+    # runs the tests of many mutants at the same time. ONE_AT_A_TIME runs the tests of
+    # one mutant at a time, for tests that write files
+    function(add_mutation_subject program label)
+        cmake_parse_arguments(PARSE_ARGV 2 subject ONE_AT_A_TIME "" "")
+        set(worker_options "")
+        if(subject_ONE_AT_A_TIME)
+            set(worker_options --workers 1)
+        endif()
+        set(mutation_commands ${mutation_commands} COMMAND ${run_mull} ${worker_options}
+            $<TARGET_FILE:${program}> -- ${test_options} "^${label}$" PARENT_SCOPE)
+        set(mutation_programs ${mutation_programs} ${program} PARENT_SCOPE)
+    endfunction()
+
+    # Each fixture case writes its outputs into the same folder in each run. Two runs
+    # of a case at the same time change the outputs of each other, and the case fails
+    if("checker" IN_LIST MOONLANDER_PARTS)
+        add_mutation_subject(check_standards checker ONE_AT_A_TIME)
+    endif()
+    if("converter" IN_LIST MOONLANDER_PARTS)
+        add_mutation_subject(key_log_converter converter ONE_AT_A_TIME)
+    endif()
+    # Label of each unit test program is its name
+    get_property(unit_test_programs GLOBAL PROPERTY UNIT_TEST_PROGRAMS)
+    foreach(program IN LISTS unit_test_programs)
+        add_mutation_subject(${program} ${program})
+    endforeach()
+
+    add_custom_target(mutation
+        ${mutation_commands}
+        COMMAND ${CMAKE_COMMAND} -DREPORTER=${MULL_REPORTER} -DCONFIG=${compile_config}
+            -DDATABASE=${MUTATION_DATABASE} -DREPORT_DIRECTORY=${MUTATION_REPORT_DIR}
+            "-DREPORTER_OPTIONS=${reporter_options}"
+            -P ${PROJECT_SOURCE_DIR}/src/ci/report-mutants.cmake
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        VERBATIM)
+    add_dependencies(mutation ${mutation_programs})
 endif()
