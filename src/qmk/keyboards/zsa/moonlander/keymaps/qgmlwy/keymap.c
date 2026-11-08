@@ -188,7 +188,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_NAV][LEFT_HOME_ROW] =
             {
                 KC_NO,
-                KC_NO,
+                QK_MOUSE_ACCELERATION_0,
                 QK_MOUSE_CURSOR_LEFT,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
@@ -275,7 +275,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_NAV][RIGHT_THUMB_KEYS] =
             {
                 [RIGHT_LARGE_THUMB]  = TG(LAYER_NAV),
-                [RIGHT_OUTER_THUMB]  = QK_MOUSE_ACCELERATION_0,
+                [RIGHT_OUTER_THUMB]  = KC_NO,
                 [RIGHT_MIDDLE_THUMB] = KC_NO,
                 [RIGHT_INNER_THUMB]  = KC_NO,
             },

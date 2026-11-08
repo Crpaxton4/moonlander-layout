@@ -1,5 +1,5 @@
 /** @file
- * Precision key of the nav mode, thumb key R1: while it is held, the mouse cursor
+ * Precision key of the nav mode, D (2,1): while it is held, the mouse cursor
  * moves one count per report.
  *
  * QMK's combined mouse key mode gives QK_MOUSE_ACCELERATION_0 this function, but in

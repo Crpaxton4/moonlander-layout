@@ -259,14 +259,11 @@ static const grid_position_t right_arrow_key = {
     .column = 11,
 };
 
-/**
- * Precision key R1 of the nav mode. The thumb keys have no grid row. key_at() moves
- * the left thumb row to the right thumb row for a column of the right half.
- */
+/** Precision key D (2,1) of the nav mode */
 static const grid_position_t precision_key = {
     .layer  = LAYER_NAV,
-    .row    = LEFT_THUMB_KEYS,
-    .column = FIRST_RIGHT_COLUMN + RIGHT_OUTER_THUMB,
+    .row    = 2,
+    .column = 1,
 };
 
 /** Backtick (1,1) of the special mode */
