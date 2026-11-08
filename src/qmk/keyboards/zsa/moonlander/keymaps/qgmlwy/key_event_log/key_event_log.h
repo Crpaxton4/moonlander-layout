@@ -47,4 +47,12 @@ void key_event_log_housekeeping(void);
  */
 bool key_event_log_is_on(void);
 
+/**
+ * Puts the logging state back to the power-up state: logging off, with no last push
+ * and no last report. Host driver stays in place.
+ *
+ * Tests use it, so that each case starts from the power-up state.
+ */
+void key_event_log_reset(void);
+
 // #endregion
