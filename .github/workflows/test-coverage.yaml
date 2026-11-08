@@ -211,7 +211,7 @@ jobs:
         run: .github/scripts/shared/prune-ccache.sh
       # A PR run never saves, because its next push changes the same files again
       - name: "Save ccache"
-        if: ${{ !cancelled() && github.event_name == 'push' && steps.ccache-prune.outputs.save == 'true' }}
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.ccache-prune.outputs.save == 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/ccache
