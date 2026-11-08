@@ -379,7 +379,7 @@ these CI checks pass:
 - `Build` builds the firmware files, the compile databases, the programs and the tests.
 - `Test` runs all the CTest tests on the programs from the `Build` job.
 - `Analyze` runs the static analysis on the compile databases from the `Build` job.
-- `Lint` runs the hooks.
+- `Lint` runs the pre-commit hooks.
 - `Validate PR title` checks the PR title.
 
 The `Build` job runs one time in each CI run. It also builds the key log converter for
