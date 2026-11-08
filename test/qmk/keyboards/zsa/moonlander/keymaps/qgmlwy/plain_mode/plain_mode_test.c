@@ -1,9 +1,6 @@
 /** @file
  * Tests of the plain mode through the keymap's key event hook: the plain-mode combo
  * and the record handlers that must not operate in the plain mode.
- *
- * Fake layer_on() and layer_off() only record the call, so each case sets the layer
- * state that QMK would have.
  */
 
 // #region Includes

@@ -3,7 +3,8 @@
  * log, fake clock and fake state that the tests read.
  *
  * QMK declares most of these functions in its own headers, so a wrong signature here
- * does not compile.
+ * does not compile. Layer functions also change the layer state as QMK does, so a
+ * case can read the layers that QMK uses for the action of a push.
  */
 
 // #region Includes
@@ -242,14 +243,17 @@ void tap_code16(uint16_t code) {
 
 void layer_on(uint8_t layer) {
     record_call(CALLED_LAYER_ON, layer);
+    layer_state |= (layer_state_t)(LOWEST_BIT << layer);
 }
 
 void layer_off(uint8_t layer) {
     record_call(CALLED_LAYER_OFF, layer);
+    layer_state &= (layer_state_t) ~(LOWEST_BIT << layer);
 }
 
 void layer_move(uint8_t layer) {
     record_call(CALLED_LAYER_MOVE, layer);
+    layer_state = (layer_state_t)(LOWEST_BIT << layer);
 }
 
 bool layer_state_is(uint8_t layer) {
@@ -337,6 +341,13 @@ void set_fake_status_led(uint8_t position, bool is_on) {
 bool fake_status_led_is_on(uint8_t position) {
     assert_in_range(position, 0, FAKE_STATUS_LED_COUNT - 1);
     return status_leds[position];
+}
+
+// Weak as in QMK, where a keymap with no post-processing gets this empty hook
+__attribute__((weak)) void post_process_record_user(uint16_t     keycode,
+                                                    keyrecord_t *record) {
+    (void)keycode;
+    (void)record;
 }
 
 void combo_enable(void) {

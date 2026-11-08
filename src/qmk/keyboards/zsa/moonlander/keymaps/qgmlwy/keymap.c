@@ -733,6 +733,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return PROFILED_RECORD_USER(dispatch_key_event, keycode, record);
 }
 
+/**
+ * Gives each key event that process_record_user() let pass to the special mode,
+ * after QMK has run its action.
+ *
+ * @param keycode Keycode of the key event.
+ * @param record  Key event.
+ */
+void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    post_process_special_mode(keycode, record);
+}
+
 /** Runs each housekeeping handler, on each pass of QMK's main loop */
 void housekeeping_task_user(void) {
     for (size_t index = 0; index < ARRAY_SIZE(housekeeping_handlers); index++) {

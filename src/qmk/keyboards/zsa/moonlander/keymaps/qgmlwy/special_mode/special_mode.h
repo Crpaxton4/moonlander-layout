@@ -18,9 +18,9 @@
 // #region Functions
 
 /**
- * Starts or ends the special mode for the mode key. Ends a one-shot after its push,
- * and a locked mode when the operator pushes the same whitespace key two times in a
- * row.
+ * Starts or ends the special mode for the mode key. Ends a locked mode when the
+ * operator pushes the same whitespace key two times in a row. Marks the push that
+ * ends a one-shot, for post_process_special_mode().
  *
  * @param keycode Keycode of the key event, after layer resolution.
  * @param record  Key event, with its tap count.
@@ -34,5 +34,15 @@ bool process_special_mode(uint16_t keycode, keyrecord_t *record);
  * that the push separates two whitespace keys and ends a one-shot.
  */
 void special_mode_count_taken_push(void);
+
+/**
+ * Ends a one-shot after QMK has run the action of its push. QMK finds the action
+ * and the layer for the release after process_record_user(), so both must come from
+ * LAYER_SPECIAL.
+ *
+ * @param keycode Keycode of the key event.
+ * @param record  Key event.
+ */
+void post_process_special_mode(uint16_t keycode, keyrecord_t *record);
 
 // #endregion
