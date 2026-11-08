@@ -6,6 +6,8 @@ name: "Mutation safety gate"
 # restore
 on:
   pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
