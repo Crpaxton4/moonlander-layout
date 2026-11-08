@@ -44,9 +44,6 @@ typedef struct {
 /** Handler for each pass of QMK's main loop */
 typedef void (*housekeeping_handler_t)(void);
 
-/** Key event handler for the time after QMK has run the action of the event */
-typedef void (*post_record_handler_t)(uint16_t keycode, keyrecord_t *record);
-
 // #endregion
 
 // #region Data
@@ -668,11 +665,6 @@ static const record_step_t record_handlers[] = {
 // Each record handler needs the name of its profile record
 _Static_assert(ARRAY_SIZE(record_handlers) == PROFILED_HANDLER_COUNT, "Profile names");
 
-/** Post-processing handlers, in call order */
-static const post_record_handler_t post_record_handlers[] = {
-    post_process_special_mode,
-};
-
 /** Housekeeping handlers, in call order; the LEDs come last, so they show the result */
 static const housekeeping_handler_t housekeeping_handlers[] = {
     key_event_log_housekeeping,
@@ -743,16 +735,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 /**
- * Gives each key event that process_record_user() let pass to the post-processing
- * handlers, after QMK has run its action.
+ * Gives each key event that process_record_user() let pass to the special mode,
+ * after QMK has run its action.
  *
  * @param keycode Keycode of the key event.
  * @param record  Key event.
  */
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
-    for (size_t index = 0; index < ARRAY_SIZE(post_record_handlers); index++) {
-        post_record_handlers[index](keycode, record);
-    }
+    post_process_special_mode(keycode, record);
 }
 
 /** Runs each housekeeping handler, on each pass of QMK's main loop */
