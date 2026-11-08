@@ -79,6 +79,9 @@ static rgb_t key_lights[RGB_MATRIX_LED_COUNT];
 /** Brightness of the RGB matrix that rgb_matrix_get_val() gives */
 static uint8_t key_light_brightness;
 
+/** True while QMK's combos are on, as is_combo_enabled() gives it */
+static bool combos_on;
+
 layer_state_t layer_state;
 
 layer_state_t default_layer_state;
@@ -206,6 +209,7 @@ void reset_fake_qmk(void) {
     memset(status_leds, 0, sizeof(status_leds));
     memset(key_lights, 0, sizeof(key_lights));
     key_light_brightness = UINT8_MAX;
+    combos_on            = true;
 }
 
 void advance_fake_clock(uint32_t milliseconds) {
@@ -365,6 +369,26 @@ void set_fake_key_light_brightness(uint8_t brightness) {
 rgb_t fake_key_light_color(uint8_t led) {
     assert_in_range(led, 0, RGB_MATRIX_LED_COUNT - 1);
     return key_lights[led];
+}
+
+void combo_enable(void) {
+    combos_on = true;
+}
+
+void combo_disable(void) {
+    combos_on = false;
+}
+
+void combo_toggle(void) {
+    if (combos_on) {
+        combo_disable();
+        return;
+    }
+    combo_enable();
+}
+
+bool is_combo_enabled(void) {
+    return combos_on;
 }
 
 host_driver_t *host_get_driver(void) {

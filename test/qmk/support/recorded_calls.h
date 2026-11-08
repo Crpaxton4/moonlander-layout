@@ -53,7 +53,7 @@ typedef struct {
 /**
  * Empties the log, sets the fake clock to 0 and clears the state in fake_state.h.
  * Layer state goes back to the base layer, QMK's top cursor speed to 0, the key LED
- * brightness to UINT8_MAX, and the host driver to the fake driver.
+ * brightness to UINT8_MAX, the combos on, and the host driver to the fake driver.
  */
 void reset_fake_qmk(void);
 
