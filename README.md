@@ -378,6 +378,8 @@ each push to `main`. A PR can merge only if these CI checks pass:
 
 - `Build` builds the firmware and the programs, runs the tests and the analysis.
 - `Lint` runs the hooks.
+- `Test coverage` measures the test coverage of the C programs.
+- `Mutation safety gate` runs the mutants of the changed lines.
 - `Validate PR title` checks the PR title.
 
 The `Build` job also builds the key log converter for Windows. Its job summary shows
@@ -753,7 +755,9 @@ them in their file. A log that starts after profiling changed to on has these re
 All changes go into `main` through PRs. GitHub squash-merges each PR. The PR title
 becomes the commit message on `main`. Thus, the PR title must be a
 [Conventional Commit](https://www.conventionalcommits.org/) with a scope from this
-table. A commit-msg hook does the same check on local commits.
+table. A commit-msg hook does the same check on local commits. On a Dependabot PR, the
+`Lint PR Title` workflow first shortens the title: a pre-commit hook keeps only its
+repository name, and a single update loses its group.
 
 | Scope      | Use for                                                                |
 | ---------- | ---------------------------------------------------------------------- |

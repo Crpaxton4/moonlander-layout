@@ -1,5 +1,7 @@
 # commitlint rejects the "chore(deps-dev)" prefix of `include: scope`. Rebases are
-# off, because each force-push runs CI again
+# off, because each force-push runs CI again. Dependabot settings cannot change the
+# title text: the "Lint PR Title" workflow shortens a Dependabot title that is too
+# long for commitlint
 version: 2
 updates:
   - package-ecosystem: "npm"
