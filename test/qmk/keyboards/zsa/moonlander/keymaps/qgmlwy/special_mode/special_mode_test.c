@@ -3,13 +3,15 @@
  * hold of the mode key, the one-shot, and the end of the mode on a double
  * whitespace key.
  *
- * Fake layer_on() and layer_off() only record the call, so each case sets the layer
- * state that QMK would have.
+ * Each event goes through process_record_user() and then, if it passes,
+ * post_process_record_user(), in the same order as QMK. QMK gets the action of a
+ * push between the two calls, from the layers that are on at that time.
  */
 
 // #region Includes
 
 #include QMK_KEYBOARD_H
+#include "keymap_introspection.h"
 
 #include "keycodes/keycodes.h"
 #include "layers/layers.h"
@@ -56,12 +58,25 @@ static const qmk_call_t mode_start_calls[] = {
     {.function = CALLED_LAYER_ON, .argument = LAYER_SPECIAL},
 };
 
+/** Calls of a one-shot from the tap of the mode key to the end after its push */
+static const qmk_call_t one_shot_calls[] = {
+    {.function = CALLED_LAYER_ON, .argument = LAYER_SPECIAL},
+    {.function = CALLED_LAYER_OFF, .argument = LAYER_SPECIAL},
+};
+
+/** T (2,3): GUI home row key on the base layer, `%` on the special layer */
+static const keypos_t percent_key = {.row = LEFT_HOME_ROW, .col = 3};
+
+/** P (3,9): ")" symbol hold on the base layer, digit 1 on the special layer */
+static const keypos_t digit_one_key = {.row = RIGHT_BOTTOM_LETTER_ROW, .col = 2};
+
 // #endregion
 
 // #region Static functions
 
 /**
- * Sends a push or a release of a key to process_record_user().
+ * Sends a push or a release of a key to process_record_user(), and then to
+ * post_process_record_user() if the event passes.
  *
  * @param keycode Keycode after layer resolution.
  * @param pressed True for a push.
@@ -69,7 +84,49 @@ static const qmk_call_t mode_start_calls[] = {
  */
 static bool send_key_event(uint16_t keycode, bool pressed) {
     keyrecord_t record = {.event = {.pressed = pressed}};
-    return process_record_user(keycode, &record);
+    bool        passes = process_record_user(keycode, &record);
+    if (passes) {
+        post_process_record_user(keycode, &record);
+    }
+    return passes;
+}
+
+/**
+ * Gives the keycode of a key position on the highest layer that is on and that has
+ * a key there, as QMK finds the keycode and the action of a push.
+ *
+ * @param position Key position in the matrix.
+ * @return Keycode of the push.
+ */
+static uint16_t keycode_on_active_layers(keypos_t position) {
+    uint16_t keycode = KC_TRANSPARENT;
+    for (uint8_t layer = 0; layer < keymap_layer_count(); layer++) {
+        uint16_t layer_keycode =
+            keycode_at_keymap_location(layer, position.row, position.col);
+        if (layer_state_is(layer) && layer_keycode != KC_TRANSPARENT) {
+            keycode = layer_keycode;
+        }
+    }
+    return keycode;
+}
+
+/**
+ * Pushes a key position in a one-shot, as QMK does. Checks that the push and its
+ * action both get the special layer, and that the one-shot ends after the action.
+ *
+ * @param position        Key position in the matrix.
+ * @param special_keycode Keycode of the position on the special layer.
+ * @return Key event of the push, for its release.
+ */
+static keyrecord_t push_in_one_shot(keypos_t position, uint16_t special_keycode) {
+    keyrecord_t push = {.event = {.key = position, .pressed = true}};
+    assert_int_equal(keycode_on_active_layers(position), special_keycode);
+    assert_true(process_record_user(special_keycode, &push));
+    // QMK gets the action of the push here, and keeps its layer for the release
+    assert_int_equal(keycode_on_active_layers(position), special_keycode);
+    post_process_record_user(special_keycode, &push);
+    assert_false(layer_state_is(LAYER_SPECIAL));
+    return push;
 }
 
 /**
@@ -216,6 +273,46 @@ static void special_mode_r1_rolled_push_ends_one_shot(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
+static void special_mode_r13_one_shot_symbol_acts_on_special_layer(void **state) {
+    (void)state;
+    start_with_mode_off();
+    push_mode_key(A_TAP);
+    push_in_one_shot(percent_key, KC_PERCENT);
+    assert_recorded_calls(one_shot_calls, ARRAY_SIZE(one_shot_calls));
+}
+
+static void special_mode_r13_one_shot_digit_acts_on_special_layer(void **state) {
+    (void)state;
+    start_with_mode_off();
+    push_mode_key(A_TAP);
+    push_in_one_shot(digit_one_key, KC_1);
+    assert_recorded_calls(one_shot_calls, ARRAY_SIZE(one_shot_calls));
+}
+
+static void special_mode_r13_push_after_one_shot_is_on_base_layer(void **state) {
+    (void)state;
+    start_with_mode_off();
+    push_mode_key(A_TAP);
+    push_in_one_shot(percent_key, KC_PERCENT);
+    uint16_t base_keycode = keycode_on_active_layers(percent_key);
+    assert_int_equal(base_keycode, LGUI_T(KC_T));
+    assert_true(send_key_event(base_keycode, true));
+    assert_recorded_calls(one_shot_calls, ARRAY_SIZE(one_shot_calls));
+}
+
+static void special_mode_r9_one_shot_key_release_after_the_end(void **state) {
+    (void)state;
+    start_with_mode_off();
+    push_mode_key(A_TAP);
+    keyrecord_t release   = push_in_one_shot(digit_one_key, KC_1);
+    release.event.pressed = false;
+    // QMK gives the release the keycode of the push from its layer cache
+    assert_true(process_record_user(KC_1, &release));
+    post_process_record_user(KC_1, &release);
+    assert_false(layer_state_is(LAYER_SPECIAL));
+    assert_recorded_calls(one_shot_calls, ARRAY_SIZE(one_shot_calls));
+}
+
 static void special_mode_r1_hold_starts_locked_mode(void **state) {
     (void)state;
     start_with_mode_off();
@@ -271,6 +368,17 @@ static void special_mode_r4_double_space_ends_mode(void **state) {
     start_special_mode(A_HOLD);
     static const uint16_t keycodes[] = {KC_SPACE, KC_SPACE};
     assert_false(tap_keys(keycodes, ARRAY_SIZE(keycodes)));
+    assert_recorded_calls(mode_end_calls, ARRAY_SIZE(mode_end_calls));
+}
+
+static void special_mode_r4_double_space_ends_mode_with_no_action(void **state) {
+    (void)state;
+    start_special_mode(A_HOLD);
+    assert_true(send_key_event(KC_SPACE, true));
+    keyrecord_t second_space = {.event = {.pressed = true}};
+    // QMK runs no action and no post-processing for a push that does not pass
+    assert_false(process_record_user(KC_SPACE, &second_space));
+    assert_false(layer_state_is(LAYER_SPECIAL));
     assert_recorded_calls(mode_end_calls, ARRAY_SIZE(mode_end_calls));
 }
 
@@ -380,6 +488,10 @@ static const struct CMUnitTest special_mode_cases[] = {
     cmocka_unit_test(special_mode_r1_one_shot_ends_after_a_disabled_position),
     cmocka_unit_test(special_mode_r1_one_shot_ends_after_a_taken_push),
     cmocka_unit_test(special_mode_r1_rolled_push_ends_one_shot),
+    cmocka_unit_test(special_mode_r13_one_shot_symbol_acts_on_special_layer),
+    cmocka_unit_test(special_mode_r13_one_shot_digit_acts_on_special_layer),
+    cmocka_unit_test(special_mode_r13_push_after_one_shot_is_on_base_layer),
+    cmocka_unit_test(special_mode_r9_one_shot_key_release_after_the_end),
     cmocka_unit_test(special_mode_r1_hold_starts_locked_mode),
     cmocka_unit_test(special_mode_r1_hold_locks_waiting_one_shot),
     cmocka_unit_test(special_mode_r1_hold_keeps_locked_mode),
@@ -387,6 +499,7 @@ static const struct CMUnitTest special_mode_cases[] = {
     cmocka_unit_test(special_mode_r1_taken_push_while_mode_is_off),
     cmocka_unit_test(special_mode_r3_whitespace_keys_send_their_output),
     cmocka_unit_test(special_mode_r4_double_space_ends_mode),
+    cmocka_unit_test(special_mode_r4_double_space_ends_mode_with_no_action),
     cmocka_unit_test(special_mode_r4_double_enter_ends_mode),
     cmocka_unit_test(special_mode_r4_double_tab_ends_mode),
     cmocka_unit_test(special_mode_r4_expression_then_double_space),
