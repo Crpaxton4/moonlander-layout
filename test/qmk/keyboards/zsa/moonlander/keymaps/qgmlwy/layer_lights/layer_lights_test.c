@@ -88,7 +88,10 @@ typedef struct {
 
 // #region Data
 
-/** Keys of the default mode that send nothing: rows 0 and 4, (3,0), (3,13), R1 to R3 */
+/**
+ * Keys of the default mode that send nothing: rows 0 and 4, (3,0), (3,13), R0, R2 and
+ * R3
+ */
 static const key_run_t default_mode_dark_keys[] = {
     {.row = LEFT_NUMBER_ROW, .first_column = 0, .last_column = LAST_LEFT_HALF_COLUMN},
     {.row = LEFT_BOTTOM_LETTER_ROW, .first_column = 0, .last_column = 0},
@@ -102,14 +105,14 @@ static const key_run_t default_mode_dark_keys[] = {
     {.row = RIGHT_BOTTOM_ROW, .first_column = 0, .last_column = LAST_RIGHT_HALF_COLUMN},
     {
         .row          = RIGHT_THUMB_KEYS,
-        .first_column = RIGHT_INNER_THUMB,
-        .last_column  = RIGHT_OUTER_THUMB,
+        .first_column = RIGHT_LARGE_THUMB,
+        .last_column  = RIGHT_MIDDLE_THUMB,
     },
 };
 
 /**
  * Keys of the nav mode: the precision key D, M S T N, wheel up and down, the mouse
- * buttons, the arrows, Home, End and R0
+ * buttons, the arrows, Home, End, L1 to L3 and R1
  */
 static const key_run_t nav_mode_lit_keys[] = {
     {.row = LEFT_TOP_ROW, .first_column = 3, .last_column = 3},
@@ -118,9 +121,14 @@ static const key_run_t nav_mode_lit_keys[] = {
     {.row = RIGHT_HOME_ROW, .first_column = 1, .last_column = 5},
     {.row = RIGHT_BOTTOM_LETTER_ROW, .first_column = 2, .last_column = 4},
     {
+        .row          = LEFT_THUMB_KEYS,
+        .first_column = LEFT_OUTER_THUMB,
+        .last_column  = LEFT_INNER_THUMB,
+    },
+    {
         .row          = RIGHT_THUMB_KEYS,
-        .first_column = RIGHT_LARGE_THUMB,
-        .last_column  = RIGHT_LARGE_THUMB,
+        .first_column = RIGHT_OUTER_THUMB,
+        .last_column  = RIGHT_OUTER_THUMB,
     },
 };
 
