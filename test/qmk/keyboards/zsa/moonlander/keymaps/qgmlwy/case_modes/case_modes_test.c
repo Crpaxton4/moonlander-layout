@@ -550,7 +550,7 @@ static void case_modes_r6_precision_key_ends_mode(void **state) {
     assert_false(push_key(SNAKE_CASE_KEY, A_TAP));
     type_text("max");
     reset_fake_qmk();
-    // Precision key R1 of the nav mode takes its push and release, and sends no key
+    // Precision key D of the nav mode takes its push and release, and sends no key
     keyrecord_t precision_key = {.event = {.pressed = true}};
     assert_false(process_record_user(QK_MOUSE_ACCELERATION_0, &precision_key));
     precision_key.event.pressed = false;

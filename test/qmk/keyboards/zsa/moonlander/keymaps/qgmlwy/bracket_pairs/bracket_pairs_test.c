@@ -259,14 +259,11 @@ static const grid_position_t right_arrow_key = {
     .column = 11,
 };
 
-/**
- * Precision key R1 of the nav mode. The thumb keys have no grid row. key_at() moves
- * the left thumb row to the right thumb row for a column of the right half.
- */
+/** Precision key D (2,1) of the nav mode */
 static const grid_position_t precision_key = {
     .layer  = LAYER_NAV,
-    .row    = LEFT_THUMB_KEYS,
-    .column = FIRST_RIGHT_COLUMN + RIGHT_OUTER_THUMB,
+    .row    = 2,
+    .column = 1,
 };
 
 /** Backtick (1,1) of the special mode */
@@ -523,23 +520,23 @@ static void start_case(void) {
 }
 
 /**
- * Pushes thumb key R0 of the default mode. The hook lets it pass, and QMK then
+ * Pushes thumb key R1 of the default mode. The hook lets it pass, and QMK then
  * turns on the nav layer, so the test turns it on.
  */
 static void turn_on_nav_mode(void) {
     uint16_t nav_mode_key =
-        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB);
+        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_OUTER_THUMB);
     assert_true(push_and_release(nav_mode_key, NOT_A_TAP));
     layer_state = NAV_MODE_ON;
 }
 
 /**
- * Pushes thumb key R0 of the nav mode, the same key as in the default mode. The hook
+ * Pushes thumb key R1 of the nav mode, the same key as in the default mode. The hook
  * lets it pass, and QMK then turns off the nav layer, so the test turns it off.
  */
 static void turn_off_nav_mode(void) {
     uint16_t nav_mode_key =
-        keycode_at_keymap_location(LAYER_NAV, RIGHT_THUMB_KEYS, RIGHT_LARGE_THUMB);
+        keycode_at_keymap_location(LAYER_NAV, RIGHT_THUMB_KEYS, RIGHT_OUTER_THUMB);
     assert_int_equal(nav_mode_key, TG(LAYER_NAV));
     assert_true(push_and_release(nav_mode_key, NOT_A_TAP));
     layer_state = 0;
@@ -1615,9 +1612,9 @@ static void bracket_pairs_nav_mode_free_key_keeps_pair(void **state) {
     hold_key(keycode_of(opening_parenthesis_key));
     type_key(KC_A);
     turn_on_nav_mode();
-    // Thumb key L1, Space in the default mode, sends nothing in the nav mode
+    // Thumb key L0, Enter in the default mode, sends nothing in the nav mode
     uint16_t free_key =
-        keycode_at_keymap_location(LAYER_NAV, LEFT_THUMB_KEYS, LEFT_OUTER_THUMB);
+        keycode_at_keymap_location(LAYER_NAV, LEFT_THUMB_KEYS, LEFT_LARGE_THUMB);
     assert_int_equal(free_key, KC_NO);
     assert_true(push_and_release(free_key, NOT_A_TAP));
     type_key(keycode_of(left_arrow_key));

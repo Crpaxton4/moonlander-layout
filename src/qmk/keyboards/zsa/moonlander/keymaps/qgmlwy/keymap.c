@@ -159,8 +159,8 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_BASE][RIGHT_THUMB_KEYS] =
             {
-                [RIGHT_LARGE_THUMB]  = TG(LAYER_NAV),
-                [RIGHT_OUTER_THUMB]  = KC_NO,
+                [RIGHT_LARGE_THUMB]  = KC_NO,
+                [RIGHT_OUTER_THUMB]  = TG(LAYER_NAV),
                 [RIGHT_MIDDLE_THUMB] = KC_NO,
                 [RIGHT_INNER_THUMB]  = KC_NO,
             },
@@ -188,7 +188,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_NAV][LEFT_HOME_ROW] =
             {
                 KC_NO,
-                KC_NO,
+                QK_MOUSE_ACCELERATION_0,
                 QK_MOUSE_CURSOR_LEFT,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
@@ -217,10 +217,12 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_NAV][LEFT_THUMB_KEYS] =
             {
-                [LEFT_LARGE_THUMB]  = KC_NO,
-                [LEFT_OUTER_THUMB]  = KC_NO,
-                [LEFT_MIDDLE_THUMB] = KC_NO,
-                [LEFT_INNER_THUMB]  = KC_NO,
+                [LEFT_LARGE_THUMB] = KC_NO,
+                // L1 also ends the nav mode, so either thumb can leave it
+                [LEFT_OUTER_THUMB] = TG(LAYER_NAV),
+                // Backspace and Delete stay for edits with the mouse or the arrows
+                [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
+                [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },
         [LAYER_NAV][RIGHT_NUMBER_ROW] =
             {
@@ -274,8 +276,8 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_NAV][RIGHT_THUMB_KEYS] =
             {
-                [RIGHT_LARGE_THUMB]  = TG(LAYER_NAV),
-                [RIGHT_OUTER_THUMB]  = QK_MOUSE_ACCELERATION_0,
+                [RIGHT_LARGE_THUMB]  = KC_NO,
+                [RIGHT_OUTER_THUMB]  = TG(LAYER_NAV),
                 [RIGHT_MIDDLE_THUMB] = KC_NO,
                 [RIGHT_INNER_THUMB]  = KC_NO,
             },
