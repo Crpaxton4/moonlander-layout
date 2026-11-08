@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.18.0...v1.19.0) (2026-11-08)
+
+
+### Features
+
+* **firmware:** light the keys in the color of the active mode ([#191](https://github.com/Crpaxton4/moonlander-layout/issues/191)) ([56e4bf1](https://github.com/Crpaxton4/moonlander-layout/commit/56e4bf1a4e5a475fd8b8f67229f85d7496af9467))
+
 ## [1.18.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.17.0...v1.18.0) (2026-11-08)
 
 
