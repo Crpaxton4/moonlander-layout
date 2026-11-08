@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.16.0...v1.17.0) (2026-11-08)
+
+
+### Features
+
+* **firmware:** keep only the nav keys in nav mode ([#192](https://github.com/Crpaxton4/moonlander-layout/issues/192)) ([894188a](https://github.com/Crpaxton4/moonlander-layout/commit/894188ad423a5fa18081e9e94f33231a453a619e))
+
 ## [1.16.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.15.0...v1.16.0) (2026-11-07)
 
 
