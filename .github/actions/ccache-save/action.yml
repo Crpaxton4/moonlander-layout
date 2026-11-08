@@ -16,7 +16,7 @@ runs:
       shell: bash
       run: .github/scripts/shared/prune-ccache.sh
     - name: "Save ccache"
-      if: ${{ github.event_name == 'push' && steps.prune.outputs.save == 'true' }}
+      if: ${{ steps.prune.outputs.save == 'true' }}
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ runner.temp }}/ccache
