@@ -543,12 +543,14 @@ path is also in that folder. A new test of a program that writes files must also
 the program only relative paths.
 
 Each Mull run uses one worker for each core. A parallel build runs more than one Mull
-run at the same time. To run one Mull run for each core, set the cache variable
-`MUTATION_WORKERS` to 1 and build with one job for each core:
+run at the same time. CI runs two Mull runs with two workers each. To do the same,
+set the cache variable `MUTATION_WORKERS` to 2, build the programs, and then run
+half as many jobs as there are cores:
 
 ```bash
-cmake --preset mutation-diff -DMUTATION_WORKERS=1
-cmake --build --preset mutation-diff --parallel "$(nproc)"
+cmake --preset mutation-diff -DMUTATION_WORKERS=2
+cmake --build --preset mutation-diff --target mutation-programs
+cmake --build --preset mutation-diff --parallel "$(($(nproc) / 2))"
 ```
 
 ### Mutation safety gate
