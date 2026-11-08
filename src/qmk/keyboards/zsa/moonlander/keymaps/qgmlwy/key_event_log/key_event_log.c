@@ -185,4 +185,8 @@ bool key_event_log_is_on(void) {
     return logging.is_on;
 }
 
+void key_event_log_reset(void) {
+    logging = (logging_t){.is_on = false};
+}
+
 // #endregion

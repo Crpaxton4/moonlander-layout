@@ -2,8 +2,7 @@
  * Tests of the key event log through the keymap hooks: the logging combo, the
  * records on the console and the reports to the host.
  *
- * Logging state stays from one case to the next when the program runs all its
- * cases, so each case first sets the state that it needs.
+ * Each case starts from the power-up state, so all cases can run in one process.
  */
 
 // #region Includes
@@ -127,6 +126,12 @@ static void push_logging_combo(void) {
     send_key_event(LOGGING_TOGGLE, false);
 }
 
+/** Puts the fake QMK and the key event log in their power-up state */
+static void start_at_power_up(void) {
+    reset_fake_qmk();
+    key_event_log_reset();
+}
+
 /**
  * Sets logging on or off, then empties the console text and the call log.
  *
@@ -136,10 +141,7 @@ static void push_logging_combo(void) {
  * @param on True for logging on.
  */
 static void start_with_logging(bool on) {
-    reset_fake_qmk();
-    if (key_event_log_is_on()) {
-        push_logging_combo();
-    }
+    start_at_power_up();
     if (on) {
         push_logging_combo();
     }
@@ -162,7 +164,7 @@ static void send_test_report(uint8_t modifiers, uint8_t first_key) {
 
 static void key_event_log_r1_off_at_power_up(void **state) {
     (void)state;
-    reset_fake_qmk();
+    start_at_power_up();
     assert_false(key_event_log_is_on());
     housekeeping_task_user();
     assert_true(send_key_event(KC_A, true));
@@ -398,11 +400,23 @@ static void key_event_log_special_mode_r10_combo_ends_one_shot(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
+static void key_event_log_reset_gives_the_power_up_state(void **state) {
+    (void)state;
+    start_with_logging(true);
+    send_test_report(0, KC_A);
+    key_event_log_reset();
+    assert_false(key_event_log_is_on());
+    // Report with no keys is a change only if the reset kept the last report
+    start_with_logging(true);
+    send_test_report(0, 0);
+    assert_console_text("");
+}
+
 // #endregion
 
 // #region Test runner
 
-/** Cases of this program; the power-up case is first, for a run of all cases */
+/** Cases of this program */
 static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r1_off_at_power_up),
     cmocka_unit_test(key_event_log_r2_combo_switches_logging_on),
@@ -425,6 +439,7 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_off),
     cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_on),
     cmocka_unit_test(key_event_log_special_mode_r10_combo_ends_one_shot),
+    cmocka_unit_test(key_event_log_reset_gives_the_power_up_state),
 };
 
 int main(int argc, char **argv) {
