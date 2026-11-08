@@ -377,7 +377,7 @@ The `CI` workflow (`.github/workflows/ci.yaml`) runs all the checks on each PR a
 each push to `main`. A PR can merge only if these CI checks pass:
 
 - `Build` builds the firmware and the programs, runs the tests and the analysis.
-- `Lint` runs the hooks.
+- `Lint` runs the pre-commit hooks.
 - `Validate PR title` checks the PR title.
 
 The `Build` job also builds the key log converter for Windows. Its job summary shows
