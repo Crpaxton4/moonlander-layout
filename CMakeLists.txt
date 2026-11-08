@@ -730,26 +730,44 @@ if(MOONLANDER_MUTATION)
         --reporters SQLite --report-dir ${MUTATION_REPORT_DIR} --report-name mutation
         --allow-surviving --test-program ${CMAKE_CTEST_COMMAND})
     set(test_options --test-dir ${CMAKE_BINARY_DIR} --stop-on-failure --label-regex)
+    # Mull uses one worker for each core. Mull runs of a parallel build share the
+    # cores, so CI gives each run fewer workers
+    set(MUTATION_WORKERS "" CACHE STRING
+        "Workers of each Mull run; empty uses one worker for each core")
+    set(worker_options "")
+    if(NOT MUTATION_WORKERS STREQUAL "")
+        set(worker_options --workers ${MUTATION_WORKERS})
+    endif()
+
     # Report of an earlier run must not hide a run with no mutant
-    set(mutation_commands
-        COMMAND ${CMAKE_COMMAND} -E rm -rf ${MUTATION_REPORT_DIR})
-    set(mutation_programs "")
+    add_custom_target(mutation-reset
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${MUTATION_REPORT_DIR}
+        VERBATIM)
+    # Mull runs start when all programs are built, so no compiler uses the cores of
+    # a Mull run
+    add_custom_target(mutation-programs)
 
     # add_mutation_subject(<program> <label> [ONE_AT_A_TIME])
     #
-    # Adds a Mull run of the program, with the CTest tests that have the label. Mull
-    # runs the tests of many mutants at the same time. ONE_AT_A_TIME runs the tests of
-    # one mutant at a time, for tests that write files
+    # Adds the target mutation-<program>, a Mull run of the program with the CTest
+    # tests that have the label. Mull runs the tests of many mutants at the same time.
+    # ONE_AT_A_TIME runs the tests of one mutant at a time, for tests that write files.
+    # Each Mull run is a target, so a parallel build runs several at the same time
     function(add_mutation_subject program label)
         cmake_parse_arguments(PARSE_ARGV 2 subject ONE_AT_A_TIME "" "")
-        set(worker_options "")
         if(subject_ONE_AT_A_TIME)
             set(worker_options --workers 1)
         endif()
-        set(mutation_commands ${mutation_commands} COMMAND ${run_mull} ${worker_options}
-            $<TARGET_FILE:${program}> -- ${test_options} "^${label}$" PARENT_SCOPE)
-        set(mutation_programs ${mutation_programs} ${program} PARENT_SCOPE)
+        add_custom_target(mutation-${program}
+            COMMAND ${run_mull} ${worker_options}
+                $<TARGET_FILE:${program}> -- ${test_options} "^${label}$"
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+            VERBATIM)
+        add_dependencies(mutation-programs ${program})
+        add_dependencies(mutation-${program} mutation-reset mutation-programs)
+        set(mutation_runs ${mutation_runs} mutation-${program} PARENT_SCOPE)
     endfunction()
+    set(mutation_runs "")
 
     # Each fixture case writes its outputs into the same folder in each run. Two runs
     # of a case at the same time change the outputs of each other, and the case fails
@@ -766,12 +784,11 @@ if(MOONLANDER_MUTATION)
     endforeach()
 
     add_custom_target(mutation
-        ${mutation_commands}
         COMMAND ${CMAKE_COMMAND} -DREPORTER=${MULL_REPORTER} -DCONFIG=${compile_config}
             -DDATABASE=${MUTATION_DATABASE} -DREPORT_DIRECTORY=${MUTATION_REPORT_DIR}
             "-DREPORTER_OPTIONS=${reporter_options}"
             -P ${PROJECT_SOURCE_DIR}/src/ci/report-mutants.cmake
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         VERBATIM)
-    add_dependencies(mutation ${mutation_programs})
+    add_dependencies(mutation ${mutation_runs})
 endif()

@@ -55,6 +55,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: "Load versions"
         run: .github/scripts/shared/load-versions.sh
+      # check-standards hook builds the checker with all cores
+      - name: "Use all cores"
+        run: .github/scripts/shared/use-all-cores.sh
 
       # Runner tool cache does not contain the NODE_VERSION release, so the job
       # caches that release for setup-node
@@ -188,12 +191,90 @@ jobs:
           path: ${{ runner.temp }}/tree-sitter-debs
           key: ${{ steps.tree-sitter-key.outputs.key }}
 
-      # check-standards hook builds the checker with CMake
-      - name: "Install CMake"
-        run: .github/scripts/lint/install-cmake.sh
+      # check-standards hook builds the checker with CMake. The checker needs no
+      # cmocka, but the job restores the same packages as the other CMake jobs. A
+      # cache hit needs no package lists and no download
+      - name: "Compute CMake and cmocka cache key"
+        id: unit-test-apt-key
+        env:
+          APT_PACKAGES: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+        run: .github/scripts/shared/compute-apt-cache-key.sh
+      - name: "Restore CMake and cmocka packages"
+        id: unit-test-apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/unit-test-debs
+          key: ${{ steps.unit-test-apt-key.outputs.key }}
+
+      - name: "Download CMake and cmocka packages"
+        if: ${{ steps.unit-test-apt-cache.outputs.cache-hit != 'true' }}
+        env:
+          APT_PACKAGES: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+          DEB_DIR: ${{ runner.temp }}/unit-test-debs
+        run: .github/scripts/shared/download-apt-packages.sh
+
+      - name: "Verify CMake and cmocka packages"
+        env:
+          APT_PACKAGES: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+          DEB_DIR: ${{ runner.temp }}/unit-test-debs
+        run: .github/scripts/shared/verify-apt-packages.sh
+
+      # Save before the install, so a failed install does not discard them
+      - name: "Save CMake and cmocka packages"
+        if: ${{ steps.unit-test-apt-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/unit-test-debs
+          key: ${{ steps.unit-test-apt-key.outputs.key }}
+
+      - name: "Install CMake and cmocka"
+        env:
+          APT_PACKAGES: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+          DEB_DIR: ${{ runner.temp }}/unit-test-debs
+        run: .github/scripts/shared/install-apt-packages.sh
+      - name: "Use pinned CMake"
+        run: .github/scripts/shared/use-pinned-cmake.sh
+
+      # check-standards hook compiles the checker and the tree-sitter grammar. A PR
+      # run uses ccache only if it restored an entry, so a missing cache costs only
+      # the lookup
+      - name: "Compute ccache cache key"
+        id: ccache-key
+        env:
+          CCACHE_NAME: lint
+          COMPILER: cc
+          FLAGS_HASH: ${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
+          KEY_EXTRA: ""
+        run: .github/scripts/shared/compute-ccache-key.sh
+      - name: "Restore ccache"
+        id: ccache-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ${{ steps.ccache-key.outputs.key }}
+          restore-keys: |
+            ${{ steps.ccache-key.outputs.prefix }}
+            ${{ steps.ccache-key.outputs.compiler-prefix }}
+
+      - name: "Install ccache"
+        id: ccache
+        if: ${{ github.event_name != 'pull_request' || steps.ccache-cache.outputs.cache-matched-key != '' }}
+        run: .github/scripts/shared/install-ccache.sh
 
       - name: "Run pre-commit"
         run: .github/scripts/lint/run-pre-commit.sh
+
+      - name: "Prune ccache"
+        id: ccache-prune
+        if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
+        run: .github/scripts/shared/prune-ccache.sh
+      # A PR run never saves, because its next push changes the same files again
+      - name: "Save ccache"
+        if: ${{ !cancelled() && github.event_name == 'push' && steps.ccache-prune.outputs.save == 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ${{ steps.ccache-key.outputs.key }}
 
       - name: "Summarize timings"
         if: ${{ !cancelled() }}

@@ -389,8 +389,14 @@ The `Test` and `Analyze` jobs start when the `Build` job is complete, and they r
 the same time. If a PR changes no file that the build, the tests or the analysis
 use, CI skips these three jobs. A skipped job passes its check.
 
-CI also runs the Test coverage check on each PR and on each push to `main`, and the
-Mutation safety gate check on each PR.
+CI also runs the Test coverage check and the Mutation safety gate check on each PR and
+on each push to `main`. If a PR changes no file that the coverage build or the
+mutation build uses, CI skips that job.
+
+Each CI build and each CTest run uses all cores of the runner. CI keeps the apt
+packages of the pinned versions in the Actions cache, so a job installs them with no
+download. Each job that compiles also uses [ccache][ccache]. A run on `main` saves the
+caches, and the PR runs restore them.
 
 ## Unit tests
 
@@ -504,7 +510,8 @@ cmake --build --preset mutation-diff
 
 The `mutation` target runs Mull one time for each program: the standards checker, the
 key log converter and each unit test program. Each run uses the CTest tests of its
-program. Then `mull-reporter` merges the results. If a test of one program kills a
+program, and each run is the target `mutation-<program>`. Then `mull-reporter` merges
+the results. If a test of one program kills a
 mutant, the mutant is killed. The target writes these files into `report/` in the
 build directory:
 
@@ -530,11 +537,22 @@ relative paths. The converter writes its outputs into
 path is also in that folder. A new test of a program that writes files must also give
 the program only relative paths.
 
+Each Mull run uses one worker for each core. A parallel build runs more than one Mull
+run at the same time. To run one Mull run for each core, set the cache variable
+`MUTATION_WORKERS` to 1 and build with one job for each core:
+
+```bash
+cmake --preset mutation-diff -DMUTATION_WORKERS=1
+cmake --build --preset mutation-diff --parallel "$(nproc)"
+```
+
 ### Mutation safety gate
 
-The Mutation safety gate workflow runs on each PR to `main`. The PR checkout is a merge
-commit, and its first parent is the base branch. The gate runs only the mutants on the
-lines that are different from the first parent, thus only the mutants of the PR. Each
+The Mutation safety gate workflow runs on each PR to `main` and on each push to
+`main`. The PR checkout is a merge commit, and its first parent is the base branch. The
+gate runs only the mutants on the lines that are different from the first parent,
+thus only the mutants of the PR. On `main`, the gate runs the mutants of the last
+merge. A manual run of the workflow can compare with a different git ref. Each
 surviving mutant fails the gate. A PR that does not change the code under test has no
 mutants and passes.
 
@@ -750,6 +768,7 @@ of that file ends in the release tag, for example
 `zsa_moonlander_reva_qgmlwy-v1.0.29.bin`.
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 
+[ccache]: https://ccache.dev/
 [cmake]: https://cmake.org/
 [cmocka]: https://cmocka.org/
 [ctest]: https://cmake.org/cmake/help/latest/manual/ctest.1.html

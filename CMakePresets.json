@@ -132,7 +132,7 @@
             "name": "analyze",
             "configurePreset": "dev",
             "targets": ["analyze"],
-            "nativeToolOptions": ["--keep-going"]
+            "nativeToolOptions": ["--keep-going", "--output-sync=target"]
         },
         {
             "name": "firmware",
@@ -173,17 +173,19 @@
             "name": "coverage-gate",
             "configurePreset": "coverage",
             "targets": ["coverage-gate"],
-            "nativeToolOptions": ["--keep-going"]
+            "nativeToolOptions": ["--keep-going", "--output-sync=target"]
         },
         {
             "name": "mutation",
             "configurePreset": "mutation",
-            "targets": ["mutation"]
+            "targets": ["mutation"],
+            "nativeToolOptions": ["--output-sync=target"]
         },
         {
             "name": "mutation-diff",
             "configurePreset": "mutation-diff",
-            "targets": ["mutation"]
+            "targets": ["mutation"],
+            "nativeToolOptions": ["--output-sync=target"]
         }
     ],
     "testPresets": [
