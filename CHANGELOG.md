@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.18.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.17.0...v1.18.0) (2026-11-08)
+
+
+### Features
+
+* **firmware:** rework the nav thumb keys and move precision to d ([#196](https://github.com/Crpaxton4/moonlander-layout/issues/196)) ([6e6e3c8](https://github.com/Crpaxton4/moonlander-layout/commit/6e6e3c80dcce6a9da952d5df033505c43ae40010))
+
+
+### Bug Fixes
+
+* **firmware:** end the special one-shot after the key action ([#193](https://github.com/Crpaxton4/moonlander-layout/issues/193)) ([be1c1b8](https://github.com/Crpaxton4/moonlander-layout/commit/be1c1b8cb7f77fdcace36a9d3122e899bef854ab))
+
 ## [1.17.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.16.0...v1.17.0) (2026-11-08)
 
 
