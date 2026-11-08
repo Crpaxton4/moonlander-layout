@@ -520,10 +520,10 @@ the build directory:
 
 For each mutant, Mull runs a unit test program one time, and the program runs all its
 cases in one process. A failed case, a crash, a sanitizer stop and a timeout each kill
-the mutant. The cases of `key_event_log_test` fail in one process, because the key
-event log keeps state that no function resets. Thus, `ONE_CASE_PER_PROCESS` in
-`CMakeLists.txt` marks that program, and Mull runs its CTest tests, with one process
-for each case. The checker tests and the converter tests also run through CTest,
+the mutant. A program whose cases fail in one process, because the code under test
+keeps state that no function resets, gets `ONE_CASE_PER_PROCESS` in `CMakeLists.txt`.
+Mull then runs its CTest tests, with one process for each case. No unit test program
+has this mark now. The checker tests and the converter tests also run through CTest,
 because each case runs the program through `src/ci/run-fixture.cmake`. If a new test
 program fails in one process, Mull stops with the message `Original test failed`.
 

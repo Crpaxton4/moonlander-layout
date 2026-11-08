@@ -593,9 +593,8 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         LIBRARIES keymap_logic unit_test)
     add_cmocka_test(${KEYMAP_TESTS}/case_modes/case_modes_test.c
         LIBRARIES qgmlwy_keymap)
-    # Logging state of the key event log stays from one case to the next
     add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_test.c
-        LIBRARIES qgmlwy_keymap ONE_CASE_PER_PROCESS)
+        LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/status_leds/status_leds_test.c
         LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/precision_key/precision_key_test.c
