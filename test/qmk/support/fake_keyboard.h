@@ -20,6 +20,9 @@
 /** Columns of the Moonlander key matrix */
 #define MATRIX_COLS 7
 
+/** Number of key LEDs of the Moonlander, as the keyboard data of QMK gives them */
+#define RGB_MATRIX_LED_COUNT 72
+
 /** Number of elements of an array; QMK headers keep it, because their version needs GNU
  * C */
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -50,9 +53,11 @@
 #include "action_tapping.h"
 #include "action_util.h"
 #include "host.h"
+#include "keymap_common.h"
 #include "process_combo.h"
 #include "progmem.h"
 #include "quantum_keycodes.h"
+#include "rgb_matrix.h"
 #include "timer.h"
 
 // #endregion

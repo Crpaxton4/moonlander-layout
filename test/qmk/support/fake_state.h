@@ -1,6 +1,6 @@
 /** @file
- * Firmware state of the fake that a test sets or reads: modifiers, status LEDs and
- * the text on the console.
+ * Firmware state of the fake that a test sets or reads: modifiers, status LEDs, key
+ * LEDs and the text on the console.
  *
  * reset_fake_qmk() clears all of this state, the call log and the clock.
  */
@@ -11,6 +11,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "color.h"
 
 // #endregion
 
@@ -52,6 +54,22 @@ void set_fake_status_led(uint8_t position, bool is_on);
  * @return True if the last setting of that LED was on.
  */
 bool fake_status_led_is_on(uint8_t position);
+
+/**
+ * Sets the brightness of the RGB matrix that rgb_matrix_get_val() gives.
+ *
+ * @param brightness Brightness from 0 to UINT8_MAX; reset_fake_qmk() sets UINT8_MAX.
+ */
+void set_fake_key_light_brightness(uint8_t brightness);
+
+/**
+ * Gives the last color of one key LED, as rgb_matrix_set_color_all() or
+ * rgb_matrix_set_color() sets it.
+ *
+ * @param led Index of the LED in the RGB matrix.
+ * @return Color of the LED; black after reset_fake_qmk().
+ */
+rgb_t fake_key_light_color(uint8_t led);
 
 /**
  * Fails the test if the console text since the last reset is not the expected

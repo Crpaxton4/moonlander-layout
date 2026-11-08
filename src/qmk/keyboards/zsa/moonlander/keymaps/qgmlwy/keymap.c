@@ -1,6 +1,6 @@
 /** @file
- * Layers and combos of the qgmlwy keymap, and its key event and housekeeping
- * hooks.
+ * Layers and combos of the qgmlwy keymap, and its key event, housekeeping, start-up
+ * and key light hooks.
  *
  * QMK compiles this file only inside its keymap introspection, which sizes
  * `keymaps` and `key_combos` with `sizeof`. Thus the two tables are in this file.
@@ -16,6 +16,7 @@
 #include "combos/combos.h"
 #include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
+#include "layer_lights/layer_lights.h"
 #include "layers/layers.h"
 #include "plain_mode/plain_mode.h"
 #include "precision_key/precision_key.h"
@@ -751,6 +752,21 @@ void housekeeping_task_user(void) {
     for (size_t index = 0; index < ARRAY_SIZE(housekeeping_handlers); index++) {
         housekeeping_handlers[index]();
     }
+}
+
+/** Starts the key lights, after the keyboard code turned on the RGB matrix */
+void keyboard_post_init_user(void) {
+    start_layer_lights();
+}
+
+/**
+ * Sets the mode color on all keys, after QMK made each frame of the RGB matrix effect.
+ *
+ * @return False, so that keyboard code does not set its own key colors after this hook.
+ */
+bool rgb_matrix_indicators_user(void) {
+    show_layer_light();
+    return false;
 }
 
 // #endregion

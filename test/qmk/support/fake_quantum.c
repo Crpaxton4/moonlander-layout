@@ -74,6 +74,12 @@ static uint8_t fake_one_shot_modifiers;
 /** Last setting of each status LED, indexed by position from the left */
 static bool status_leds[FAKE_STATUS_LED_COUNT];
 
+/** Last color of each key LED, indexed as in the RGB matrix */
+static rgb_t key_lights[RGB_MATRIX_LED_COUNT];
+
+/** Brightness of the RGB matrix that rgb_matrix_get_val() gives */
+static uint8_t key_light_brightness;
+
 /** True while QMK's combos are on, as is_combo_enabled() gives it */
 static bool combos_on;
 
@@ -85,20 +91,21 @@ uint8_t mk_max_speed;
 
 /** Name of each recorded function, for the failure output */
 static const char *const function_names[] = {
-    [CALLED_REGISTER_CODE]     = "register_code",
-    [CALLED_UNREGISTER_CODE]   = "unregister_code",
-    [CALLED_TAP_CODE]          = "tap_code",
-    [CALLED_REGISTER_CODE16]   = "register_code16",
-    [CALLED_UNREGISTER_CODE16] = "unregister_code16",
-    [CALLED_TAP_CODE16]        = "tap_code16",
-    [CALLED_LAYER_ON]          = "layer_on",
-    [CALLED_LAYER_OFF]         = "layer_off",
-    [CALLED_LAYER_MOVE]        = "layer_move",
-    [CALLED_WAIT_MS]           = "wait_ms",
-    [CALLED_SEND_KEYBOARD]     = "send_keyboard",
-    [CALLED_SEND_NKRO]         = "send_nkro",
-    [CALLED_DEL_MODS]          = "del_mods",
-    [CALLED_ADD_MODS]          = "add_mods",
+    [CALLED_REGISTER_CODE]            = "register_code",
+    [CALLED_UNREGISTER_CODE]          = "unregister_code",
+    [CALLED_TAP_CODE]                 = "tap_code",
+    [CALLED_REGISTER_CODE16]          = "register_code16",
+    [CALLED_UNREGISTER_CODE16]        = "unregister_code16",
+    [CALLED_TAP_CODE16]               = "tap_code16",
+    [CALLED_LAYER_ON]                 = "layer_on",
+    [CALLED_LAYER_OFF]                = "layer_off",
+    [CALLED_LAYER_MOVE]               = "layer_move",
+    [CALLED_WAIT_MS]                  = "wait_ms",
+    [CALLED_SEND_KEYBOARD]            = "send_keyboard",
+    [CALLED_SEND_NKRO]                = "send_nkro",
+    [CALLED_DEL_MODS]                 = "del_mods",
+    [CALLED_ADD_MODS]                 = "add_mods",
+    [CALLED_RGB_MATRIX_MODE_NOEEPROM] = "rgb_matrix_mode_noeeprom",
 };
 
 /** Host driver that records the keyboard reports, in place of the USB driver */
@@ -201,7 +208,9 @@ void reset_fake_qmk(void) {
     mk_max_speed            = 0;
     host_driver             = &fake_host_driver;
     memset(status_leds, 0, sizeof(status_leds));
-    combos_on = true;
+    memset(key_lights, 0, sizeof(key_lights));
+    key_light_brightness = UINT8_MAX;
+    combos_on            = true;
 }
 
 void advance_fake_clock(uint32_t milliseconds) {
@@ -343,11 +352,32 @@ bool fake_status_led_is_on(uint8_t position) {
     return status_leds[position];
 }
 
-// Weak as in QMK, where a keymap with no post-processing gets this empty hook
-__attribute__((weak)) void post_process_record_user(uint16_t     keycode,
-                                                    keyrecord_t *record) {
-    (void)keycode;
-    (void)record;
+void rgb_matrix_set_color_all(uint8_t red, uint8_t green, uint8_t blue) {
+    for (size_t led = 0; led < RGB_MATRIX_LED_COUNT; led++) {
+        key_lights[led] = (rgb_t){.r = red, .g = green, .b = blue};
+    }
+}
+
+void rgb_matrix_set_color(int index, uint8_t red, uint8_t green, uint8_t blue) {
+    assert_in_range(index, 0, RGB_MATRIX_LED_COUNT - 1);
+    key_lights[index] = (rgb_t){.r = red, .g = green, .b = blue};
+}
+
+void rgb_matrix_mode_noeeprom(uint8_t mode) {
+    record_call(CALLED_RGB_MATRIX_MODE_NOEEPROM, mode);
+}
+
+uint8_t rgb_matrix_get_val(void) {
+    return key_light_brightness;
+}
+
+void set_fake_key_light_brightness(uint8_t brightness) {
+    key_light_brightness = brightness;
+}
+
+rgb_t fake_key_light_color(uint8_t led) {
+    assert_in_range(led, 0, RGB_MATRIX_LED_COUNT - 1);
+    return key_lights[led];
 }
 
 void combo_enable(void) {
@@ -368,6 +398,13 @@ void combo_toggle(void) {
 
 bool is_combo_enabled(void) {
     return combos_on;
+}
+
+// Weak as in QMK, where a keymap with no post-processing gets this empty hook
+__attribute__((weak)) void post_process_record_user(uint16_t     keycode,
+                                                    keyrecord_t *record) {
+    (void)keycode;
+    (void)record;
 }
 
 host_driver_t *host_get_driver(void) {

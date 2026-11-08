@@ -471,6 +471,8 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         ${qmk_firmware}/quantum
         ${qmk_firmware}/quantum/keymap_extras
         ${qmk_firmware}/quantum/process_keycode
+        ${qmk_firmware}/quantum/rgb_matrix
+        ${qmk_firmware}/quantum/rgb_matrix/animations
         ${qmk_firmware}/quantum/sequencer
         ${qmk_firmware}/platforms
         ${qmk_firmware}/tmk_core/protocol)
@@ -484,8 +486,48 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
     target_include_directories(unit_test PUBLIC ${UNIT_TESTS_DIR}/support)
     target_link_libraries(unit_test PUBLIC cmocka::cmocka)
 
+    # LED map of the fake RGB matrix, from the keyboard data of the same keyboard as the
+    # firmware build. Each LED of the data names its matrix position. A position with
+    # no LED is NO_LED, as in the map that QMK writes for the firmware
+    set(keyboard_data_file ${qmk_firmware}/keyboards/zsa/moonlander/reva/keyboard.json)
+    set_property(DIRECTORY APPEND PROPERTY
+        CMAKE_CONFIGURE_DEPENDS ${keyboard_data_file})
+    file(READ ${keyboard_data_file} keyboard_data)
+    # Same matrix size as fake_keyboard.h
+    set(LED_MAP_ROW_COUNT 12)
+    set(led_map_column_count 7)
+    math(EXPR led_map_size "${LED_MAP_ROW_COUNT} * ${led_map_column_count}")
+    set(led_map "")
+    foreach(position RANGE 1 ${led_map_size})
+        list(APPEND led_map NO_LED)
+    endforeach()
+    string(JSON KEY_LED_COUNT LENGTH "${keyboard_data}" rgb_matrix layout)
+    math(EXPR last_led "${KEY_LED_COUNT} - 1")
+    foreach(led RANGE ${last_led})
+        string(JSON row GET "${keyboard_data}" rgb_matrix layout ${led} matrix 0)
+        string(JSON column GET "${keyboard_data}" rgb_matrix layout ${led} matrix 1)
+        if(row GREATER_EQUAL LED_MAP_ROW_COUNT
+                OR column GREATER_EQUAL led_map_column_count)
+            message(FATAL_ERROR "LED ${led} is outside the matrix: ${row}, ${column}")
+        endif()
+        math(EXPR position "${row} * ${led_map_column_count} + ${column}")
+        list(REMOVE_AT led_map ${position})
+        list(INSERT led_map ${position} ${led})
+    endforeach()
+    set(LED_MAP_ROWS "")
+    math(EXPR last_row "${LED_MAP_ROW_COUNT} - 1")
+    foreach(row RANGE ${last_row})
+        math(EXPR first_position "${row} * ${led_map_column_count}")
+        list(SUBLIST led_map ${first_position} ${led_map_column_count} row_leds)
+        list(JOIN row_leds ", " row_text)
+        string(APPEND LED_MAP_ROWS "            {${row_text}},\n")
+    endforeach()
+    configure_file(${UNIT_TESTS_DIR}/support/fake_led_config.c.in
+        ${UNIT_TESTS_BINARY_DIR}/support/fake_led_config.c @ONLY)
+
     # Recording QMK functions
-    add_library(fake_qmk STATIC ${UNIT_TESTS_DIR}/support/fake_quantum.c)
+    add_library(fake_qmk STATIC ${UNIT_TESTS_DIR}/support/fake_quantum.c
+        ${UNIT_TESTS_BINARY_DIR}/support/fake_led_config.c)
     target_include_directories(fake_qmk PUBLIC ${UNIT_TESTS_DIR}/support ${KEYMAP_DIR})
     target_compile_definitions(fake_qmk PUBLIC QMK_KEYBOARD_H="fake_keyboard.h"
         # Same feature as COMBO_ENABLE in rules.mk
@@ -517,6 +559,7 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         ${KEYMAP_DIR}/case_modes/case_modes.c
         ${KEYMAP_DIR}/bracket_pairs/bracket_pairs.c
         ${KEYMAP_DIR}/plain_mode/plain_mode.c
+        ${KEYMAP_DIR}/layer_lights/layer_lights.c
         ${KEYMAP_DIR}/combos/combos.c)
     target_compile_definitions(qgmlwy_keymap PRIVATE KEYMAP_C="${KEYMAP_DIR}/keymap.c")
     target_link_libraries(qgmlwy_keymap PUBLIC fake_qmk keymap_logic)
@@ -561,6 +604,8 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
     add_cmocka_test(${KEYMAP_TESTS}/bracket_pairs/bracket_pairs_test.c
         LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/plain_mode/plain_mode_test.c
+        LIBRARIES qgmlwy_keymap)
+    add_cmocka_test(${KEYMAP_TESTS}/layer_lights/layer_lights_test.c
         LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/combos/combos_test.c LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/profiling/profiling_logic_test.c

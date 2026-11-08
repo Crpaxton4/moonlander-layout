@@ -33,6 +33,7 @@ enum qmk_function {
     CALLED_SEND_NKRO,         /**< Host driver send_nkro(), argument: modifiers */
     CALLED_DEL_MODS,          /**< del_mods(), argument: modifiers */
     CALLED_ADD_MODS,          /**< add_mods(), argument: modifiers */
+    CALLED_RGB_MATRIX_MODE_NOEEPROM, /**< rgb_matrix_mode_noeeprom(), argument: mode */
 };
 
 // #endregion
@@ -51,8 +52,8 @@ typedef struct {
 
 /**
  * Empties the log, sets the fake clock to 0 and clears the state in fake_state.h.
- * Layer state goes back to the base layer, QMK's top cursor speed to 0, the combos
- * on, and the host driver to the fake driver.
+ * Layer state goes back to the base layer, QMK's top cursor speed to 0, the key LED
+ * brightness to UINT8_MAX, the combos on, and the host driver to the fake driver.
  */
 void reset_fake_qmk(void);
 
