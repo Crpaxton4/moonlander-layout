@@ -356,8 +356,8 @@ static void keymap_nav_left_top_row(void **state) {
             {
                 KC_NO,
                 KC_NO,
-                QK_MOUSE_CURSOR_UP,
                 KC_NO,
+                QK_MOUSE_CURSOR_UP,
                 KC_NO,
                 KC_NO,
                 KC_NO,
@@ -372,10 +372,10 @@ static void keymap_nav_left_home_row(void **state) {
         .keys =
             {
                 KC_NO,
+                KC_NO,
                 QK_MOUSE_CURSOR_LEFT,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
-                KC_NO,
                 KC_NO,
                 KC_NO,
             },

@@ -179,8 +179,8 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             {
                 KC_NO,
                 KC_NO,
-                QK_MOUSE_CURSOR_UP,
                 KC_NO,
+                QK_MOUSE_CURSOR_UP,
                 KC_NO,
                 KC_NO,
                 KC_NO,
@@ -188,10 +188,10 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_NAV][LEFT_HOME_ROW] =
             {
                 KC_NO,
+                KC_NO,
                 QK_MOUSE_CURSOR_LEFT,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
-                KC_NO,
                 KC_NO,
                 KC_NO,
             },
