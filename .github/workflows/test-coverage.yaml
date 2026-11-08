@@ -32,7 +32,8 @@ jobs:
       - name: "Load versions"
         run: .github/scripts/shared/load-versions.sh
 
-      # Unit tests read only the QMK headers, so the checkout has no submodules
+      # Unit tests read the QMK headers and the LED map of the Moonlander keyboard data,
+      # so the checkout has no submodules
       - name: "Read ZSA firmware pin"
         id: qmk
         run: .github/scripts/shared/read-qmk-ref.sh
@@ -44,6 +45,7 @@ jobs:
           path: qmk_firmware
           submodules: false
           sparse-checkout: |
+            keyboards/zsa/moonlander
             platforms
             quantum
             tmk_core
