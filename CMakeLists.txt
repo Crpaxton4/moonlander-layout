@@ -101,12 +101,9 @@ if(MOONLANDER_MUTATION)
         message(FATAL_ERROR "No Mull plugin for LLVM ${llvm_major} at ${MULL_PLUGIN}")
     endif()
     set(sanitizers -fsanitize=address,undefined)
-    # Mull finds each mutant from the command line that the debug data records. The
-    # function check of UBSan adds a handler call at each call through a function
-    # pointer, and Mull then removes that handler call instead of the call itself.
-    # Without the check, Mull removes the call
+    # Mull finds each mutant from the command line that the debug data records
     add_compile_options(-fpass-plugin=${MULL_PLUGIN} -grecord-command-line
-        ${sanitizers} -fno-sanitize-recover=all -fno-sanitize=function)
+        ${sanitizers} -fno-sanitize-recover=all)
     add_link_options(${sanitizers})
 endif()
 
