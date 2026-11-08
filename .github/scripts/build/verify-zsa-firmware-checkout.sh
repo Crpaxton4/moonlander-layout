@@ -5,7 +5,7 @@ set -euo pipefail
 : "${QMK_REF:?not set or empty}"
 : "${RUNNER_TEMP:?not set or empty}"
 
-read -ra submodules <<<"$QMK_SUBMODULES"
+IFS=, read -ra submodules <<<"$QMK_SUBMODULES"
 head=$(git rev-parse HEAD)
 echo "HEAD $head"
 if [ "$head" != "$QMK_REF" ]; then

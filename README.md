@@ -373,30 +373,27 @@ The standards checker has two rules for the `.c`, `.h` and `.inc` files:
     - Control flow in a function has a maximum of two levels.
     - An `if` or a `case` contains no control flow.
 
-CI runs all the checks on each PR and on each push to `main`. A PR can merge only if
-these CI checks pass:
+The `CI` workflow (`.github/workflows/ci.yaml`) runs all the checks on each PR and on
+each push to `main`. A PR can merge only if these CI checks pass:
 
-- `Build` builds the firmware files, the compile databases, the programs and the tests.
-- `Test` runs all the CTest tests on the programs from the `Build` job.
-- `Analyze` runs the static analysis on the compile databases from the `Build` job.
+- `Build` builds the firmware and the programs, runs the tests and the analysis.
 - `Lint` runs the hooks.
 - `Validate PR title` checks the PR title.
 
-The `Build` job runs one time in each CI run. It also builds the key log converter for
-Windows, and shows the memory report in its job summary. The artifact `firmware`
+The `Build` job also builds the key log converter for Windows. Its job summary shows
+the memory report and the duration of each analysis check. The artifact `firmware`
 contains the firmware, and the artifact `debug-firmware` contains the debug firmware.
-The `Test` and `Analyze` jobs start when the `Build` job is complete, and they run at
-the same time. If a PR changes no file that the build, the tests or the analysis
-use, CI skips these three jobs. A skipped job passes its check.
 
-CI also runs the Test coverage check and the Mutation safety gate check on each PR and
-on each push to `main`. If a PR changes no file that the coverage build or the
-mutation build uses, CI skips that job.
+The `CI` workflow also runs the `Test coverage` check and the `Mutation safety gate`
+check. On a PR, the first job of the workflow finds the changed files. If a PR changes
+no file that a job uses, CI skips that job. A skipped job passes its check. A push to
+`main` runs all jobs.
 
 Each CI build and each CTest run uses all cores of the runner. CI keeps the apt
 packages of the pinned versions in the Actions cache, so a job installs them with no
 download. Each job that compiles also uses [ccache][ccache]. A run on `main` saves the
-caches, and the PR runs restore them.
+caches, and the PR runs restore them. The composite actions in `.github/actions/` hold
+the setup steps that more than one job uses.
 
 ## Unit tests
 
@@ -468,9 +465,9 @@ converter. `add_coverage_area` in `CMakeLists.txt` gives the minimums. The gate 
 the coverage of each area, writes it into `<area>.md` in the report folder, and fails
 if a value is less than its minimum. When the tests get better, increase the minimum.
 
-The Test coverage workflow in CI runs `cmake --workflow --preset coverage` on each PR
-and on each push to `main`. The job summary shows the coverage of each area, and the
-artifact `coverage-report` contains the report folder.
+The `Test coverage` job in CI runs `cmake --workflow --preset coverage`. The job summary
+shows the coverage of each area, and the artifact `coverage-report` contains the
+report folder.
 
 The CMake Tools extension of VS Code can show the coverage of each line after it runs
 the tests with coverage. To use it, select the `coverage` configure preset. Then set
@@ -509,11 +506,10 @@ cmake --build --preset mutation-diff
 ```
 
 The `mutation` target runs Mull one time for each program: the standards checker, the
-key log converter and each unit test program. Each run uses the CTest tests of its
-program, and each run is the target `mutation-<program>`. Then `mull-reporter` merges
-the results. If a test of one program kills a
-mutant, the mutant is killed. The target writes these files into `report/` in the
-build directory:
+key log converter and each unit test program. Each run is the target
+`mutation-<program>`. Then `mull-reporter` merges the results. If a test of one program
+kills a mutant, the mutant is killed. The target writes these files into `report/` in
+the build directory:
 
 | File              | Contents                                         |
 | ----------------- | ------------------------------------------------ |
@@ -521,6 +517,15 @@ build directory:
 | `mutation.html`   | The Mutation Testing Elements report, for people |
 | `mutation.json`   | The Mutation Testing Elements data               |
 | `mutation.sqlite` | The Mull data of all the runs                    |
+
+For each mutant, Mull runs a unit test program one time, and the program runs all its
+cases in one process. A failed case, a crash, a sanitizer stop and a timeout each kill
+the mutant. The cases of `key_event_log_test` fail in one process, because the key
+event log keeps state that no function resets. Thus, `ONE_CASE_PER_PROCESS` in
+`CMakeLists.txt` marks that program, and Mull runs its CTest tests, with one process
+for each case. The checker tests and the converter tests also run through CTest,
+because each case runs the program through `src/ci/run-fixture.cmake`. If a new test
+program fails in one process, Mull stops with the message `Original test failed`.
 
 ### Tests that write files
 
@@ -548,10 +553,10 @@ cmake --build --preset mutation-diff --parallel "$(nproc)"
 
 ### Mutation safety gate
 
-The Mutation safety gate workflow runs on each PR to `main` and on each push to
-`main`. The PR checkout is a merge commit, and its first parent is the base branch. The
-gate runs only the mutants on the lines that are different from the first parent,
-thus only the mutants of the PR. On `main`, the gate runs the mutants of the last
+The `Mutation safety gate` job runs on each PR and on each push to `main`. The PR
+checkout is a merge commit, and its first parent is the base branch. The gate runs
+only the mutants on the lines that are different from the first parent, thus only the
+mutants of the PR. On `main`, the gate runs the mutants of the last
 merge. A manual run of the workflow can compare with a different git ref. Each
 surviving mutant fails the gate. A PR that does not change the code under test has no
 mutants and passes.
@@ -762,8 +767,9 @@ table. A commit-msg hook does the same check on local commits.
 ## Releases
 
 When a merge changes `src/qmk/`, release-please makes a release PR. The release PR
-merges automatically. CI then builds only the firmware, with no debug firmware, no
-test and no analysis, and attaches the firmware file to the GitHub release. The name
+merges automatically. The Release Please workflow then builds only the firmware, with
+no debug firmware, no test and no analysis, and attaches the firmware file to the
+GitHub release. The name
 of that file ends in the release tag, for example
 `zsa_moonlander_reva_qgmlwy-v1.0.29.bin`.
 release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).

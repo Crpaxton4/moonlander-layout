@@ -1,0 +1,25 @@
+name: "ZSA firmware headers"
+description: >-
+  Checks out the QMK headers and the Moonlander keyboard data of the pinned ZSA
+  qmk_firmware commit into qmk_firmware/. The unit tests need no submodules
+
+runs:
+  using: composite
+  steps:
+    - name: "Read ZSA firmware pin"
+      id: qmk
+      shell: bash
+      run: .github/scripts/shared/read-qmk-ref.sh
+    - name: "Check out ZSA firmware headers"
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: zsa/qmk_firmware
+        ref: ${{ steps.qmk.outputs.ref }}
+        path: qmk_firmware
+        submodules: false
+        sparse-checkout: |
+          keyboards/zsa/moonlander
+          platforms
+          quantum
+          tmk_core
+        persist-credentials: false

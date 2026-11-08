@@ -9,7 +9,7 @@ exclude: |
     ^package-lock\.json$|
     ^LICENSE$
   )
-# CI runs the manual stage (lint.yaml), so each check hook has both stages
+# CI runs the manual stage (Lint job of ci.yaml), so each check hook has both stages
 
 repos:
   - repo: local

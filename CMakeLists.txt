@@ -101,9 +101,12 @@ if(MOONLANDER_MUTATION)
         message(FATAL_ERROR "No Mull plugin for LLVM ${llvm_major} at ${MULL_PLUGIN}")
     endif()
     set(sanitizers -fsanitize=address,undefined)
-    # Mull finds each mutant from the command line that the debug data records
+    # Mull finds each mutant from the command line that the debug data records. The
+    # function check of UBSan adds a handler call at each call through a function
+    # pointer, and Mull then removes that handler call instead of the call itself.
+    # Without the check, Mull removes the call
     add_compile_options(-fpass-plugin=${MULL_PLUGIN} -grecord-command-line
-        ${sanitizers} -fno-sanitize-recover=all)
+        ${sanitizers} -fno-sanitize-recover=all -fno-sanitize=function)
     add_link_options(${sanitizers})
 endif()
 
@@ -409,15 +412,18 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
     # build directory, so the build directory mirrors test/
     set(UNIT_TESTS_BINARY_DIR ${CMAKE_BINARY_DIR}/test/qmk)
 
-    # add_cmocka_test(<test source> [LIBRARIES <library>...])
+    # add_cmocka_test(<test source> [LIBRARIES <library>...] [ONE_CASE_PER_PROCESS])
     #
     # Builds one test program from the test source. Adds one CTest test for each
     # cmocka_unit_test*() case in the source, so a test runner shows each case on its
     # own. Each CTest test gives its case name as the first argument, and the test
     # program runs only the case with that name. A change to the test source runs the
-    # configure step again, so a new case gets its CTest test at the next build
+    # configure step again, so a new case gets its CTest test at the next build.
+    # Mutation testing runs all cases of a program in one process. ONE_CASE_PER_PROCESS
+    # marks a program whose cases fail in one process, because the code under test
+    # keeps state that no function resets
     function(add_cmocka_test test_source)
-        cmake_parse_arguments(PARSE_ARGV 1 test "" "" LIBRARIES)
+        cmake_parse_arguments(PARSE_ARGV 1 test ONE_CASE_PER_PROCESS "" LIBRARIES)
         get_filename_component(program ${test_source} NAME_WE)
         add_executable(${program} ${test_source})
         set_property(TARGET ${program} PROPERTY RUNTIME_OUTPUT_DIRECTORY
@@ -425,8 +431,12 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         target_link_libraries(${program} PRIVATE ${test_LIBRARIES} cmocka::cmocka)
         set_property(DIRECTORY ${PROJECT_SOURCE_DIR} APPEND PROPERTY
             CMAKE_CONFIGURE_DEPENDS ${test_source})
-        # Mutation testing runs the cases of each test program on their own
-        set_property(GLOBAL APPEND PROPERTY UNIT_TEST_PROGRAMS ${program})
+        if(test_ONE_CASE_PER_PROCESS)
+            set_property(GLOBAL APPEND PROPERTY ONE_CASE_PER_PROCESS_PROGRAMS
+                ${program})
+        else()
+            set_property(GLOBAL APPEND PROPERTY UNIT_TEST_PROGRAMS ${program})
+        endif()
 
         # clang-format can put the case name on the line after the macro name
         set(case_pattern "cmocka_unit_test[a-z_]*\\([ \t\n]*([a-z0-9_]+)")
@@ -586,8 +596,9 @@ if("unit-tests" IN_LIST MOONLANDER_PARTS)
         LIBRARIES keymap_logic unit_test)
     add_cmocka_test(${KEYMAP_TESTS}/case_modes/case_modes_test.c
         LIBRARIES qgmlwy_keymap)
+    # Logging state of the key event log stays from one case to the next
     add_cmocka_test(${KEYMAP_TESTS}/key_event_log/key_event_log_test.c
-        LIBRARIES qgmlwy_keymap)
+        LIBRARIES qgmlwy_keymap ONE_CASE_PER_PROCESS)
     add_cmocka_test(${KEYMAP_TESTS}/status_leds/status_leds_test.c
         LIBRARIES qgmlwy_keymap)
     add_cmocka_test(${KEYMAP_TESTS}/precision_key/precision_key_test.c
@@ -723,13 +734,16 @@ if(MOONLANDER_MUTATION)
         set(reporter_options "")
     endif()
 
-    # Mull finds the mutants in the program, then runs the CTest tests of that program
-    # for each mutant. All runs write into one database. mull-reporter then counts a
-    # mutant as killed if the tests of one program kill it
+    # Mull finds the mutants in the program, then runs the tests of that program for
+    # each mutant. All runs write into one database. mull-reporter then counts a
+    # mutant as killed if the tests of one program kill it. Mull stops a mutant after
+    # 10 times the duration of a run without mutants. A run of all cases in one
+    # process takes only milliseconds, so the minimum keeps a slow runner from a false
+    # kill
     set(run_mull ${CMAKE_COMMAND} -E env MULL_CONFIG=${runner_config} ${MULL_RUNNER}
         --reporters SQLite --report-dir ${MUTATION_REPORT_DIR} --report-name mutation
-        --allow-surviving --test-program ${CMAKE_CTEST_COMMAND})
-    set(test_options --test-dir ${CMAKE_BINARY_DIR} --stop-on-failure --label-regex)
+        --allow-surviving --minimum-timeout 1000)
+    set(ctest_options --test-dir ${CMAKE_BINARY_DIR} --stop-on-failure --label-regex)
     # Mull uses one worker for each core. Mull runs of a parallel build share the
     # cores, so CI gives each run fewer workers
     set(MUTATION_WORKERS "" CACHE STRING
@@ -747,20 +761,27 @@ if(MOONLANDER_MUTATION)
     # a Mull run
     add_custom_target(mutation-programs)
 
-    # add_mutation_subject(<program> <label> [ONE_AT_A_TIME])
+    # add_mutation_subject(<program> [LABEL <label>] [ONE_AT_A_TIME])
     #
-    # Adds the target mutation-<program>, a Mull run of the program with the CTest
-    # tests that have the label. Mull runs the tests of many mutants at the same time.
+    # Adds the target mutation-<program>, a Mull run of the program. Without LABEL,
+    # each mutant runs the program, and the program runs all its cases in one process.
+    # With LABEL, each mutant runs the CTest tests that have the label, so each case
+    # has its own process. A failed case, a crash, a sanitizer stop and a timeout each
+    # kill the mutant. Mull runs the tests of many mutants at the same time.
     # ONE_AT_A_TIME runs the tests of one mutant at a time, for tests that write files.
     # Each Mull run is a target, so a parallel build runs several at the same time
-    function(add_mutation_subject program label)
-        cmake_parse_arguments(PARSE_ARGV 2 subject ONE_AT_A_TIME "" "")
+    function(add_mutation_subject program)
+        cmake_parse_arguments(PARSE_ARGV 1 subject ONE_AT_A_TIME LABEL "")
         if(subject_ONE_AT_A_TIME)
             set(worker_options --workers 1)
         endif()
+        set(test_command $<TARGET_FILE:${program}>)
+        if(DEFINED subject_LABEL)
+            set(test_command --test-program ${CMAKE_CTEST_COMMAND} ${test_command} --
+                ${ctest_options} "^${subject_LABEL}$")
+        endif()
         add_custom_target(mutation-${program}
-            COMMAND ${run_mull} ${worker_options}
-                $<TARGET_FILE:${program}> -- ${test_options} "^${label}$"
+            COMMAND ${run_mull} ${worker_options} ${test_command}
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
             VERBATIM)
         add_dependencies(mutation-programs ${program})
@@ -770,17 +791,22 @@ if(MOONLANDER_MUTATION)
     set(mutation_runs "")
 
     # Each fixture case writes its outputs into the same folder in each run. Two runs
-    # of a case at the same time change the outputs of each other, and the case fails
+    # of a case at the same time change the outputs of each other, and the case fails.
+    # The fixture cases run the program through run-fixture.cmake, so they need CTest
     if("checker" IN_LIST MOONLANDER_PARTS)
-        add_mutation_subject(check_standards checker ONE_AT_A_TIME)
+        add_mutation_subject(check_standards LABEL checker ONE_AT_A_TIME)
     endif()
     if("converter" IN_LIST MOONLANDER_PARTS)
-        add_mutation_subject(key_log_converter converter ONE_AT_A_TIME)
+        add_mutation_subject(key_log_converter LABEL converter ONE_AT_A_TIME)
     endif()
-    # Label of each unit test program is its name
     get_property(unit_test_programs GLOBAL PROPERTY UNIT_TEST_PROGRAMS)
     foreach(program IN LISTS unit_test_programs)
-        add_mutation_subject(${program} ${program})
+        add_mutation_subject(${program})
+    endforeach()
+    # Label of each unit test program is its name
+    get_property(one_case_programs GLOBAL PROPERTY ONE_CASE_PER_PROCESS_PROGRAMS)
+    foreach(program IN LISTS one_case_programs)
+        add_mutation_subject(${program} LABEL ${program})
     endforeach()
 
     add_custom_target(mutation

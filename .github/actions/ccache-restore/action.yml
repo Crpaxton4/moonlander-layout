@@ -1,0 +1,58 @@
+name: "Restore ccache"
+description: >-
+  Restores the ccache objects of a build and installs ccache as the CMake compiler
+  launcher. A PR run uses ccache only if it restored an entry, so a missing cache
+  costs only the lookup. ccache-save prunes and saves the objects at the end of the
+  job
+
+inputs:
+  name:
+    description: "Name of the build in the cache key"
+    required: true
+  compiler:
+    description: "Compiler command of the build"
+    required: true
+  flags-hash:
+    description: "Hash of the files that set the compiler flags"
+    required: true
+  key-extra:
+    description: "More key text, for example a compiler plugin release; can be empty"
+    required: true
+
+outputs:
+  key:
+    description: "Key that ccache-save saves the objects under"
+    value: ${{ steps.key.outputs.key }}
+  used:
+    description: "true if the job uses ccache"
+    value: ${{ steps.install.outcome == 'success' }}
+
+runs:
+  using: composite
+  steps:
+    - name: "Compute ccache cache key"
+      id: key
+      shell: bash
+      env:
+        CCACHE_NAME: ${{ inputs.name }}
+        COMPILER: ${{ inputs.compiler }}
+        FLAGS_HASH: ${{ inputs.flags-hash }}
+        KEY_EXTRA: ${{ inputs.key-extra }}
+      run: .github/scripts/shared/compute-ccache-key.sh
+    - name: "Restore ccache"
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/ccache
+        key: ${{ steps.key.outputs.key }}
+        restore-keys: |
+          ${{ steps.key.outputs.prefix }}
+          ${{ steps.key.outputs.compiler-prefix }}
+
+    - name: "Install ccache"
+      id: install
+      if: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.cache.outputs.cache-matched-key != '' }}
+      shell: bash
+      run: .github/scripts/shared/install-ccache.sh

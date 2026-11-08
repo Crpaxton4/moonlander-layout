@@ -1,0 +1,51 @@
+name: "ZSA firmware"
+description: >-
+  Checks out the pinned ZSA qmk_firmware commit and the submodules that the firmware
+  build needs into qmk_firmware/, through the Actions cache. Each run compares the
+  checkout with the pin, so a cache never gives a different commit
+
+runs:
+  using: composite
+  steps:
+    - name: "Compute ZSA firmware cache key"
+      id: key
+      shell: bash
+      run: .github/scripts/build/compute-zsa-firmware-cache-key.sh
+    - name: "Restore ZSA firmware"
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: qmk_firmware
+        key: ${{ steps.key.outputs.key }}
+
+    # qmk_firmware/.git goes into the cache, so it must contain no credentials
+    - name: "Check out ZSA firmware"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: zsa/qmk_firmware
+        ref: ${{ steps.key.outputs.ref }}
+        path: qmk_firmware
+        submodules: false
+        persist-credentials: false
+
+    - name: "Check out ZSA firmware submodules"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      working-directory: qmk_firmware
+      run: ../.github/scripts/build/check-out-zsa-firmware-submodules.sh
+
+    - name: "Verify ZSA firmware checkout"
+      shell: bash
+      working-directory: qmk_firmware
+      env:
+        QMK_REF: ${{ steps.key.outputs.ref }}
+      run: ../.github/scripts/build/verify-zsa-firmware-checkout.sh
+
+    # Save before the build, so no build output goes into the cache
+    - name: "Save ZSA firmware"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: qmk_firmware
+        key: ${{ steps.key.outputs.key }}
