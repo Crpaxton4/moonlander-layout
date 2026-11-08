@@ -210,11 +210,11 @@ static const grid_position_t closing_square_bracket_key = {
     .column = 11,
 };
 
-/** Mouse right key T (2,3) of the nav mode */
+/** Mouse right key N (2,4) of the nav mode */
 static const grid_position_t mouse_right_key = {
     .layer  = LAYER_NAV,
     .row    = 2,
-    .column = 3,
+    .column = 4,
 };
 
 /** B (1,11), a plain letter key */
@@ -335,10 +335,10 @@ static const grid_position_t nav_clearing_keys[] = {
     {.layer = LAYER_NAV, .row = 3, .column = 9},
     {.layer = LAYER_NAV, .row = 3, .column = 10},
     {.layer = LAYER_NAV, .row = 3, .column = 11},
-    {.layer = LAYER_NAV, .row = 1, .column = 2},
-    {.layer = LAYER_NAV, .row = 2, .column = 1},
+    {.layer = LAYER_NAV, .row = 1, .column = 3},
     {.layer = LAYER_NAV, .row = 2, .column = 2},
     {.layer = LAYER_NAV, .row = 2, .column = 3},
+    {.layer = LAYER_NAV, .row = 2, .column = 4},
     {.layer = LAYER_NAV, .row = 1, .column = 8},
     {.layer = LAYER_NAV, .row = 2, .column = 8},
     {.layer = LAYER_NAV, .row = 1, .column = 10},
