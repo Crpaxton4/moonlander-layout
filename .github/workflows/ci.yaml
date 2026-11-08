@@ -141,6 +141,7 @@ jobs:
 
       # A failed test does not stop the analysis, so one run shows all findings
       - name: "Run tests"
+        id: tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: ctest --preset dev
 
@@ -162,8 +163,18 @@ jobs:
           name: mingw
           packages: gcc-mingw-w64-x86-64-win32=${{ env.MINGW_VERSION }}
       - name: "Build key log converter for Windows"
+        id: windows
         if: ${{ !cancelled() }}
         run: cmake --workflow --preset windows
+
+      - name: "Summarize results"
+        if: ${{ !cancelled() }}
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          ANALYSIS_OUTCOME: ${{ steps.analysis.outcome }}
+          WINDOWS_OUTCOME: ${{ steps.windows.outcome }}
+        run: .github/scripts/build/summarize-build-results.sh
 
       # Prune and save come after the Windows build, so the cache keeps its objects
       - uses: ./.github/actions/ccache-save
