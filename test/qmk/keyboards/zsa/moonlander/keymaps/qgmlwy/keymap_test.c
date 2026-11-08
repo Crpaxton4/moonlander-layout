@@ -39,6 +39,7 @@ typedef struct {
 
 /** Small right thumb keys R2 and R3, which send no key in each mode */
 static const uint8_t free_right_thumb_keys[] = {
+    RIGHT_OUTER_THUMB,
     RIGHT_MIDDLE_THUMB,
     RIGHT_INNER_THUMB,
 };
@@ -372,7 +373,7 @@ static void keymap_nav_left_home_row(void **state) {
         .keys =
             {
                 KC_NO,
-                KC_NO,
+                QK_MOUSE_ACCELERATION_0,
                 QK_MOUSE_CURSOR_LEFT,
                 QK_MOUSE_CURSOR_DOWN,
                 QK_MOUSE_CURSOR_RIGHT,
@@ -522,7 +523,7 @@ static void keymap_nav_right_thumb_keys(void **state) {
         .keys =
             {
                 [RIGHT_LARGE_THUMB]  = TG(LAYER_NAV),
-                [RIGHT_OUTER_THUMB]  = QK_MOUSE_ACCELERATION_0,
+                [RIGHT_OUTER_THUMB]  = KC_NO,
                 [RIGHT_MIDDLE_THUMB] = KC_NO,
                 [RIGHT_INNER_THUMB]  = KC_NO,
             },
@@ -586,10 +587,6 @@ static void keymap_free_positions_send_nothing_in_both_modes(void **state) {
         uint8_t thumb = free_right_thumb_keys[index];
         assert_key_sends_nothing_in_both_modes(RIGHT_THUMB_KEYS, thumb);
     }
-    // Thumb key R1 is the precision key of the nav mode only
-    assert_int_equal(
-        keycode_at_keymap_location(LAYER_BASE, RIGHT_THUMB_KEYS, RIGHT_OUTER_THUMB),
-        KC_NO);
 }
 
 /**

@@ -108,12 +108,12 @@ static const key_run_t default_mode_dark_keys[] = {
 };
 
 /**
- * Keys of the nav mode: M S T N, wheel up and down, the mouse buttons, the arrows,
- * Home, End, R0 and R1
+ * Keys of the nav mode: the precision key D, M S T N, wheel up and down, the mouse
+ * buttons, the arrows, Home, End and R0
  */
 static const key_run_t nav_mode_lit_keys[] = {
     {.row = LEFT_TOP_ROW, .first_column = 3, .last_column = 3},
-    {.row = LEFT_HOME_ROW, .first_column = 2, .last_column = 4},
+    {.row = LEFT_HOME_ROW, .first_column = 1, .last_column = 4},
     {.row = RIGHT_TOP_ROW, .first_column = 1, .last_column = 5},
     {.row = RIGHT_HOME_ROW, .first_column = 1, .last_column = 5},
     {.row = RIGHT_BOTTOM_LETTER_ROW, .first_column = 2, .last_column = 4},
@@ -121,11 +121,6 @@ static const key_run_t nav_mode_lit_keys[] = {
         .row          = RIGHT_THUMB_KEYS,
         .first_column = RIGHT_LARGE_THUMB,
         .last_column  = RIGHT_LARGE_THUMB,
-    },
-    {
-        .row          = RIGHT_THUMB_KEYS,
-        .first_column = RIGHT_OUTER_THUMB,
-        .last_column  = RIGHT_OUTER_THUMB,
     },
 };
 
