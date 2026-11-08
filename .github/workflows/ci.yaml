@@ -1,0 +1,480 @@
+name: "CI"
+
+# A run on main fills the caches that all PRs can restore
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      diff-ref:
+        description: "Git ref of the mutation diff; empty mutates the changes of the last commit"
+        type: string
+        default: ""
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # A skipped job passes its check, but a `paths:` filter keeps the check pending.
+  # The Build job also covers src/check_standards/ and src/key_log_converter/
+  FIRMWARE_PATHS: '^src/(qmk|ci|check_standards|key_log_converter)/|^test/|^CMakeLists\.txt$|^CMakePresets\.json$|(^|/)\.clang-tidy$|^Doxyfile$|^versions\.env$|^\.github/(workflows/ci\.yaml$|actions/|scripts/(build|shared)/)'
+  # Coverage and the mutation gate need the code under test, the tests, and the
+  # CMake and CI files of their builds
+  UNIT_TEST_PATHS: '^src/qmk/(keyboards/|\.qmk-ref$)|^src/(check_standards|key_log_converter|ci)/|^test/|^CMakeLists\.txt$|^CMakePresets\.json$|^versions\.env$|^\.github/(workflows/ci\.yaml$|actions/|scripts/(coverage|mutation|shared)/)'
+  # All hooks exclude these release-please files, so a PR that changes only them
+  # skips the Lint job
+  RELEASE_ONLY_PATHS: '^(CHANGELOG\.md|\.release-please-manifest\.json)$'
+
+# One change check feeds all jobs. Pushes to main and manual runs run all jobs
+jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    # Same Ubuntu release as the development machine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      firmware: ${{ steps.diff.outputs.firmware }}
+      unit-tests: ${{ steps.diff.outputs.unit-tests }}
+      release-only: ${{ steps.diff.outputs.release-only }}
+    steps:
+      # Job reads only the step scripts
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+      - id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: .github/scripts/shared/detect-changes.sh
+
+  # Build, tests and analysis share one runner, so the analysis reads the compile
+  # databases of this build with no artifact
+  build:
+    name: "Build"
+    needs: changes
+    # A failed change check gives no output, so the job runs
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.firmware != 'false') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    # Dependabot updates each SHA pin and its release comment on the same line
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
+      - name: "Use all cores"
+        run: .github/scripts/shared/use-all-cores.sh
+
+      - uses: ./.github/actions/zsa-firmware
+      - uses: ./.github/actions/qmk-toolchain
+      - uses: ./.github/actions/uv
+      - name: "Install QMK CLI"
+        run: .github/scripts/build/install-qmk-cli.sh
+      - run: .github/scripts/build/configure-qmk-cli.sh
+
+      # One ccache holds the objects of the firmware, the host programs and the
+      # Windows converter
+      - uses: ./.github/actions/ccache-restore
+        id: ccache
+        with:
+          name: build
+          compiler: cc
+          flags-hash: ${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'src/ci/mingw-w64-toolchain.cmake') }}
+          key-extra: qmk-${{ env.QMK_TOOLCHAINS_RELEASE }}-mingw-${{ env.MINGW_VERSION }}
+      # The keymap compile database then names the ccache link as the compiler
+      - name: "Link ccache for QMK"
+        if: ${{ steps.ccache.outputs.used == 'true' }}
+        run: .github/scripts/build/install-ccache.sh
+
+      # Each job that uses CMake restores the same packages
+      - uses: ./.github/actions/apt-packages
+        with:
+          name: unit-test
+          packages: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+      - name: "Use pinned CMake"
+        run: .github/scripts/shared/use-pinned-cmake.sh
+      - uses: ./.github/actions/tree-sitter
+
+      - name: "Install clang-tidy"
+        run: .github/scripts/shared/install-clang-tidy.sh
+      - name: "Install Doxygen"
+        run: .github/scripts/build/install-doxygen.sh
+
+      - name: "Build firmware, debug firmware, host programs and unit tests"
+        id: build
+        # PR values are empty outside a PR
+        env:
+          FIRMWARE_ONLY: false
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+          RELEASE_TAG: ""
+        run: .github/scripts/build/build.sh
+
+      # build preset writes the memory report of the normal and the debug firmware
+      - name: "Summarize memory use"
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: .github/scripts/build/summarize-memory-report.sh
+
+      # upload-artifact skips the dot directory .build/ without include-hidden-files
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: firmware
+          path: |
+            .build/*.bin
+            !.build/*-debug.bin
+          include-hidden-files: true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: debug-firmware
+          path: .build/*-debug.bin
+          include-hidden-files: true
+
+      # A failed test does not stop the analysis, so one run shows all findings
+      - name: "Run tests"
+        id: tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ctest --preset dev
+
+      - name: "Run static analysis"
+        id: analysis
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          QMK_HOME: ${{ github.workspace }}/qmk_firmware
+        run: .github/scripts/build/run-static-analysis.sh
+      - name: "Summarize analysis timings"
+        if: ${{ !cancelled() && steps.analysis.outcome != 'skipped' }}
+        run: .github/scripts/build/summarize-analysis-timings.sh
+
+      # Runner image does not contain MinGW-w64. The Windows build runs also after
+      # a failed build
+      - uses: ./.github/actions/apt-packages
+        if: ${{ !cancelled() }}
+        with:
+          name: mingw
+          packages: gcc-mingw-w64-x86-64-win32=${{ env.MINGW_VERSION }}
+      - name: "Build key log converter for Windows"
+        id: windows
+        if: ${{ !cancelled() }}
+        run: cmake --workflow --preset windows
+
+      - name: "Summarize results"
+        if: ${{ !cancelled() }}
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          ANALYSIS_OUTCOME: ${{ steps.analysis.outcome }}
+          WINDOWS_OUTCOME: ${{ steps.windows.outcome }}
+        run: .github/scripts/build/summarize-build-results.sh
+
+      # Prune and save come after the Windows build, so the cache keeps its objects
+      - uses: ./.github/actions/ccache-save
+        if: ${{ !cancelled() && steps.ccache.outputs.used == 'true' }}
+        with:
+          key: ${{ steps.ccache.outputs.key }}
+
+  lint:
+    name: "Lint"
+    needs: changes
+    # A failed change check gives no output, so the job runs
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.release-only != 'true') }}
+    # Apt pins need the Ubuntu release of the development machine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
+      # check-standards hook builds the checker with all cores
+      - name: "Use all cores"
+        run: .github/scripts/shared/use-all-cores.sh
+
+      - uses: ./.github/actions/node
+      - uses: ./.github/actions/uv
+      - name: "Install pre-commit"
+        run: .github/scripts/lint/install-pre-commit.sh
+
+      - name: "Compute pre-commit cache key"
+        id: pre-commit-key
+        env:
+          CONFIG_HASH: ${{ hashFiles('.pre-commit-config.yaml') }}
+        run: .github/scripts/lint/compute-pre-commit-cache-key.sh
+      - name: "Restore pre-commit environments"
+        id: pre-commit-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ steps.pre-commit-key.outputs.key }}
+
+      - name: "Install hook environments"
+        run: .github/scripts/lint/install-hook-environments.sh
+
+      # Save before the hooks, so a failed hook does not discard it
+      - name: "Save pre-commit environments"
+        if: ${{ steps.pre-commit-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ steps.pre-commit-key.outputs.key }}
+
+      # actionlint and the shellcheck hook run the shellcheck on PATH
+      - name: "Compute shellcheck cache key"
+        id: shellcheck-key
+        run: .github/scripts/lint/compute-shellcheck-cache-key.sh
+      - name: "Restore shellcheck package"
+        id: shellcheck-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/shellcheck-deb
+          key: ${{ steps.shellcheck-key.outputs.key }}
+
+      - name: "Download shellcheck package"
+        if: ${{ steps.shellcheck-cache.outputs.cache-hit != 'true' }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/shellcheck-deb
+        run: .github/scripts/lint/download-shellcheck-package.sh
+
+      - name: "Unpack shellcheck"
+        env:
+          DEB_DIR: ${{ runner.temp }}/shellcheck-deb
+        run: .github/scripts/lint/unpack-shellcheck.sh
+
+      # Save before the hooks, so a failed hook does not discard it
+      - name: "Save shellcheck package"
+        if: ${{ steps.shellcheck-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/shellcheck-deb
+          key: ${{ steps.shellcheck-key.outputs.key }}
+
+      - name: "Check shellcheck"
+        run: .github/scripts/lint/check-shellcheck.sh
+
+      # check-standards hook builds the checker with CMake and tree-sitter. The
+      # checker needs no cmocka, but the job restores the same packages as the other
+      # CMake jobs
+      - uses: ./.github/actions/tree-sitter
+      - uses: ./.github/actions/apt-packages
+        with:
+          name: unit-test
+          packages: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+      - name: "Use pinned CMake"
+        run: .github/scripts/shared/use-pinned-cmake.sh
+      - uses: ./.github/actions/ccache-restore
+        id: ccache
+        with:
+          name: lint
+          compiler: cc
+          flags-hash: ${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
+          key-extra: ""
+
+      - name: "Run pre-commit"
+        run: .github/scripts/lint/run-pre-commit.sh
+
+      - uses: ./.github/actions/ccache-save
+        if: ${{ !cancelled() && steps.ccache.outputs.used == 'true' }}
+        with:
+          key: ${{ steps.ccache.outputs.key }}
+
+      - name: "Summarize timings"
+        if: ${{ !cancelled() }}
+        run: .github/scripts/lint/summarize-hook-timings.sh
+
+  coverage:
+    name: "Test coverage"
+    needs: changes
+    # A failed change check gives no output, so the job runs
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.unit-tests != 'false') }}
+    # Apt pins need the Ubuntu release of the development machine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      # Unit tests compile against the QMK headers of this checkout
+      QMK_HOME: ${{ github.workspace }}/qmk_firmware
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
+      # gcov merges the counters of parallel test runs safely, because it locks each
+      # counter file
+      - name: "Use all cores"
+        run: .github/scripts/shared/use-all-cores.sh
+
+      - uses: ./.github/actions/zsa-firmware-headers
+      - uses: ./.github/actions/tree-sitter
+      - uses: ./.github/actions/apt-packages
+        with:
+          name: unit-test
+          packages: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+      - name: "Use pinned CMake"
+        run: .github/scripts/shared/use-pinned-cmake.sh
+      - uses: ./.github/actions/uv
+      - name: "Install gcovr"
+        run: .github/scripts/coverage/install-gcovr.sh
+
+      # ccache keeps the gcov notes file of each object with the object
+      - uses: ./.github/actions/ccache-restore
+        id: ccache
+        with:
+          name: coverage
+          compiler: cc
+          flags-hash: ${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
+          key-extra: ""
+
+      # Workflow builds with gcov counters, runs all tests and then the coverage
+      # gate of each area
+      - name: "Measure test coverage"
+        run: cmake --workflow --preset coverage
+
+      - uses: ./.github/actions/ccache-save
+        if: ${{ !cancelled() && steps.ccache.outputs.used == 'true' }}
+        with:
+          key: ${{ steps.ccache.outputs.key }}
+
+      - name: "Summarize coverage"
+        if: ${{ !cancelled() }}
+        env:
+          REPORT_DIR: .build/coverage/report
+        run: .github/scripts/coverage/summarize-coverage.sh
+
+      # upload-artifact skips the dot directory .build/ without include-hidden-files
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-report
+          path: .build/coverage/report/
+          include-hidden-files: true
+
+  # Gate mutates only the lines that differ from the diff ref. On a PR, the ref is the
+  # base branch, so a PR with no change of the code under test has no mutants and
+  # passes. On main, the gate mutates the last merge
+  mutation:
+    name: "Mutation safety gate"
+    needs: changes
+    # A failed change check gives no output, so the job runs
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.unit-tests != 'false') }}
+    # Apt pins need the Ubuntu release of the development machine
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      # Unit tests compile against the QMK headers of this checkout
+      QMK_HOME: ${{ github.workspace }}/qmk_firmware
+    steps:
+      # Mull compares the checkout with the diff ref, so the checkout needs that
+      # commit. A PR checkout is a merge commit, and its first parent is the base
+      # branch. A diff ref of a manual run can be any commit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: ${{ inputs.diff-ref && '0' || '2' }}
+          persist-credentials: false
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
+      - name: "Use all cores"
+        run: .github/scripts/shared/use-all-cores.sh
+
+      - uses: ./.github/actions/zsa-firmware-headers
+      - uses: ./.github/actions/tree-sitter
+      - uses: ./.github/actions/apt-packages
+        with:
+          name: unit-test
+          packages: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+      - name: "Use pinned CMake"
+        run: .github/scripts/shared/use-pinned-cmake.sh
+      # Runner image contains the pinned clang packages, so a cache miss downloads no
+      # package
+      - uses: ./.github/actions/apt-packages
+        with:
+          name: clang
+          packages: clang-18=${{ env.CLANG_VERSION }} libclang-rt-18-dev=${{ env.CLANG_VERSION }}
+
+      # Mull packages come from the GitHub release, not from an apt archive. Each
+      # run compares each package with its sha256 pin, so a cache never gives a
+      # different package
+      - name: "Compute Mull cache key"
+        id: mull-key
+        run: .github/scripts/mutation/compute-mull-cache-key.sh
+      - name: "Restore Mull packages"
+        id: mull-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/mull-debs
+          key: ${{ steps.mull-key.outputs.key }}
+
+      - name: "Download Mull packages"
+        if: ${{ steps.mull-cache.outputs.cache-hit != 'true' }}
+        env:
+          DEB_DIR: ${{ runner.temp }}/mull-debs
+        run: .github/scripts/mutation/download-mull-packages.sh
+
+      - name: "Verify Mull packages"
+        env:
+          DEB_DIR: ${{ runner.temp }}/mull-debs
+        run: .github/scripts/mutation/verify-mull-packages.sh
+
+      # Save before the gate, so a failed gate does not discard them
+      - name: "Save Mull packages"
+        if: ${{ steps.mull-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/mull-debs
+          key: ${{ steps.mull-key.outputs.key }}
+
+      - name: "Install Mull"
+        env:
+          DEB_DIR: ${{ runner.temp }}/mull-debs
+        run: .github/scripts/mutation/install-mutation-tools.sh
+
+      # Mull plugin release is in the key, so a new plugin never restores objects with
+      # the mutants of the old plugin
+      - uses: ./.github/actions/ccache-restore
+        id: ccache
+        with:
+          name: mutation
+          compiler: clang-18
+          flags-hash: ${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'src/ci/mull.yml') }}
+          key-extra: mull-${{ env.MULL_VERSION }}-${{ env.MULL_PLUGIN_SHA256 }}
+
+      # On a PR, a push and a manual run without a ref, the diff ref is the first
+      # parent of the checkout
+      - name: "Run mutation gate"
+        env:
+          MUTATION_DIFF_REF: ${{ inputs.diff-ref || 'HEAD^1' }}
+        run: .github/scripts/mutation/run-mutation-gate.sh
+
+      - uses: ./.github/actions/ccache-save
+        if: ${{ !cancelled() && steps.ccache.outputs.used == 'true' }}
+        with:
+          key: ${{ steps.ccache.outputs.key }}
+
+      - name: "Summarize surviving mutants"
+        if: ${{ !cancelled() }}
+        env:
+          REPORT_DIR: .build/mutation-diff/report
+          MULL_CONFIG: .build/mutation-diff/mull.yml
+        run: .github/scripts/mutation/summarize-mutants.sh
+
+      # upload-artifact skips the dot directory .build/ without include-hidden-files
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: mutation-report
+          path: .build/mutation-diff/report/
+          include-hidden-files: true
+          if-no-files-found: ignore

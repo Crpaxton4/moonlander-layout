@@ -1,0 +1,38 @@
+name: "QMK toolchain"
+description: >-
+  Installs the pinned QMK toolchain and flash utilities through the Actions cache.
+  Each run compares each asset with its sha256 pin, so a cache never gives a
+  different release
+
+runs:
+  using: composite
+  steps:
+    - name: "Compute QMK toolchain cache key"
+      id: key
+      shell: bash
+      run: .github/scripts/build/compute-qmk-toolchain-cache-key.sh
+    - name: "Restore QMK toolchain"
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/qmk-assets
+        key: ${{ steps.key.outputs.key }}
+
+    - name: "Download QMK toolchain"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      working-directory: ${{ runner.temp }}
+      run: '"$GITHUB_WORKSPACE/.github/scripts/build/download-qmk-toolchain.sh"'
+
+    - name: "Install QMK toolchain"
+      shell: bash
+      working-directory: ${{ runner.temp }}
+      run: '"$GITHUB_WORKSPACE/.github/scripts/build/install-qmk-toolchain.sh"'
+
+    # Save before the build, so a failed build does not discard the assets
+    - name: "Save QMK toolchain"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/qmk-assets
+        key: ${{ steps.key.outputs.key }}

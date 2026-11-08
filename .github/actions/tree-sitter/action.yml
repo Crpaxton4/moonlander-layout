@@ -1,0 +1,45 @@
+name: "tree-sitter"
+description: >-
+  Unpacks the pinned tree-sitter packages from the Actions cache and points
+  CMAKE_PREFIX_PATH at them. The standards checker builds against these packages
+
+runs:
+  using: composite
+  steps:
+    - name: "Compute tree-sitter cache key"
+      id: key
+      shell: bash
+      run: .github/scripts/shared/compute-tree-sitter-cache-key.sh
+    - name: "Restore tree-sitter packages"
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/tree-sitter-debs
+        key: ${{ steps.key.outputs.key }}
+
+    - name: "Download tree-sitter packages"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      env:
+        DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+      run: .github/scripts/shared/download-tree-sitter-packages.sh
+
+    - name: "Verify tree-sitter versions"
+      shell: bash
+      env:
+        DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+      run: .github/scripts/shared/verify-tree-sitter-versions.sh
+
+    - name: "Unpack tree-sitter"
+      shell: bash
+      env:
+        DEB_DIR: ${{ runner.temp }}/tree-sitter-debs
+      run: .github/scripts/shared/unpack-tree-sitter.sh
+
+    # Save before the build, so a failed build does not discard them
+    - name: "Save tree-sitter packages"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/tree-sitter-debs
+        key: ${{ steps.key.outputs.key }}

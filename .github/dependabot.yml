@@ -24,8 +24,11 @@ updates:
       pre-commit:
         patterns:
           - "*"
+  # Composite actions pin actions too, so Dependabot also reads their folders
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/.github/actions/*"
     schedule:
       interval: "weekly"
     commit-message:

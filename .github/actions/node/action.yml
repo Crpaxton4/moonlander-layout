@@ -1,0 +1,39 @@
+name: "Node"
+description: >-
+  Installs the pinned Node release through the Actions cache, then the npm packages.
+  The runner tool cache does not contain the NODE_VERSION release
+
+runs:
+  using: composite
+  steps:
+    - name: "Compute node cache key"
+      id: key
+      shell: bash
+      run: .github/scripts/shared/compute-node-cache-key.sh
+    - name: "Restore node runtime"
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.key.outputs.path }}
+        key: ${{ steps.key.outputs.key }}
+
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - name: "Install npm packages"
+      shell: bash
+      run: .github/scripts/shared/install-npm-packages.sh
+
+    - name: "Check node"
+      shell: bash
+      env:
+        NODE_DIR: ${{ steps.key.outputs.path }}
+      run: .github/scripts/shared/check-node.sh
+
+    # Save before the checks, so a failed check does not discard it
+    - name: "Save node runtime"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.key.outputs.path }}
+        key: ${{ steps.key.outputs.key }}

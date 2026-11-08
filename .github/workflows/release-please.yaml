@@ -42,13 +42,55 @@ jobs:
           RELEASE_PR: ${{ steps.release.outputs.pr }}
         run: .github/scripts/release-please/auto-merge-release-pr.sh
 
+  # A failed host program, test or check must not stop a release, so this job builds
+  # only the firmware, with no debug firmware and no ccache
   build:
+    name: "Build release firmware"
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
-    uses: ./.github/workflows/build.yaml
-    with:
-      firmware-only: true
-      release-tag: ${{ needs.release-please.outputs.tag_name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    # Dependabot updates each SHA pin and its release comment on the same line
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: "Load versions"
+        run: .github/scripts/shared/load-versions.sh
+
+      - uses: ./.github/actions/zsa-firmware
+      - uses: ./.github/actions/qmk-toolchain
+      - uses: ./.github/actions/uv
+      - name: "Install QMK CLI"
+        run: .github/scripts/build/install-qmk-cli.sh
+      - run: .github/scripts/build/configure-qmk-cli.sh
+
+      # Firmware build uses CMake. The CI jobs restore the same packages
+      - uses: ./.github/actions/apt-packages
+        with:
+          name: unit-test
+          packages: cmake=${{ env.CMAKE_VERSION }} libcmocka-dev=${{ env.CMOCKA_VERSION }}
+      - name: "Use pinned CMake"
+        run: .github/scripts/shared/use-pinned-cmake.sh
+
+      # Firmware file name ends in the release tag
+      - name: "Build firmware"
+        env:
+          FIRMWARE_ONLY: true
+          PR_NUMBER: ""
+          PR_HEAD_SHA: ""
+          RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: .github/scripts/build/build.sh
+
+      # upload-artifact skips the dot directory .build/ without include-hidden-files
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: firmware
+          path: .build/*.bin
+          if-no-files-found: error
+          include-hidden-files: true
 
   publish:
     needs: [release-please, build]

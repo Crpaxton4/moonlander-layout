@@ -1,0 +1,15 @@
+name: "uv"
+description: >-
+  Installs the pinned uv release and checks its version. uv downloads from PyPI faster
+  than the Actions cache restores, so uv has no cache
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        version: ${{ env.UV_VERSION }}
+        enable-cache: false
+    - name: "Check uv"
+      shell: bash
+      run: .github/scripts/shared/check-uv-version.sh

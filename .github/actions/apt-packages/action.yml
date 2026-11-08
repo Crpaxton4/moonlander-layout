@@ -1,0 +1,59 @@
+name: "Apt packages"
+description: >-
+  Installs pinned apt packages from the Actions cache. A cache miss downloads the
+  pinned packages and each dependency that the runner image does not contain. A cache
+  hit needs no package lists and no download
+
+inputs:
+  packages:
+    description: "Space-separated name=version pins"
+    required: true
+  name:
+    description: "Name of the package folder in the runner temp directory"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: "Compute ${{ inputs.name }} cache key"
+      id: key
+      shell: bash
+      env:
+        APT_PACKAGES: ${{ inputs.packages }}
+      run: .github/scripts/shared/compute-apt-cache-key.sh
+    - name: "Restore ${{ inputs.name }} packages"
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/${{ inputs.name }}-debs
+        key: ${{ steps.key.outputs.key }}
+
+    - name: "Download ${{ inputs.name }} packages"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      env:
+        APT_PACKAGES: ${{ inputs.packages }}
+        DEB_DIR: ${{ runner.temp }}/${{ inputs.name }}-debs
+      run: .github/scripts/shared/download-apt-packages.sh
+
+    - name: "Verify ${{ inputs.name }} packages"
+      shell: bash
+      env:
+        APT_PACKAGES: ${{ inputs.packages }}
+        DEB_DIR: ${{ runner.temp }}/${{ inputs.name }}-debs
+      run: .github/scripts/shared/verify-apt-packages.sh
+
+    # Save before the install, so a failed install does not discard them
+    - name: "Save ${{ inputs.name }} packages"
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/${{ inputs.name }}-debs
+        key: ${{ steps.key.outputs.key }}
+
+    - name: "Install ${{ inputs.name }} packages"
+      shell: bash
+      env:
+        APT_PACKAGES: ${{ inputs.packages }}
+        DEB_DIR: ${{ runner.temp }}/${{ inputs.name }}-debs
+      run: .github/scripts/shared/install-apt-packages.sh
