@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.1](https://github.com/Crpaxton4/moonlander-layout/compare/v1.19.0...v1.19.1) (2026-11-08)
+
+
+### Tests
+
+* **firmware:** let the key event log cases run in one process ([#202](https://github.com/Crpaxton4/moonlander-layout/issues/202)) ([548d0a1](https://github.com/Crpaxton4/moonlander-layout/commit/548d0a1ee6333f6aa0d1e3894afeefbc8f8f9805))
+
 ## [1.19.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.18.0...v1.19.0) (2026-11-08)
 
 
