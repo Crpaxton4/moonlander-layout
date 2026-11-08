@@ -1,6 +1,8 @@
 /** @file
- * Key lights of the Moonlander: all keys show one color, the color of the mode of the
- * highest active layer.
+ * Key lights of the Moonlander: each key that does something shows one color, the
+ * color of the mode of the highest active layer. Keys that do nothing in that mode
+ * are off. The keymap tells which keys do nothing, so the lights follow each change of
+ * the keymap.
  *
  * QMK calls the RGB matrix indicator hook after each frame of the effect, after the
  * keyboard and module code, and before it sends the frame to the LEDs. Thus the mode
@@ -19,7 +21,10 @@
  */
 void start_layer_lights(void);
 
-/** Sets all key LEDs to the color of the highest active layer */
+/**
+ * Sets the key LEDs to the color of the highest active layer, and turns off the LEDs
+ * of the keys that do nothing in the active mode
+ */
 void show_layer_light(void);
 
 // #endregion

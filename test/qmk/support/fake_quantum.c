@@ -354,6 +354,11 @@ void rgb_matrix_set_color_all(uint8_t red, uint8_t green, uint8_t blue) {
     }
 }
 
+void rgb_matrix_set_color(int index, uint8_t red, uint8_t green, uint8_t blue) {
+    assert_in_range(index, 0, RGB_MATRIX_LED_COUNT - 1);
+    key_lights[index] = (rgb_t){.r = red, .g = green, .b = blue};
+}
+
 void rgb_matrix_mode_noeeprom(uint8_t mode) {
     record_call(CALLED_RGB_MATRIX_MODE_NOEEPROM, mode);
 }

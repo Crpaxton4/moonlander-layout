@@ -19,4 +19,12 @@ void update_combos(void) {
     }
 }
 
+bool combos_operate(void) {
+    // Special mode takes each combo keycode as one push and does nothing else with it
+    if (layer_state_is(LAYER_SPECIAL)) {
+        return false;
+    }
+    return is_combo_enabled();
+}
+
 // #endregion

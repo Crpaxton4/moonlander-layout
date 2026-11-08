@@ -1,11 +1,12 @@
 /** @file
- * Color of each mode on the key lights.
+ * Color of each mode on the key lights, and the keys that are off.
  */
 
 // #region Includes
 
 #include QMK_KEYBOARD_H
 
+#include "combos/combos.h"
 #include "layer_lights/layer_lights.h"
 #include "layers/layers.h"
 
@@ -76,6 +77,63 @@ static rgb_t scale_to_brightness(rgb_t color) {
     };
 }
 
+/**
+ * Tells if a key is a combo key. LAYER_COMBO_POSITIONS has a combo keycode at each
+ * combo key, KC_TRANSPARENT at the other keys, and NO_PHYSICAL_KEY where the matrix
+ * has no key.
+ *
+ * @param key Matrix position of the key.
+ * @return True for a combo key.
+ */
+static bool is_combo_key(keypos_t key) {
+    uint16_t keycode = keymap_key_to_keycode(LAYER_COMBO_POSITIONS, key);
+    if (keycode == KC_TRANSPARENT) {
+        return false;
+    }
+    return keycode != NO_PHYSICAL_KEY;
+}
+
+/**
+ * Tells if a key does something in the active mode: its keycode on the active layers
+ * is not KC_NO, as QMK finds it for a push, or it is the key of a combo that
+ * operates.
+ *
+ * @param key Matrix position of the key.
+ * @return True if the key does something.
+ */
+static bool key_is_used(keypos_t key) {
+    if (keymap_key_to_keycode(layer_switch_get_layer(key), key) != KC_NO) {
+        return true;
+    } else if (!combos_operate()) {
+        return false;
+    }
+    return is_combo_key(key);
+}
+
+/**
+ * Turns off the LED of a key that does nothing in the active mode.
+ *
+ * @param row    Matrix row of the key.
+ * @param column Matrix column of the key.
+ */
+static void turn_off_unused_key(uint8_t row, uint8_t column) {
+    uint8_t  led = g_led_config.matrix_co[row][column];
+    keypos_t key = {.row = row, .col = column};
+    if (led == NO_LED || key_is_used(key)) {
+        return;
+    }
+    rgb_matrix_set_color(led, RGB_OFF);
+}
+
+/** Turns off the LED of each key that does nothing in the active mode */
+static void turn_off_unused_keys(void) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+            turn_off_unused_key(row, column);
+        }
+    }
+}
+
 // #endregion
 
 // #region Public functions
@@ -87,6 +145,7 @@ void start_layer_lights(void) {
 void show_layer_light(void) {
     rgb_t color = scale_to_brightness(highest_layer_color());
     rgb_matrix_set_color_all(color.r, color.g, color.b);
+    turn_off_unused_keys();
 }
 
 // #endregion

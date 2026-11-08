@@ -53,6 +53,7 @@
 #include "action_tapping.h"
 #include "action_util.h"
 #include "host.h"
+#include "keymap_common.h"
 #include "process_combo.h"
 #include "progmem.h"
 #include "quantum_keycodes.h"

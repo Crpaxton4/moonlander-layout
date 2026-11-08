@@ -7,6 +7,12 @@
 
 #pragma once
 
+// #region Includes
+
+#include <stdbool.h>
+
+// #endregion
+
 // #region Enumerations
 
 /** Combos, each the index of its entry in `key_combos` */
@@ -26,5 +32,12 @@ enum combo {
  * layer_state_set_user(), so the housekeeping task does this on each pass.
  */
 void update_combos(void);
+
+/**
+ * Tells if the combos operate in the active mode, so that their keys do something.
+ *
+ * @return False in the nav mode and in the special mode, true otherwise.
+ */
+bool combos_operate(void);
 
 // #endregion

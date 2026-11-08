@@ -63,7 +63,8 @@ bool fake_status_led_is_on(uint8_t position);
 void set_fake_key_light_brightness(uint8_t brightness);
 
 /**
- * Gives the last color of one key LED, as rgb_matrix_set_color_all() sets it.
+ * Gives the last color of one key LED, as rgb_matrix_set_color_all() or
+ * rgb_matrix_set_color() sets it.
  *
  * @param led Index of the LED in the RGB matrix.
  * @return Color of the LED; black after reset_fake_qmk().

@@ -1,0 +1,26 @@
+/** @file
+ * LED map of the fake RGB matrix: the key LED of each matrix position.
+ *
+ * CMake writes the map from the keyboard data of the firmware build, as QMK does for
+ * the firmware. Thus the tests use the LED map of the keyboard.
+ */
+
+// #region Includes
+
+#include QMK_KEYBOARD_H
+
+// #endregion
+
+// #region Data
+
+// Fake and keyboard data must have the same matrix and the same number of key LEDs
+_Static_assert(@LED_MAP_ROW_COUNT@ == MATRIX_ROWS, "Matrix rows of the LED map");
+_Static_assert(@KEY_LED_COUNT@ == RGB_MATRIX_LED_COUNT, "Key LEDs of the LED map");
+
+led_config_t g_led_config = {
+    .matrix_co =
+        {
+@LED_MAP_ROWS@        },
+};
+
+// #endregion
