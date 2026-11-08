@@ -51,5 +51,8 @@ runs:
 
     - name: "Install ccache"
       id: install
+      if: >-
+        ${{ github.event_name != 'pull_request'
+        || steps.cache.outputs.cache-matched-key != '' }}
       shell: bash
       run: .github/scripts/shared/install-ccache.sh
