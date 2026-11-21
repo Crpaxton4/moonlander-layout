@@ -22,8 +22,8 @@
 /** Key at a position in the report: key name, position and layer */
 #define KEY_POSITION_FORMAT "%s at %s layer %u"
 
-/** Heatmap file line: keycode, position field and layer */
-#define HEATMAP_ROW_FORMAT "0x%04X,%s,%u\n"
+/** Heatmap file line: keycode, matrix row, matrix column and layer */
+#define HEATMAP_ROW_FORMAT "0x%04X,%u,%u,%u\n"
 
 // #endregion
 
@@ -170,11 +170,11 @@ static void count_correction(converter_t *converter, uint32_t time) {
  * @param event     Key push.
  */
 static void write_heatmap_row(converter_t *converter, const key_event_t *event) {
-    char     position[POSITION_FIELD_SIZE];
     unsigned keycode = event->keycode;
+    unsigned row     = event->position.row;
+    unsigned col     = event->position.col;
     unsigned layer   = event->layer;
-    write_position_field(event->position, position);
-    fprintf(converter->heatmap, HEATMAP_ROW_FORMAT, keycode, position, layer);
+    fprintf(converter->heatmap, HEATMAP_ROW_FORMAT, keycode, row, col, layer);
 }
 
 /**

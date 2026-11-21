@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "grid_position.h"
 #include "outputs.h"
 #include "report.h"
 #include "support.h"
@@ -93,13 +92,12 @@ static void write_usage_lines(FILE *file, converter_t *converter) {
         add_matrix_positions(&converter->usage, (uint8_t)layer);
     }
     sort_position_counts(&converter->usage);
-    fputs("position,layer,pushes\n", file);
+    fputs("row,col,layer,pushes\n", file);
     for (size_t index = 0; index < converter->usage.count; index++) {
         const position_count_t *item = &converter->usage.items[index];
-        char                    position[POSITION_FIELD_SIZE];
-        unsigned                layer = item->key.layer;
-        write_position_field(item->key.position, position);
-        fprintf(file, "%s,%u,%llu\n", position, layer, item->count);
+        fprintf(file, "%u,%u,%u,%llu\n", (unsigned)item->key.position.row,
+                (unsigned)item->key.position.col, (unsigned)item->key.layer,
+                item->count);
     }
 }
 
@@ -133,12 +131,11 @@ static void write_correction_lines(FILE *file, converter_t *converter) {
     fprintf(file, "character pushes,%llu\n", converter->character_pushes);
     fprintf(file, "correction percent,%llu.%02llu\n", percent / HUNDREDTHS_PER_PERCENT,
             percent % HUNDREDTHS_PER_PERCENT);
-    fputs("position,backspace pushes less than 1 s after a push\n", file);
+    fputs("row,col,backspace pushes less than 1 s after a push\n", file);
     for (size_t index = 0; index < converter->corrections.count; index++) {
         const position_count_t *item = &converter->corrections.items[index];
-        char                    position[POSITION_FIELD_SIZE];
-        write_position_field(item->key.position, position);
-        fprintf(file, "%s,%llu\n", position, item->count);
+        fprintf(file, "%u,%u,%llu\n", (unsigned)item->key.position.row,
+                (unsigned)item->key.position.col, item->count);
     }
 }
 

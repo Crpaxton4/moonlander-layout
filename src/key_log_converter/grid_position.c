@@ -5,7 +5,6 @@
 // #region Includes
 
 #include <stdio.h>
-#include <string.h>
 
 #include "counters.h"
 #include "grid_position.h"
@@ -88,13 +87,6 @@ void write_grid_position(position_t position, char text[GRID_POSITION_SIZE]) {
     } else {
         snprintf(text, GRID_POSITION_SIZE, "matrix %u,%u", row, col);
     }
-}
-
-void write_position_field(position_t position, char field[POSITION_FIELD_SIZE]) {
-    char text[GRID_POSITION_SIZE];
-    write_grid_position(position, text);
-    const char *mark = strchr(text, ',') == NULL ? "" : "\"";
-    snprintf(field, POSITION_FIELD_SIZE, "%s%s%s", mark, text, mark);
 }
 
 // #endregion

@@ -15,9 +15,6 @@
 /** Bytes of the longest position text, with its terminator */
 #define GRID_POSITION_SIZE 16
 
-/** Bytes of the longest position field, with two quotation marks */
-#define POSITION_FIELD_SIZE (GRID_POSITION_SIZE + 2)
-
 // #endregion
 
 // #region Functions
@@ -32,14 +29,5 @@
  * @param text     Buffer of GRID_POSITION_SIZE bytes that gets the text.
  */
 void write_grid_position(position_t position, char text[GRID_POSITION_SIZE]);
-
-/**
- * Writes a matrix position as one field of a CSV line. A text with a comma gets
- * quotation marks.
- *
- * @param position Matrix position.
- * @param field    Buffer of POSITION_FIELD_SIZE bytes that gets the field.
- */
-void write_position_field(position_t position, char field[POSITION_FIELD_SIZE]);
 
 // #endregion
