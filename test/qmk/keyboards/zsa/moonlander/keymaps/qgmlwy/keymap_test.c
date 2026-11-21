@@ -619,6 +619,31 @@ static void keymap_free_positions_send_nothing_in_both_modes(void **state) {
 }
 
 /**
+ * Fails the test at the first key of a row of a layer that sends a key. A
+ * transparent key of the combo layer sends no key, because that layer is never on.
+ *
+ * @param layer Layer of the row.
+ * @param row   Row in the key matrix.
+ */
+static void assert_layer_row_sends_nothing(uint8_t layer, uint8_t row) {
+    for (uint8_t column = 0; column < MATRIX_COLS; column++) {
+        uint16_t keycode = keycode_at_keymap_location(layer, row, column);
+        if (keycode != KC_NO && layer != LAYER_COMBO_POSITIONS) {
+            print_error("Layer %d, row %d, column %d\n", layer, row, column);
+            fail_msg("Keycode 0x%04X", keycode);
+        }
+    }
+}
+
+static void keymap_bottom_rows_send_nothing_on_each_layer(void **state) {
+    (void)state;
+    for (uint8_t layer = 0; layer < keymap_layer_count(); layer++) {
+        assert_layer_row_sends_nothing(layer, LEFT_BOTTOM_ROW);
+        assert_layer_row_sends_nothing(layer, RIGHT_BOTTOM_ROW);
+    }
+}
+
+/**
  * Gives the number of mouse keys in one row of the base layer.
  *
  * @param row Row in the key matrix.
@@ -1132,9 +1157,9 @@ static void keymap_plain_left_bottom_row(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                KC_LEFT_CTRL,
-                KC_LEFT_ALT,
-                KC_LEFT_GUI,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 KC_NO,
                 KC_NO,
                 NO_PHYSICAL_KEY,
@@ -1314,6 +1339,7 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_nav_right_bottom_row),
     cmocka_unit_test(keymap_nav_right_thumb_keys),
     cmocka_unit_test(keymap_free_positions_send_nothing_in_both_modes),
+    cmocka_unit_test(keymap_bottom_rows_send_nothing_on_each_layer),
     cmocka_unit_test(keymap_default_mode_has_no_mouse_key),
     cmocka_unit_test(keymap_nav_keys_have_no_hold),
     cmocka_unit_test(keymap_combo_positions_left_number_row),

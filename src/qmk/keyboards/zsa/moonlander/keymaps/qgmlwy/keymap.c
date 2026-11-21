@@ -556,9 +556,9 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_PLAIN][LEFT_BOTTOM_ROW] =
             {
-                KC_LEFT_CTRL,
-                KC_LEFT_ALT,
-                KC_LEFT_GUI,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 KC_NO,
                 KC_NO,
                 NO_PHYSICAL_KEY,
