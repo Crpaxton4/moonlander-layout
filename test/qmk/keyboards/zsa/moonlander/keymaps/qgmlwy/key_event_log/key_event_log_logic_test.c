@@ -42,11 +42,14 @@
 /** Left Shift bit of the report modifier byte */
 #define LEFT_SHIFT_BIT 0x02
 
-/** Time at which a test switches logging on */
+/** Time at which a test pauses logging */
 #define START_TIME 1000
 
-/** First time at which the idle time is over, after logging went on at START_TIME */
-#define IDLE_END_TIME (START_TIME + LOGGING_IDLE_MILLISECONDS)
+/** First time at which the idle time is over, after a pause at START_TIME */
+#define IDLE_END_TIME (START_TIME + PAUSE_IDLE_MILLISECONDS)
+
+/** Idle time of a pause: 5 minutes */
+#define FIVE_MINUTES (UINT32_C(5) * 60 * 1000)
 
 /** Key codes in one byte of a key bitmap */
 #define KEYS_PER_BITMAP_BYTE 8
@@ -74,20 +77,20 @@ static void set_key_bit(uint8_t *bits, uint8_t key_code) {
     bits[key_code / KEYS_PER_BITMAP_BYTE] |= KEY_CODE_BIT(key_code);
 }
 
-static void key_event_log_logic_r1_static_state_is_off(void **state) {
+static void key_event_log_logic_r1_static_state_is_on(void **state) {
     (void)state;
     // Static storage starts as zero, as the state in key_event_log.c does
     static logging_t logging;
-    assert_false(logging.is_on);
+    assert_false(logging.is_paused);
 }
 
-static void key_event_log_logic_r2_toggle_turns_on_then_off(void **state) {
+static void key_event_log_logic_r2_toggle_pauses_then_resumes(void **state) {
     (void)state;
-    logging_t logging = {.is_on = false};
-    assert_int_equal(logging_toggle(&logging, START_TIME), LOGGING_ON);
-    assert_true(logging.is_on);
+    logging_t logging = {.is_paused = false};
     assert_int_equal(logging_toggle(&logging, START_TIME), LOGGING_OFF);
-    assert_false(logging.is_on);
+    assert_true(logging.is_paused);
+    assert_int_equal(logging_toggle(&logging, START_TIME), LOGGING_ON);
+    assert_false(logging.is_paused);
 }
 
 static void key_event_log_logic_r6_push_and_release_directions(void **state) {
@@ -98,7 +101,7 @@ static void key_event_log_logic_r6_push_and_release_directions(void **state) {
 
 static void key_event_log_logic_r7_first_report_with_a_key_is_a_change(void **state) {
     (void)state;
-    logging_t       logging = {.is_on = false};
+    logging_t       logging = {.is_paused = false};
     logged_report_t report  = {.keys = {KEY_A}};
     assert_true(logging_report_changed(&logging, &report));
     assert_false(logging_report_changed(&logging, &report));
@@ -106,7 +109,7 @@ static void key_event_log_logic_r7_first_report_with_a_key_is_a_change(void **st
 
 static void key_event_log_logic_r7_modifier_change_is_a_change(void **state) {
     (void)state;
-    logging_t       logging = {.is_on = false};
+    logging_t       logging = {.is_paused = false};
     logged_report_t report  = {.modifiers = 0};
     assert_false(logging_report_changed(&logging, &report));
     report.modifiers = LEFT_SHIFT_BIT;
@@ -142,44 +145,46 @@ static void key_event_log_logic_r8_state_names(void **state) {
     (void)state;
     assert_string_equal(logging_state_name(LOGGING_ON), "on");
     assert_string_equal(logging_state_name(LOGGING_OFF), "off");
-    assert_string_equal(logging_state_name(LOGGING_IDLE_OFF), "idle-off");
+    assert_string_equal(logging_state_name(LOGGING_IDLE_ON), "idle-on");
 }
 
-static void key_event_log_logic_r9_idle_off_after_thirty_minutes(void **state) {
+static void key_event_log_logic_r9_pause_ends_after_five_idle_minutes(void **state) {
     (void)state;
-    logging_t logging = {.is_on = false};
+    logging_t logging = {.is_paused = false};
+    assert_int_equal(PAUSE_IDLE_MILLISECONDS, FIVE_MINUTES);
     logging_toggle(&logging, START_TIME);
-    assert_false(logging_idle_ended(&logging, IDLE_END_TIME - ONE_MILLISECOND));
-    assert_true(logging.is_on);
-    assert_true(logging_idle_ended(&logging, IDLE_END_TIME));
-    assert_false(logging.is_on);
-    assert_false(logging_idle_ended(&logging, IDLE_END_TIME));
+    assert_false(logging_pause_ended(&logging, IDLE_END_TIME - ONE_MILLISECOND));
+    assert_true(logging.is_paused);
+    assert_true(logging_pause_ended(&logging, IDLE_END_TIME));
+    assert_false(logging.is_paused);
+    assert_false(logging_pause_ended(&logging, IDLE_END_TIME));
 }
 
 static void key_event_log_logic_r9_push_starts_the_idle_time_again(void **state) {
     (void)state;
-    logging_t logging = {.is_on = false};
+    logging_t logging = {.is_paused = false};
     logging_toggle(&logging, START_TIME);
     const uint32_t push_time = IDLE_END_TIME - ONE_MILLISECOND;
     logging_note_push(&logging, push_time);
-    assert_false(logging_idle_ended(&logging, IDLE_END_TIME));
-    assert_true(logging_idle_ended(&logging, push_time + LOGGING_IDLE_MILLISECONDS));
+    assert_false(logging_pause_ended(&logging, IDLE_END_TIME));
+    assert_true(logging_pause_ended(&logging, push_time + PAUSE_IDLE_MILLISECONDS));
 }
 
 static void key_event_log_logic_r9_idle_time_continues_over_timer_wrap(void **state) {
     (void)state;
-    logging_t      logging    = {.is_on = false};
+    logging_t      logging    = {.is_paused = false};
     const uint32_t start_time = UINT32_MAX - START_TIME;
-    const uint32_t end_time   = start_time + LOGGING_IDLE_MILLISECONDS;
+    const uint32_t end_time   = start_time + PAUSE_IDLE_MILLISECONDS;
     logging_toggle(&logging, start_time);
-    assert_false(logging_idle_ended(&logging, end_time - ONE_MILLISECOND));
-    assert_true(logging_idle_ended(&logging, end_time));
+    assert_false(logging_pause_ended(&logging, end_time - ONE_MILLISECOND));
+    assert_true(logging_pause_ended(&logging, end_time));
 }
 
-static void key_event_log_logic_r9_no_idle_off_while_off(void **state) {
+static void key_event_log_logic_r9_no_pause_end_while_on(void **state) {
     (void)state;
-    logging_t logging = {.is_on = false};
-    assert_false(logging_idle_ended(&logging, LOGGING_IDLE_MILLISECONDS));
+    logging_t logging = {.is_paused = false};
+    assert_false(logging_pause_ended(&logging, PAUSE_IDLE_MILLISECONDS));
+    assert_false(logging.is_paused);
 }
 
 // #endregion
@@ -188,18 +193,18 @@ static void key_event_log_logic_r9_no_idle_off_while_off(void **state) {
 
 /** Cases of this program */
 static const struct CMUnitTest key_event_log_logic_cases[] = {
-    cmocka_unit_test(key_event_log_logic_r1_static_state_is_off),
-    cmocka_unit_test(key_event_log_logic_r2_toggle_turns_on_then_off),
+    cmocka_unit_test(key_event_log_logic_r1_static_state_is_on),
+    cmocka_unit_test(key_event_log_logic_r2_toggle_pauses_then_resumes),
     cmocka_unit_test(key_event_log_logic_r6_push_and_release_directions),
     cmocka_unit_test(key_event_log_logic_r7_first_report_with_a_key_is_a_change),
     cmocka_unit_test(key_event_log_logic_r7_modifier_change_is_a_change),
     cmocka_unit_test(key_event_log_logic_r7_bitmap_keys_in_code_order),
     cmocka_unit_test(key_event_log_logic_r7_bitmap_keeps_first_six_keys),
     cmocka_unit_test(key_event_log_logic_r8_state_names),
-    cmocka_unit_test(key_event_log_logic_r9_idle_off_after_thirty_minutes),
+    cmocka_unit_test(key_event_log_logic_r9_pause_ends_after_five_idle_minutes),
     cmocka_unit_test(key_event_log_logic_r9_push_starts_the_idle_time_again),
     cmocka_unit_test(key_event_log_logic_r9_idle_time_continues_over_timer_wrap),
-    cmocka_unit_test(key_event_log_logic_r9_no_idle_off_while_off),
+    cmocka_unit_test(key_event_log_logic_r9_no_pause_end_while_on),
 };
 
 int main(int argc, char **argv) {

@@ -226,15 +226,15 @@ static void plain_mode_r3_symbol_hold_does_not_operate(void **state) {
 static void plain_mode_r6_logging_combo_operates(void **state) {
     (void)state;
     start_with_layers(PLAIN_MODE);
-    bool logging_was_on = key_event_log_is_on();
+    bool logging_was_paused = key_event_log_is_paused();
     assert_false(tap_key(LOGGING_TOGGLE));
-    assert_int_not_equal(key_event_log_is_on(), logging_was_on);
+    assert_int_not_equal(key_event_log_is_paused(), logging_was_paused);
 }
 
 static void plain_mode_r6_log_records_the_plain_layer(void **state) {
     (void)state;
     start_with_layers(PLAIN_MODE);
-    if (!key_event_log_is_on()) {
+    if (key_event_log_is_paused()) {
         tap_key(LOGGING_TOGGLE);
     }
     reset_fake_qmk();

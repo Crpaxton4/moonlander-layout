@@ -1,5 +1,5 @@
 /** @file
- * Logging state, idle time and report comparison of the key event log.
+ * Logging pause, idle time and report comparison of the key event log.
  */
 
 // #region Includes
@@ -24,9 +24,9 @@
 
 /** Text of each state, indexed by state */
 static const char *const state_names[] = {
-    [LOGGING_OFF]      = "off",
-    [LOGGING_ON]       = "on",
-    [LOGGING_IDLE_OFF] = "idle-off",
+    [LOGGING_OFF]     = "off",
+    [LOGGING_ON]      = "on",
+    [LOGGING_IDLE_ON] = "idle-on",
 };
 
 // #endregion
@@ -34,8 +34,8 @@ static const char *const state_names[] = {
 // #region Public functions
 
 enum logging_state logging_toggle(logging_t *logging, uint32_t now) {
-    enum logging_state state = logging->is_on ? LOGGING_OFF : LOGGING_ON;
-    logging->is_on           = state == LOGGING_ON;
+    enum logging_state state = logging->is_paused ? LOGGING_ON : LOGGING_OFF;
+    logging->is_paused       = state == LOGGING_OFF;
     logging->last_push_time  = now;
     return state;
 }
@@ -44,11 +44,14 @@ void logging_note_push(logging_t *logging, uint32_t now) {
     logging->last_push_time = now;
 }
 
-bool logging_idle_ended(logging_t *logging, uint32_t now) {
-    if (!logging->is_on || now - logging->last_push_time < LOGGING_IDLE_MILLISECONDS) {
+bool logging_pause_ended(logging_t *logging, uint32_t now) {
+    if (!logging->is_paused) {
         return false;
     }
-    logging->is_on = false;
+    if (now - logging->last_push_time < PAUSE_IDLE_MILLISECONDS) {
+        return false;
+    }
+    logging->is_paused = false;
     return true;
 }
 

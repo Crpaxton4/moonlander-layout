@@ -265,8 +265,46 @@ The key log capture saves the QMK console of the keyboard in log files on a Wind
 computer. It uses [hid_listen][hid-listen] from PJRC. `versions.env` pins its version
 and the SHA-256 hash of its zip file.
 
-The log files contain all the text that you type while logging is on. Keep the log
-files only on the local computer.
+The log files contain all the text that you type, also passwords. Before you type
+private text, pause the logging. Keep the log files only on the local computer.
+
+### Logging
+
+Logging is on when the keyboard starts. The keyboard writes the records to the QMK
+console also when no program reads them.
+
+To pause the logging, push the keys (1,6) and (1,7) at the same time. They are the two
+innermost keys of the top letter row. Status LED 1, the leftmost LED of the left half,
+is on during a pause. To continue the logging, push the two keys again. The special
+mode stops this combo.
+
+A pause also stops after 5 minutes with no key push. Thus, a pause cannot stay on by
+mistake. A key push during a pause starts the 5 minutes again.
+
+The keyboard writes the records in this table. Each record is one line. `<time>` is the
+time since power-up in ms, as a decimal number.
+
+| Record | Fields                                                                      |
+| ------ | --------------------------------------------------------------------------- |
+| State  | `KL,S,<time>,<state>`                                                       |
+| Input  | `KL,I,<time>,<dir>,<row>,<col>,<layer>,<keycode>,<mods>,<osm>,<taps>,<int>` |
+| Output | `KL,O,<time>,<mods>,<key>,<key>,<key>,<key>,<key>,<key>`                    |
+
+The keyboard writes a state record when a pause starts or stops. The state is `off`
+when you start a pause and `on` when you stop it. The state is `idle-on` when the pause
+stops after 5 minutes. The keyboard writes no state record when it starts.
+
+The keyboard writes an input record for each key event. `<dir>` is `d` for a push and
+`u` for a release. `<row>`, `<col>` and `<layer>` are the QMK matrix position and the
+highest active layer, as decimal numbers. `<keycode>` has 4 hexadecimal digits.
+`<mods>` and `<osm>` are the modifiers and the one-shot modifiers, with 2 hexadecimal
+digits each. `<taps>` and `<int>` are the tap count and the interrupted flag of QMK.
+
+The keyboard writes an output record for each changed keyboard report that the host
+gets. The record gives the modifier byte and the six key codes, with 2 hexadecimal
+digits each. An unused key slot is `00`.
+
+During a pause, the keyboard writes no input record and no output record.
 
 ### Install the capture
 

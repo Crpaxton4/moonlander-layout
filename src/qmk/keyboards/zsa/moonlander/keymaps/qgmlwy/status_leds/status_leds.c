@@ -44,7 +44,7 @@ static const uint8_t layer_leds[] = {
 
 /** LED of each module state, which comes on with the LEDs of the layer */
 static const state_led_t state_leds[] = {
-    {.is_on = key_event_log_is_on, .led = LOGGING_LED},
+    {.is_on = key_event_log_is_paused, .led = LOGGING_PAUSE_LED},
     {.is_on = bracket_pairs_are_open, .led = OPEN_PAIR_LED},
 };
 

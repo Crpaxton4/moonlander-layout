@@ -17,7 +17,7 @@
 
 /** Combos, each the index of its entry in `key_combos` */
 enum combo {
-    LOGGING_COMBO,    /**< (1,6) and (1,7): logging on or off */
+    LOGGING_COMBO,    /**< (1,6) and (1,7): logging pause or resume */
     PLAIN_MODE_COMBO, /**< (2,6) and (2,7): plain mode on or off */
 };
 

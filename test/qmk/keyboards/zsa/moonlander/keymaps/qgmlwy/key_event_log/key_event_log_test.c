@@ -36,6 +36,9 @@
 /** Left Ctrl bit of the report modifier byte */
 #define LEFT_CTRL_BIT 0x01
 
+/** Time with no key push that is much longer than the idle time of a pause */
+#define ONE_HOUR (UINT32_C(60) * 60 * 1000)
+
 /** Shortest time step */
 #define ONE_MILLISECOND 1
 
@@ -133,21 +136,21 @@ static void start_at_power_up(void) {
 }
 
 /**
- * Sets logging on or off, then empties the console text and the call log.
+ * Sets logging on or paused, then empties the console text and the call log.
  *
- * Logging goes on at time 0, so the idle time starts at 0. A housekeeping pass puts
+ * A pause starts at time 0, so its idle time starts at 0. A housekeeping pass puts
  * the logging host driver in place.
  *
- * @param on True for logging on.
+ * @param on True for logging on, false for a pause.
  */
 static void start_with_logging(bool on) {
     start_at_power_up();
-    if (on) {
+    if (!on) {
         push_logging_combo();
     }
     reset_fake_qmk();
     housekeeping_task_user();
-    assert_int_equal(key_event_log_is_on(), on);
+    assert_int_equal(key_event_log_is_paused(), !on);
     assert_console_text("");
 }
 
@@ -162,32 +165,34 @@ static void send_test_report(uint8_t modifiers, uint8_t first_key) {
     host_get_driver()->send_keyboard(&report);
 }
 
-static void key_event_log_r1_off_at_power_up(void **state) {
+static void key_event_log_r1_on_at_power_up(void **state) {
     (void)state;
     start_at_power_up();
-    assert_false(key_event_log_is_on());
+    assert_false(key_event_log_is_paused());
     housekeeping_task_user();
     assert_true(send_key_event(KC_A, true));
     send_test_report(0, KC_A);
-    assert_console_text("");
+    // No state record, because no console listener gets a record at power-up
+    assert_console_text("KL,I,0,d,2,3,0,0004,00,00,0,0\n"
+                        "KL,O,0,00,04,00,00,00,00,00\n");
 }
 
-static void key_event_log_r2_combo_switches_logging_on(void **state) {
+static void key_event_log_r2_combo_ends_the_pause(void **state) {
     (void)state;
     start_with_logging(false);
     advance_fake_clock(EVENT_INTERVAL);
     send_key_event(LOGGING_TOGGLE, true);
     send_key_event(LOGGING_TOGGLE, false);
-    assert_true(key_event_log_is_on());
+    assert_false(key_event_log_is_paused());
     assert_console_text("KL,S,1234,on\n");
 }
 
-static void key_event_log_r2_combo_switches_logging_off(void **state) {
+static void key_event_log_r2_combo_pauses_logging(void **state) {
     (void)state;
     start_with_logging(true);
     advance_fake_clock(EVENT_INTERVAL);
     send_key_event(LOGGING_TOGGLE, true);
-    assert_false(key_event_log_is_on());
+    assert_true(key_event_log_is_paused());
     assert_console_text("KL,S,1234,off\n");
 }
 
@@ -297,38 +302,51 @@ static void key_event_log_r7_output_record_of_an_nkro_report(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
-static void key_event_log_r9_idle_off_after_thirty_minutes(void **state) {
+static void key_event_log_r9_logging_stays_on_with_no_push(void **state) {
     (void)state;
     start_with_logging(true);
-    advance_fake_clock(LOGGING_IDLE_MILLISECONDS - ONE_MILLISECOND);
+    advance_fake_clock(ONE_HOUR);
     housekeeping_task_user();
-    assert_true(key_event_log_is_on());
+    assert_false(key_event_log_is_paused());
+    assert_true(send_key_event(KC_A, true));
+    assert_console_text("KL,I,3600000,d,2,3,0,0004,00,00,0,0\n");
+}
+
+static void key_event_log_r9_pause_ends_after_five_idle_minutes(void **state) {
+    (void)state;
+    start_with_logging(false);
+    advance_fake_clock(PAUSE_IDLE_MILLISECONDS - ONE_MILLISECOND);
+    housekeeping_task_user();
+    assert_true(key_event_log_is_paused());
     advance_fake_clock(ONE_MILLISECOND);
     housekeeping_task_user();
-    assert_false(key_event_log_is_on());
-    assert_console_text("KL,S,1800000,idle-off\n");
+    assert_false(key_event_log_is_paused());
+    assert_console_text("KL,S,300000,idle-on\n");
 }
 
 static void key_event_log_r9_push_starts_the_idle_time_again(void **state) {
     (void)state;
-    start_with_logging(true);
+    start_with_logging(false);
     advance_fake_clock(EVENT_INTERVAL);
     send_key_event(KC_A, true);
-    advance_fake_clock(LOGGING_IDLE_MILLISECONDS - ONE_MILLISECOND);
+    advance_fake_clock(PAUSE_IDLE_MILLISECONDS - ONE_MILLISECOND);
     housekeeping_task_user();
-    assert_true(key_event_log_is_on());
+    assert_true(key_event_log_is_paused());
+    assert_console_text("");
 }
 
-static void key_event_log_r9_idle_off_before_a_late_push(void **state) {
+static void key_event_log_r9_pause_ends_before_a_late_push(void **state) {
     (void)state;
-    start_with_logging(true);
-    advance_fake_clock(LOGGING_IDLE_MILLISECONDS);
+    start_with_logging(false);
+    advance_fake_clock(PAUSE_IDLE_MILLISECONDS);
+    // Housekeeping does not run while the host sleeps, so the push ends the pause
     send_key_event(KC_A, true);
-    assert_false(key_event_log_is_on());
-    assert_console_text("KL,S,1800000,idle-off\n");
+    assert_false(key_event_log_is_paused());
+    assert_console_text("KL,S,300000,idle-on\n"
+                        "KL,I,300000,d,2,3,0,0004,00,00,0,0\n");
 }
 
-static void key_event_log_r10_no_records_while_off(void **state) {
+static void key_event_log_r10_no_records_while_paused(void **state) {
     (void)state;
     start_with_logging(false);
     assert_true(send_key_event(KC_A, true));
@@ -338,7 +356,7 @@ static void key_event_log_r10_no_records_while_off(void **state) {
     assert_console_text("");
 }
 
-static void key_event_log_r11_reports_reach_the_host_while_off(void **state) {
+static void key_event_log_r11_reports_reach_the_host_while_paused(void **state) {
     (void)state;
     start_with_logging(false);
     send_test_report(0, KC_A);
@@ -361,13 +379,13 @@ static void key_event_log_r11_driver_stays_in_place(void **state) {
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
 }
 
-static void key_event_log_special_mode_r10_combo_keeps_logging_off(void **state) {
+static void key_event_log_special_mode_r10_combo_keeps_the_pause(void **state) {
     (void)state;
     start_with_logging(false);
     layer_state = ONLY_LAYER(LAYER_SPECIAL);
     assert_false(send_key_event(LOGGING_TOGGLE, true));
     assert_false(send_key_event(LOGGING_TOGGLE, false));
-    assert_false(key_event_log_is_on());
+    assert_true(key_event_log_is_paused());
     assert_console_text("");
 }
 
@@ -377,7 +395,7 @@ static void key_event_log_special_mode_r10_combo_keeps_logging_on(void **state) 
     advance_fake_clock(EVENT_INTERVAL);
     layer_state = ONLY_LAYER(LAYER_SPECIAL);
     assert_false(send_key_event(LOGGING_TOGGLE, true));
-    assert_true(key_event_log_is_on());
+    assert_false(key_event_log_is_paused());
     assert_console_text("");
 }
 
@@ -392,7 +410,7 @@ static void key_event_log_special_mode_r10_combo_ends_one_shot(void **state) {
     layer_state = ONLY_LAYER(LAYER_SPECIAL);
     // Combo is a push, so it uses up the one-shot and does not change the logging
     assert_false(send_key_event(LOGGING_TOGGLE, true));
-    assert_false(key_event_log_is_on());
+    assert_true(key_event_log_is_paused());
     static const qmk_call_t expected[] = {
         {.function = CALLED_LAYER_ON, .argument = LAYER_SPECIAL},
         {.function = CALLED_LAYER_OFF, .argument = LAYER_SPECIAL},
@@ -402,10 +420,10 @@ static void key_event_log_special_mode_r10_combo_ends_one_shot(void **state) {
 
 static void key_event_log_reset_gives_the_power_up_state(void **state) {
     (void)state;
-    start_with_logging(true);
+    start_with_logging(false);
     send_test_report(0, KC_A);
     key_event_log_reset();
-    assert_false(key_event_log_is_on());
+    assert_false(key_event_log_is_paused());
     // Report with no keys is a change only if the reset kept the last report
     start_with_logging(true);
     send_test_report(0, 0);
@@ -418,9 +436,9 @@ static void key_event_log_reset_gives_the_power_up_state(void **state) {
 
 /** Cases of this program */
 static const struct CMUnitTest key_event_log_cases[] = {
-    cmocka_unit_test(key_event_log_r1_off_at_power_up),
-    cmocka_unit_test(key_event_log_r2_combo_switches_logging_on),
-    cmocka_unit_test(key_event_log_r2_combo_switches_logging_off),
+    cmocka_unit_test(key_event_log_r1_on_at_power_up),
+    cmocka_unit_test(key_event_log_r2_combo_pauses_logging),
+    cmocka_unit_test(key_event_log_r2_combo_ends_the_pause),
     cmocka_unit_test(key_event_log_r3_combo_keys),
     cmocka_unit_test(key_event_log_r3_combo_positions_of_the_case_mode_keys),
     cmocka_unit_test(key_event_log_r3_combo_sends_no_key),
@@ -430,13 +448,14 @@ static const struct CMUnitTest key_event_log_cases[] = {
     cmocka_unit_test(key_event_log_r6_input_record_of_a_symbol_hold),
     cmocka_unit_test(key_event_log_r7_output_record_of_a_changed_report),
     cmocka_unit_test(key_event_log_r7_output_record_of_an_nkro_report),
-    cmocka_unit_test(key_event_log_r9_idle_off_after_thirty_minutes),
+    cmocka_unit_test(key_event_log_r9_logging_stays_on_with_no_push),
+    cmocka_unit_test(key_event_log_r9_pause_ends_after_five_idle_minutes),
     cmocka_unit_test(key_event_log_r9_push_starts_the_idle_time_again),
-    cmocka_unit_test(key_event_log_r9_idle_off_before_a_late_push),
-    cmocka_unit_test(key_event_log_r10_no_records_while_off),
-    cmocka_unit_test(key_event_log_r11_reports_reach_the_host_while_off),
+    cmocka_unit_test(key_event_log_r9_pause_ends_before_a_late_push),
+    cmocka_unit_test(key_event_log_r10_no_records_while_paused),
+    cmocka_unit_test(key_event_log_r11_reports_reach_the_host_while_paused),
     cmocka_unit_test(key_event_log_r11_driver_stays_in_place),
-    cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_off),
+    cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_the_pause),
     cmocka_unit_test(key_event_log_special_mode_r10_combo_keeps_logging_on),
     cmocka_unit_test(key_event_log_special_mode_r10_combo_ends_one_shot),
     cmocka_unit_test(key_event_log_reset_gives_the_power_up_state),
