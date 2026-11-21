@@ -398,7 +398,7 @@ static void write_data_quality(FILE *file, const converter_t *converter) {
     const profile_t     *profile  = &converter->profile;
     const count_metric_t counts[] = {
         {"Ignored lines", summary->ignored_lines},
-        {"Records outside sessions", summary->records_outside_sessions},
+        {"Profiling records outside sessions", summary->outside_sessions},
         {"Handler records with no clock record", profile->records_without_clock},
     };
     count_t profiling_ms = all_scans(profile).interval_ms;

@@ -141,7 +141,7 @@ static void print_summary(const summary_t *summary) {
     printf("files: %zu\n", summary->files);
     printf("sessions: %zu\n", summary->sessions);
     printf("records: %zu\n", summary->records);
-    printf("records outside sessions: %zu\n", summary->records_outside_sessions);
+    printf("profiling records outside sessions: %zu\n", summary->outside_sessions);
     printf("ignored lines: %zu\n", summary->ignored_lines);
 }
 

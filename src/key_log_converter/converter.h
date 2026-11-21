@@ -21,23 +21,24 @@
 
 /** Counts that the converter writes to standard output */
 typedef struct {
-    size_t files;                    /**< Log files that the run read */
-    size_t sessions;                 /**< Sessions in all files */
-    size_t records;                  /**< Complete records in all files */
-    size_t records_outside_sessions; /**< Input and output records with logging off */
-    size_t ignored_lines;            /**< Lines that are not complete records */
+    size_t files;            /**< Log files that the run read */
+    size_t sessions;         /**< Sessions in all files */
+    size_t records;          /**< Complete records in all files */
+    size_t outside_sessions; /**< Profiling records with no open session */
+    size_t ignored_lines;    /**< Lines that are not complete records */
 } summary_t;
 
 /** State of one log file. Each file starts with no session and no clock */
 typedef struct {
-    bool     in_session;      /**< true between a state record on and off */
-    bool     has_time;        /**< false before the first record */
-    uint32_t time;            /**< Time of the record before */
-    report_t previous;        /**< Report of the output record before */
-    uint32_t session_start;   /**< Time of the first record of the session */
-    bool     has_clock;       /**< true after a clock record, until a restart */
-    bool     has_input;       /**< false before the first input record */
-    uint32_t last_input_time; /**< Time of the last input record in a session */
+    bool     in_session;        /**< true from the first key record to a state off */
+    bool     has_time;          /**< false before the first record */
+    uint32_t time;              /**< Time of the record before */
+    report_t previous;          /**< Report of the output record before */
+    uint32_t session_start;     /**< Time of the first record of the session */
+    bool     session_has_input; /**< false before the first input record of it */
+    bool     has_clock;         /**< true after a clock record, until a restart */
+    bool     has_input;         /**< false before the first input record */
+    uint32_t last_input_time;   /**< Time of the last input record in a session */
 } stream_t;
 
 /** Outputs and totals of a run */

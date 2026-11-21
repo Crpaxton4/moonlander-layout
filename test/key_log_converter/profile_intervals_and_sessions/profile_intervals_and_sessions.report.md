@@ -53,6 +53,6 @@ None.
 | Metric                               |   Value |
 | ------------------------------------ | ------: |
 | Ignored lines                        |       3 |
-| Records outside sessions             |       2 |
+| Profiling records outside sessions   |       2 |
 | Handler records with no clock record |       0 |
 | Time with profiling on               | 0:00:20 |

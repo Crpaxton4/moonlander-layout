@@ -14,8 +14,22 @@
 /** Backspace pushes in this time after a push count against that position */
 #define CORRECTION_WINDOW_MS 1000
 
+/** Time with no input record that splits a session, as the idle-off of old logs */
+#define IDLE_SPLIT_MS (30U * 60U * 1000U)
+
 /** Heatmap file line with no line break: keycode, row, column and layer */
 #define HEATMAP_ROW_FORMAT "0x%04X,%u,%u,%u"
+
+// #endregion
+
+// #region Enumerations
+
+/** Uses of a record with no open session */
+typedef enum {
+    NEEDS_SESSION,    /**< Record gets only a count */
+    STARTS_SESSION,   /**< Record starts a session, then applies */
+    NEEDS_NO_SESSION, /**< Record applies with no session */
+} session_rule_t;
 
 // #endregion
 
@@ -29,10 +43,10 @@
  */
 typedef void record_handler_t(converter_t *converter, const record_t *record);
 
-/** Handler of one record type, and the logging state in which it applies */
+/** Handler of one record type, and its use with no open session */
 typedef struct {
     record_handler_t *convert; /**< Use of the record */
-    bool outside_sessions;     /**< true if the record also applies with logging off */
+    session_rule_t    outside; /**< Use of the record with no open session */
 } record_rule_t;
 
 // #endregion
@@ -53,10 +67,10 @@ static void convert_stack(converter_t *converter, const record_t *record);
 
 /** Record rules, indexed by record_type_t */
 static const record_rule_t record_rules[RECORD_TYPE_COUNT] = {
-    [RECORD_STATE]   = {.convert = convert_state, .outside_sessions = true},
-    [RECORD_INPUT]   = {.convert = convert_input},
-    [RECORD_OUTPUT]  = {.convert = convert_output},
-    [RECORD_CLOCK]   = {.convert = convert_clock, .outside_sessions = true},
+    [RECORD_STATE]   = {.convert = convert_state, .outside = NEEDS_NO_SESSION},
+    [RECORD_INPUT]   = {.convert = convert_input, .outside = STARTS_SESSION},
+    [RECORD_OUTPUT]  = {.convert = convert_output, .outside = STARTS_SESSION},
+    [RECORD_CLOCK]   = {.convert = convert_clock, .outside = NEEDS_NO_SESSION},
     [RECORD_HANDLER] = {.convert = convert_handler},
     [RECORD_SCANS]   = {.convert = convert_scans},
     [RECORD_STACK]   = {.convert = convert_stack},
@@ -73,27 +87,42 @@ static const record_rule_t record_rules[RECORD_TYPE_COUNT] = {
  * @param time      Time of the first record of the session.
  */
 static void begin_session(converter_t *converter, uint32_t time) {
-    converter->stream.in_session    = true;
-    converter->stream.session_start = time;
-    converter->stream.previous      = (report_t){.mods = 0};
-    converter->recent_pushes.count  = 0;
+    converter->stream.in_session        = true;
+    converter->stream.session_start     = time;
+    converter->stream.session_has_input = false;
+    converter->stream.previous          = (report_t){.mods = 0};
+    converter->recent_pushes.count      = 0;
     converter->summary.sessions++;
 }
 
 /**
- * Ends a session at the time of its last record. Each session ends with a line
- * break, so the next session starts on a new corpus line.
+ * Ends a session. Each session ends with a line break, so the next session starts
+ * on a new corpus line.
  *
  * @param converter Outputs and totals.
+ * @param time      Time of the last record of the session.
  */
-static void end_session(converter_t *converter) {
+static void end_session(converter_t *converter, uint32_t time) {
     stream_t *stream   = &converter->stream;
     stream->in_session = false;
-    converter->logged_ms += stream->time - stream->session_start;
+    converter->logged_ms += time - stream->session_start;
     if (converter->corpus_line_open) {
         fputc('\n', converter->corpus);
         converter->corpus_line_open = false;
     }
+}
+
+/**
+ * Tells if a logging state starts a session.
+ *
+ * @param state State of a state record.
+ * @return true if the operator or the keyboard switched logging on.
+ */
+static bool is_on_state(logging_state_t state) {
+    if (state == LOGGING_ON) {
+        return true;
+    }
+    return state == LOGGING_IDLE_ON;
 }
 
 /**
@@ -103,12 +132,12 @@ static void end_session(converter_t *converter) {
  * @param record    State record.
  */
 static void convert_state(converter_t *converter, const record_t *record) {
-    bool switched_on = record->state == LOGGING_ON;
+    bool switched_on = is_on_state(record->state);
     bool in_session  = converter->stream.in_session;
     if (switched_on && !in_session) {
         begin_session(converter, record->time);
     } else if (!switched_on && in_session) {
-        end_session(converter);
+        end_session(converter, record->time);
     }
 }
 
@@ -157,7 +186,8 @@ static void convert_input(converter_t *converter, const record_t *record) {
     const key_event_t *event    = &record->event;
     layer_position_t   key      = {.position = event->position, .layer = event->layer};
     converter->stream.has_input = true;
-    converter->stream.last_input_time = record->time;
+    converter->stream.session_has_input = true;
+    converter->stream.last_input_time   = record->time;
     if (!event->pushed) {
         return;
     }
@@ -325,9 +355,46 @@ static void restart_stream(converter_t *converter, uint32_t time) {
     stream->has_clock = false;
     stream->has_input = false;
     if (stream->in_session) {
-        end_session(converter);
+        end_session(converter, stream->time);
         begin_session(converter, time);
     }
+}
+
+/**
+ * Tells if an input record comes after an idle time that splits its session.
+ *
+ * @param stream State of the log file.
+ * @param record Record of the log file.
+ * @return true if the session ends at the input record before this record.
+ */
+static bool comes_after_idle_time(const stream_t *stream, const record_t *record) {
+    if (record->type != RECORD_INPUT || !stream->in_session) {
+        return false;
+    }
+    if (!stream->session_has_input) {
+        return false;
+    }
+    return record->time - stream->last_input_time >= IDLE_SPLIT_MS;
+}
+
+/**
+ * Tells if a record has no use, because no session is open and the record cannot
+ * start one. A record that can start a session starts it.
+ *
+ * @param converter Outputs and totals.
+ * @param record    Record of the log file.
+ * @return true if the record gets only a count.
+ */
+static bool is_outside_sessions(converter_t *converter, const record_t *record) {
+    session_rule_t rule = record_rules[record->type].outside;
+    if (converter->stream.in_session || rule == NEEDS_NO_SESSION) {
+        return false;
+    }
+    if (rule == STARTS_SESSION) {
+        begin_session(converter, record->time);
+        return false;
+    }
+    return true;
 }
 
 // #endregion
@@ -340,25 +407,27 @@ void begin_stream(converter_t *converter) {
 }
 
 void convert_record(converter_t *converter, const record_t *record) {
-    stream_t            *stream = &converter->stream;
-    const record_rule_t *rule   = &record_rules[record->type];
+    stream_t *stream = &converter->stream;
     converter->summary.records++;
     // A time that goes back is a restart or a timer wrap
     if (stream->has_time && record->time < stream->time) {
         restart_stream(converter, record->time);
+    } else if (comes_after_idle_time(stream, record)) {
+        end_session(converter, stream->last_input_time);
+        begin_session(converter, record->time);
     }
     stream->has_time = true;
     stream->time     = record->time;
-    if (!rule->outside_sessions && !stream->in_session) {
-        converter->summary.records_outside_sessions++;
+    if (is_outside_sessions(converter, record)) {
+        converter->summary.outside_sessions++;
         return;
     }
-    rule->convert(converter, record);
+    record_rules[record->type].convert(converter, record);
 }
 
 void end_stream(converter_t *converter) {
     if (converter->stream.in_session) {
-        end_session(converter);
+        end_session(converter, converter->stream.time);
     }
 }
 
