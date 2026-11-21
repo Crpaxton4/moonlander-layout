@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.23.0...v1.24.0) (2026-11-21)
+
+
+### Features
+
+* **firmware:** logging always on, combo pauses ([#219](https://github.com/Crpaxton4/moonlander-layout/issues/219)) ([70728d1](https://github.com/Crpaxton4/moonlander-layout/commit/70728d1ccf7a51b15a00a1f514d90d5334723d0c))
+
 ## [1.23.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.22.0...v1.23.0) (2026-11-21)
 
 
