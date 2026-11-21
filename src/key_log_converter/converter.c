@@ -422,6 +422,7 @@ void convert_record(converter_t *converter, const record_t *record) {
         converter->summary.outside_sessions++;
         return;
     }
+    // mull-ignore-next: cxx_remove_void_call
     record_rules[record->type].convert(converter, record);
 }
 
