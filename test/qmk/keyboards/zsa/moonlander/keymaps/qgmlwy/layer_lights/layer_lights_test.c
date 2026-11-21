@@ -148,13 +148,13 @@ static const key_run_t special_mode_lit_keys[] = {
 };
 
 /**
- * Keys of the plain mode with no key: (2,0), (3,13), (4,3), (4,4), (4,9) to (4,13)
+ * Keys of the plain mode with no key: (2,0), (3,13), (4,0) to (4,4), (4,9) to (4,13)
  * and R0 to R3. The combo keys (1,6), (1,7), (2,6) and (2,7) send no key, but they
  * are lit, because the combos operate in the plain mode.
  */
 static const key_run_t plain_mode_dark_keys[] = {
     {.row = LEFT_HOME_ROW, .first_column = 0, .last_column = 0},
-    {.row = LEFT_BOTTOM_ROW, .first_column = 3, .last_column = 4},
+    {.row = LEFT_BOTTOM_ROW, .first_column = 0, .last_column = 4},
     {
         .row          = RIGHT_BOTTOM_LETTER_ROW,
         .first_column = LAST_RIGHT_HALF_COLUMN,
