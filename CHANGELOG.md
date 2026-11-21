@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.20.0...v1.21.0) (2026-11-21)
+
+
+### Features
+
+* **firmware:** modifiers in the nav mode ([#213](https://github.com/Crpaxton4/moonlander-layout/issues/213)) ([70424a6](https://github.com/Crpaxton4/moonlander-layout/commit/70424a6e1e153254d360f035fb1af26e246e7835))
+
 ## [1.20.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.19.1...v1.20.0) (2026-11-21)
 
 
