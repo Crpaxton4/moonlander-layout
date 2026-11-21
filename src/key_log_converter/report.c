@@ -88,7 +88,6 @@ typedef struct {
 typedef struct {
     const char *heading;                   /**< Markdown heading */
     column_t    columns[TOP_COLUMN_COUNT]; /**< Columns */
-    const char *name_mark;                 /**< Text on the two sides of each name */
 } top_list_t;
 
 // #endregion
@@ -110,25 +109,22 @@ static const column_t handler_columns[HANDLER_COLUMN_COUNT] = {
     [HANDLER_SHARE_COLUMN]   = {"Share of a scan", ALIGN_RIGHT},
 };
 
-/** Names of the new keys */
+/** Key names of the pushes */
 static const top_list_t key_list = {
-    .heading   = "### Top keys",
-    .columns   = {{"Key", ALIGN_LEFT}, {"Pushes", ALIGN_RIGHT}},
-    .name_mark = "",
+    .heading = "### Top keys",
+    .columns = {{"Key", ALIGN_LEFT}, {"Pushes", ALIGN_RIGHT}},
 };
 
-/** Heatmap lines, as code because they have commas */
-static const top_list_t heatmap_list = {
-    .heading   = "### Busiest heatmap rows",
-    .columns   = {{"Heatmap row", ALIGN_LEFT}, {"Pushes", ALIGN_RIGHT}},
-    .name_mark = "`",
+/** Key names of the pushes, each with its position and layer */
+static const top_list_t key_position_list = {
+    .heading = "### Busiest positions",
+    .columns = {{"Key and position", ALIGN_LEFT}, {"Pushes", ALIGN_RIGHT}},
 };
 
 /** Shortcut names */
 static const top_list_t shortcut_list = {
-    .heading   = "### Top shortcuts",
-    .columns   = {{"Shortcut", ALIGN_LEFT}, {"Pushes", ALIGN_RIGHT}},
-    .name_mark = "",
+    .heading = "### Top shortcuts",
+    .columns = {{"Shortcut", ALIGN_LEFT}, {"Pushes", ALIGN_RIGHT}},
 };
 
 // #endregion
@@ -221,15 +217,13 @@ static void write_usage_metrics(FILE *file, const converter_t *converter) {
  * @param list   Heading and columns.
  */
 static void write_top_list(FILE *file, named_counts_t *counts, const top_list_t *list) {
-    table_t     table = {.columns = list->columns, .column_count = TOP_COLUMN_COUNT};
-    const char *mark  = list->name_mark;
+    table_t table = {.columns = list->columns, .column_count = TOP_COLUMN_COUNT};
     sort_named_counts(counts);
     write_block(file, list->heading);
     for (size_t index = 0; index < counts->count && index < TOP_LIST_LENGTH; index++) {
         const named_count_t *item = &counts->items[index];
         table_row_t         *row  = add_table_row(&table);
-        char                *name = row->cells[TOP_NAME_COLUMN];
-        snprintf(name, CELL_SIZE, "%s%s%s", mark, item->name, mark);
+        snprintf(row->cells[TOP_NAME_COLUMN], CELL_SIZE, "%s", item->name);
         snprintf(row->cells[TOP_PUSHES_COLUMN], CELL_SIZE, "%llu", item->count);
     }
     write_table(file, &table);
@@ -245,7 +239,7 @@ static void write_usage(FILE *file, converter_t *converter) {
     write_block(file, "## Usage");
     write_usage_metrics(file, converter);
     write_top_list(file, &converter->keys, &key_list);
-    write_top_list(file, &converter->heatmap_rows, &heatmap_list);
+    write_top_list(file, &converter->key_positions, &key_position_list);
     write_top_list(file, &converter->shortcuts, &shortcut_list);
 }
 

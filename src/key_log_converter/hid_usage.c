@@ -198,6 +198,14 @@ char usage_character(uint8_t usage, bool shifted) {
     return shifted ? entry->shifted : entry->plain;
 }
 
+const char *usage_name(uint8_t usage) {
+    const usage_t *entry = find_usage(usage);
+    if (entry == NULL) {
+        return NULL;
+    }
+    return entry->name;
+}
+
 void write_shortcut_name(key_press_t press, char name[SHORTCUT_NAME_SIZE]) {
     name[0] = '\0';
     for (size_t index = 0; index < COUNT_OF(modifiers); index++) {

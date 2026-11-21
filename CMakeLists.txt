@@ -325,6 +325,7 @@ if("converter" IN_LIST MOONLANDER_PARTS)
         ${CONVERTER_DIR}/converter.c
         ${CONVERTER_DIR}/counters.c
         ${CONVERTER_DIR}/hid_usage.c
+        ${CONVERTER_DIR}/keycode_name.c
         ${CONVERTER_DIR}/main.c
         ${CONVERTER_DIR}/markdown.c
         ${CONVERTER_DIR}/outputs.c

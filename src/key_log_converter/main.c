@@ -171,7 +171,7 @@ static void free_tables(converter_t *converter) {
     free(converter->recent_pushes.items);
     free(converter->shortcuts.items);
     free(converter->keys.items);
-    free(converter->heatmap_rows.items);
+    free(converter->key_positions.items);
     free(converter->profile.handlers.items);
 }
 

@@ -15,7 +15,7 @@
 
 None.
 
-### Busiest heatmap rows
+### Busiest positions
 
 None.
 

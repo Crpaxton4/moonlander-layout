@@ -6,6 +6,7 @@
 
 #include "converter.h"
 #include "hid_usage.h"
+#include "keycode_name.h"
 
 // #endregion
 
@@ -16,6 +17,9 @@
 
 /** Time with no input record that splits a session, as the idle-off of old logs */
 #define IDLE_SPLIT_MS (30U * 60U * 1000U)
+
+/** Key at a position in the report: key name, row, column and layer */
+#define KEY_POSITION_FORMAT "%s at %u,%u layer %u"
 
 /** Heatmap file line with no line break: keycode, row, column and layer */
 #define HEATMAP_ROW_FORMAT "0x%04X,%u,%u,%u"
@@ -159,20 +163,36 @@ static void count_correction(converter_t *converter, uint32_t time) {
 }
 
 /**
- * Writes the heatmap line of a push and counts that line.
+ * Writes the heatmap line of a push.
  *
  * @param converter Outputs and totals.
  * @param event     Key push.
  */
 static void write_heatmap_row(converter_t *converter, const key_event_t *event) {
-    char     line[COUNT_NAME_SIZE];
     unsigned keycode = event->keycode;
     unsigned row     = event->position.row;
     unsigned col     = event->position.col;
     unsigned layer   = event->layer;
-    snprintf(line, sizeof(line), HEATMAP_ROW_FORMAT, keycode, row, col, layer);
-    fprintf(converter->heatmap, "%s\n", line);
-    add_named_count(&converter->heatmap_rows, line);
+    fprintf(converter->heatmap, HEATMAP_ROW_FORMAT "\n", keycode, row, col, layer);
+}
+
+/**
+ * Counts the key name of a push, and that name at the position and layer of the
+ * push.
+ *
+ * @param converter Outputs and totals.
+ * @param event     Key push.
+ */
+static void count_key_name(converter_t *converter, const key_event_t *event) {
+    char     name[KEYCODE_NAME_SIZE];
+    char     place[COUNT_NAME_SIZE];
+    unsigned row   = event->position.row;
+    unsigned col   = event->position.col;
+    unsigned layer = event->layer;
+    write_keycode_name(event->keycode, name);
+    snprintf(place, sizeof(place), KEY_POSITION_FORMAT, name, row, col, layer);
+    add_named_count(&converter->keys, name);
+    add_named_count(&converter->key_positions, place);
 }
 
 /**
@@ -192,6 +212,7 @@ static void convert_input(converter_t *converter, const record_t *record) {
         return;
     }
     write_heatmap_row(converter, event);
+    count_key_name(converter, event);
     converter->key_pushes++;
     find_position_count(&converter->usage, key)->count++;
     if (event->layer > converter->highest_layer) {
@@ -204,15 +225,15 @@ static void convert_input(converter_t *converter, const record_t *record) {
 }
 
 /**
- * Counts a name for a new key or for a key push with Ctrl, Alt or GUI.
+ * Counts the name of a key push with Ctrl, Alt or GUI.
  *
- * @param counts Table of counts.
- * @param press  New key and its modifiers.
+ * @param converter Outputs and totals.
+ * @param press     New key and its modifiers.
  */
-static void count_key_name(named_counts_t *counts, key_press_t press) {
+static void count_shortcut(converter_t *converter, key_press_t press) {
     char name[SHORTCUT_NAME_SIZE];
     write_shortcut_name(press, name);
-    add_named_count(counts, name);
+    add_named_count(&converter->shortcuts, name);
 }
 
 /**
@@ -222,12 +243,11 @@ static void count_key_name(named_counts_t *counts, key_press_t press) {
  * @param press     New key and the modifiers of its report.
  */
 static void convert_new_key(converter_t *converter, key_press_t press) {
-    count_key_name(&converter->keys, (key_press_t){.usage = press.usage});
     if (press.usage == USAGE_BACKSPACE || press.usage == USAGE_DELETE) {
         converter->correction_pushes++;
     }
     if ((press.mods & MODS_SHORTCUT) != 0) {
-        count_key_name(&converter->shortcuts, press);
+        count_shortcut(converter, press);
         return;
     }
     char character = usage_character(press.usage, (press.mods & MODS_SHIFT) != 0);

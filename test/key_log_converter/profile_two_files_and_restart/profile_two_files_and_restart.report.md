@@ -18,12 +18,12 @@
 | A   |      1 |
 | B   |      1 |
 
-### Busiest heatmap rows
+### Busiest positions
 
-| Heatmap row    | Pushes |
-| -------------- | -----: |
-| `0x0004,4,0,0` |      1 |
-| `0x0005,4,1,0` |      1 |
+| Key and position | Pushes |
+| ---------------- | -----: |
+| A at 4,0 layer 0 |      1 |
+| B at 4,1 layer 0 |      1 |
 
 ### Top shortcuts
 

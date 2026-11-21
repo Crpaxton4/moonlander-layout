@@ -26,7 +26,7 @@
 #define CORRECTION_LAYER 0
 
 /** Bytes of the longest name of a name count, with its terminator */
-#define COUNT_NAME_SIZE SHORTCUT_NAME_SIZE
+#define COUNT_NAME_SIZE 72
 
 // #endregion
 

@@ -54,8 +54,8 @@ typedef struct {
     position_counts_t corrections;       /**< Backspace pushes after each position */
     recent_pushes_t   recent_pushes;     /**< Last push of each position */
     named_counts_t    shortcuts;         /**< Pushes of each shortcut */
-    named_counts_t    keys;              /**< New keys of each key name */
-    named_counts_t    heatmap_rows;      /**< Pushes of each heatmap line */
+    named_counts_t    keys;              /**< Pushes of each key name */
+    named_counts_t    key_positions;     /**< Pushes of each key at a position */
     count_t           key_pushes;        /**< Pushes of all input records */
     count_t           logged_ms;         /**< Time of all sessions */
     profile_t         profile;           /**< Profiling totals */
