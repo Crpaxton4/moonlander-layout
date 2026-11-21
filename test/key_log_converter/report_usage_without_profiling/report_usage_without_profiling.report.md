@@ -28,18 +28,18 @@
 
 ### Busiest positions
 
-| Key and position         | Pushes |
-| ------------------------ | -----: |
-| L at 8,3 layer 0         |      3 |
-| Left Ctrl at 3,0 layer 0 |      2 |
-| O at 8,4 layer 0         |      2 |
-| S at 3,1 layer 0         |      2 |
-| Backspace at 5,2 layer 0 |      1 |
-| C at 4,3 layer 0         |      1 |
-| D at 3,2 layer 0         |      1 |
-| E at 2,3 layer 0         |      1 |
-| H at 8,1 layer 0         |      1 |
-| R at 2,4 layer 0         |      1 |
+| Key and position           | Pushes |
+| -------------------------- | -----: |
+| L at (2,10) layer 0        |      3 |
+| Left Ctrl at (3,0) layer 0 |      2 |
+| O at (2,11) layer 0        |      2 |
+| S at (3,1) layer 0         |      2 |
+| Backspace at L3 layer 0    |      1 |
+| C at (4,3) layer 0         |      1 |
+| D at (3,2) layer 0         |      1 |
+| E at (2,3) layer 0         |      1 |
+| H at (2,8) layer 0         |      1 |
+| R at (2,4) layer 0         |      1 |
 
 ### Top shortcuts
 

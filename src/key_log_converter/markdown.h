@@ -14,7 +14,7 @@
 // #region Macros
 
 /** Bytes of one table cell, with its terminator */
-#define CELL_SIZE 72
+#define CELL_SIZE 80
 
 /** Most columns of a table */
 #define MAX_TABLE_COLUMNS 5

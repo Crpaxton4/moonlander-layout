@@ -28,18 +28,18 @@
 
 ### Busiest positions
 
-| Key and position                            | Pushes |
-| ------------------------------------------- | -----: |
-| A / Right Ctrl+Shift+Alt+GUI at 3,1 layer 2 |      1 |
-| A / layer 15 at 5,1 layer 2                 |      1 |
-| Ctrl+Alt+GUI+A at 8,1 layer 2               |      1 |
-| E / Right GUI at 1,1 layer 2                |      1 |
-| L / layer 0 at 4,1 layer 2                  |      1 |
-| Shift+2 at 7,1 layer 2                      |      1 |
-| Shift+A at 9,1 layer 2                      |      1 |
-| T / Left Ctrl+Shift at 2,1 layer 2          |      1 |
-| T / Left GUI at 0,1 layer 2                 |      1 |
-| TG(1) at 6,1 layer 2                        |      1 |
+| Key and position                              | Pushes |
+| --------------------------------------------- | -----: |
+| A / Right Ctrl+Shift+Alt+GUI at (3,1) layer 2 |      1 |
+| A / layer 15 at L2 layer 2                    |      1 |
+| Ctrl+Alt+GUI+A at (2,8) layer 2               |      1 |
+| E / Right GUI at (1,1) layer 2                |      1 |
+| L / layer 0 at (4,1) layer 2                  |      1 |
+| Shift+2 at (1,8) layer 2                      |      1 |
+| Shift+A at (3,8) layer 2                      |      1 |
+| T / Left Ctrl+Shift at (2,1) layer 2          |      1 |
+| T / Left GUI at (0,1) layer 2                 |      1 |
+| TG(1) at (0,8) layer 2                        |      1 |
 
 ### Top shortcuts
 

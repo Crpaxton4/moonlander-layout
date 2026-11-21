@@ -5,6 +5,7 @@
 // #region Includes
 
 #include "converter.h"
+#include "grid_position.h"
 #include "hid_usage.h"
 #include "keycode_name.h"
 
@@ -18,11 +19,11 @@
 /** Time with no input record that splits a session, as the idle-off of old logs */
 #define IDLE_SPLIT_MS (30U * 60U * 1000U)
 
-/** Key at a position in the report: key name, row, column and layer */
-#define KEY_POSITION_FORMAT "%s at %u,%u layer %u"
+/** Key at a position in the report: key name, position and layer */
+#define KEY_POSITION_FORMAT "%s at %s layer %u"
 
-/** Heatmap file line with no line break: keycode, row, column and layer */
-#define HEATMAP_ROW_FORMAT "0x%04X,%u,%u,%u"
+/** Heatmap file line: keycode, matrix row, matrix column and layer */
+#define HEATMAP_ROW_FORMAT "0x%04X,%u,%u,%u\n"
 
 // #endregion
 
@@ -173,7 +174,7 @@ static void write_heatmap_row(converter_t *converter, const key_event_t *event) 
     unsigned row     = event->position.row;
     unsigned col     = event->position.col;
     unsigned layer   = event->layer;
-    fprintf(converter->heatmap, HEATMAP_ROW_FORMAT "\n", keycode, row, col, layer);
+    fprintf(converter->heatmap, HEATMAP_ROW_FORMAT, keycode, row, col, layer);
 }
 
 /**
@@ -184,13 +185,12 @@ static void write_heatmap_row(converter_t *converter, const key_event_t *event) 
  * @param event     Key push.
  */
 static void count_key_name(converter_t *converter, const key_event_t *event) {
-    char     name[KEYCODE_NAME_SIZE];
-    char     place[COUNT_NAME_SIZE];
-    unsigned row   = event->position.row;
-    unsigned col   = event->position.col;
-    unsigned layer = event->layer;
+    char name[KEYCODE_NAME_SIZE];
+    char position[GRID_POSITION_SIZE];
+    char place[COUNT_NAME_SIZE];
     write_keycode_name(event->keycode, name);
-    snprintf(place, sizeof(place), KEY_POSITION_FORMAT, name, row, col, layer);
+    write_grid_position(event->position, position);
+    snprintf(place, sizeof(place), KEY_POSITION_FORMAT, name, position, event->layer);
     add_named_count(&converter->keys, name);
     add_named_count(&converter->key_positions, place);
 }

@@ -749,6 +749,12 @@ tap key and the layer of its hold, for example `L / layer 0`. A key with a modif
 for example, `Shift+2`, and a layer toggle key is `TG(1)`. A keycode with no name has
 its hexadecimal value.
 
+The report gives each position as the keymap names it, and not in matrix coordinates. A
+grid key is `(2,3)`, which is grid row 2 and grid column 3. The grid columns of the
+right half are 7 to 13. A thumb key is `L0` to `L3` or `R0` to `R3`. A matrix position
+with no grid key and no thumb key is, for example, `matrix 5,4`. The CSV files keep the
+matrix coordinates, because the QMK heatmap tool reads them.
+
 The profiling section gives the calls of each handler, the average and the maximum
 time of one call, and the share of a scan. The share of a scan is the average call as a
 percent of the average scan time. The average scan time is the `interval_ms` of all scan

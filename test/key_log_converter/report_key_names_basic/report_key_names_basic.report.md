@@ -28,18 +28,18 @@
 
 ### Busiest positions
 
-| Key and position              | Pushes |
-| ----------------------------- | -----: |
-| A at 0,1 layer 2              |      1 |
-| Left Ctrl at 2,1 layer 2      |      1 |
-| Mouse button 1 at 5,1 layer 2 |      1 |
-| Mouse button 8 at 6,1 layer 2 |      1 |
-| Mouse speed 0 at 8,1 layer 2  |      1 |
-| Mouse speed 2 at 9,1 layer 2  |      1 |
-| Mouse up at 4,1 layer 2       |      1 |
-| No key at 1,1 layer 2         |      1 |
-| Right GUI at 3,1 layer 2      |      1 |
-| Wheel down at 7,1 layer 2     |      1 |
+| Key and position                | Pushes |
+| ------------------------------- | -----: |
+| A at (0,1) layer 2              |      1 |
+| Left Ctrl at (2,1) layer 2      |      1 |
+| Mouse button 1 at L2 layer 2    |      1 |
+| Mouse button 8 at (0,8) layer 2 |      1 |
+| Mouse speed 0 at (2,8) layer 2  |      1 |
+| Mouse speed 2 at (3,8) layer 2  |      1 |
+| Mouse up at (4,1) layer 2       |      1 |
+| No key at (1,1) layer 2         |      1 |
+| Right GUI at (3,1) layer 2      |      1 |
+| Wheel down at (1,8) layer 2     |      1 |
 
 ### Top shortcuts
 
