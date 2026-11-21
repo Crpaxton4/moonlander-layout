@@ -386,6 +386,22 @@ static const uint8_t home_row_modifiers[] = {
     MOD_BIT(KC_LEFT_ALT),   MOD_BIT(KC_LEFT_GUI),
 };
 
+/** Modifier keys Z X C V (3,1) to (3,4) of the nav mode */
+static const grid_position_t nav_modifier_keys[] = {
+    {.layer = LAYER_NAV, .row = 3, .column = 1},
+    {.layer = LAYER_NAV, .row = 3, .column = 2},
+    {.layer = LAYER_NAV, .row = 3, .column = 3},
+    {.layer = LAYER_NAV, .row = 3, .column = 4},
+};
+
+/** Modifiers of the nav mode, in the order of nav_modifier_keys */
+static const uint16_t nav_modifiers[] = {
+    KC_LEFT_CTRL,
+    KC_LEFT_ALT,
+    KC_LEFT_GUI,
+    KC_LEFT_SHIFT,
+};
+
 /** Left and Right, which keep the pairs only with no modifier */
 static const uint16_t left_and_right_keys[] = {
     KC_LEFT,
@@ -1648,6 +1664,52 @@ static void bracket_pairs_nav_mode_enter_clears_stack(void **state) {
     assert_false(bracket_pairs_are_open());
 }
 
+static void bracket_pairs_nav_mode_modifier_keeps_pair(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    turn_on_nav_mode();
+    for (size_t index = 0; index < ARRAY_SIZE(nav_modifier_keys); index++) {
+        uint16_t modifier = keycode_of(nav_modifier_keys[index]);
+        assert_int_equal(modifier, nav_modifiers[index]);
+        // Modifier moves no cursor, and QMK must get the push and the release
+        assert_true(send_key_event(modifier, true));
+        assert_true(send_key_event(modifier, false));
+        assert_true(bracket_pairs_are_open());
+    }
+}
+
+static void bracket_pairs_nav_mode_modifier_with_arrow_clears_stack(void **state) {
+    (void)state;
+    for (size_t index = 0; index < ARRAY_SIZE(shortcut_modifiers); index++) {
+        start_case();
+        hold_key(keycode_of(opening_parenthesis_key));
+        turn_on_nav_mode();
+        // Z X C are Ctrl, Alt and GUI, in the order of shortcut_modifiers
+        uint16_t modifier = keycode_of(nav_modifier_keys[index]);
+        assert_int_equal(MOD_BIT(modifier), shortcut_modifiers[index]);
+        assert_true(send_key_event(modifier, true));
+        set_fake_modifiers(shortcut_modifiers[index]);
+        assert_true(push_and_release(keycode_of(left_arrow_key), NOT_A_TAP));
+        assert_false(bracket_pairs_are_open());
+    }
+}
+
+static void bracket_pairs_nav_mode_modifier_release_passes_after_mode_end(
+    void **state) {
+    (void)state;
+    for (size_t index = 0; index < ARRAY_SIZE(nav_modifier_keys); index++) {
+        start_case();
+        turn_on_nav_mode();
+        uint16_t modifier = keycode_of(nav_modifier_keys[index]);
+        assert_int_equal(modifier, nav_modifiers[index]);
+        assert_true(send_key_event(modifier, true));
+        turn_off_nav_mode();
+        // QMK releases the key of the layer of the push, so no modifier stays down
+        assert_true(send_key_event(modifier, false));
+    }
+}
+
 /**
  * Fails the test if a long push in the nav mode of a bottom letter row key opens a
  * pair, or does not pass to QMK. A column with no hold in the default mode has no
@@ -1703,6 +1765,9 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_nav_mode_precision_key_keeps_pair),
     cmocka_unit_test(bracket_pairs_nav_mode_free_key_keeps_pair),
     cmocka_unit_test(bracket_pairs_nav_mode_enter_clears_stack),
+    cmocka_unit_test(bracket_pairs_nav_mode_modifier_keeps_pair),
+    cmocka_unit_test(bracket_pairs_nav_mode_modifier_with_arrow_clears_stack),
+    cmocka_unit_test(bracket_pairs_nav_mode_modifier_release_passes_after_mode_end),
     cmocka_unit_test(bracket_pairs_nav_mode_bottom_letter_row_has_no_opener),
     cmocka_unit_test(bracket_pairs_r10_shortcut_clears_stack),
     cmocka_unit_test(bracket_pairs_r10_shift_tab_clears_stack),

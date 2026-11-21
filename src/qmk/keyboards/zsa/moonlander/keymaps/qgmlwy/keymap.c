@@ -199,10 +199,11 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_NAV][LEFT_BOTTOM_LETTER_ROW] =
             {
                 KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                // Modifiers for shortcuts with a mouse button or an arrow
+                KC_LEFT_CTRL,
+                KC_LEFT_ALT,
+                KC_LEFT_GUI,
+                KC_LEFT_SHIFT,
                 KC_NO,
                 NO_PHYSICAL_KEY,
             },
