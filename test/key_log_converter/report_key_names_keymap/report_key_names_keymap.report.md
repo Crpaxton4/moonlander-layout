@@ -28,18 +28,18 @@
 
 ### Busiest positions
 
-| Key and position                  | Pushes |
-| --------------------------------- | -----: |
-| 0x7E49 at 9,1 layer 2             |      1 |
-| Camel case at 2,1 layer 2         |      1 |
-| Constant case at 4,1 layer 2      |      1 |
-| Logging combo left at 8,1 layer 2 |      1 |
-| Logging toggle at 3,1 layer 2     |      1 |
-| Pascal case at 5,1 layer 2        |      1 |
-| Plain mode toggle at 6,1 layer 2  |      1 |
-| Profiling toggle at 7,1 layer 2   |      1 |
-| Snake case at 1,1 layer 2         |      1 |
-| Special mode at 0,1 layer 2       |      1 |
+| Key and position                    | Pushes |
+| ----------------------------------- | -----: |
+| 0x7E49 at (3,8) layer 2             |      1 |
+| Camel case at (2,1) layer 2         |      1 |
+| Constant case at (4,1) layer 2      |      1 |
+| Logging combo left at (2,8) layer 2 |      1 |
+| Logging toggle at (3,1) layer 2     |      1 |
+| Pascal case at L2 layer 2           |      1 |
+| Plain mode toggle at (0,8) layer 2  |      1 |
+| Profiling toggle at (1,8) layer 2   |      1 |
+| Snake case at (1,1) layer 2         |      1 |
+| Special mode at (0,1) layer 2       |      1 |
 
 ### Top shortcuts
 

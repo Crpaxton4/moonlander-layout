@@ -610,9 +610,8 @@ line as not run.
 
 The key log converter makes a text corpus and key metrics from the key event logs of
 the keyboard. It merges one or more log files into one set of output files. The output
-files are the input of [carpalx][carpalx], of the `ngrams` tool of
-[keyboard_layout_optimizer][keyboard-layout-optimizer] and of the
-[QMK heatmap tool][qmk-heatmap].
+files are the input of [carpalx][carpalx] and of the `ngrams` tool of
+[keyboard_layout_optimizer][keyboard-layout-optimizer].
 
 To build the converter `.build/converter/key_log_converter`, run these commands:
 
@@ -640,15 +639,15 @@ text. Keep the output folder outside of all git work trees.
 
 The converter writes these files into the output folder:
 
-| File              | Contents                                                       |
-| ----------------- | -------------------------------------------------------------- |
-| `corpus.txt`      | The typed characters for the Windows US English layout         |
-| `heatmap.csv`     | One `keycode,row,col,layer` line for each push, with no header |
-| `usage.csv`       | The pushes of each position and layer                          |
-| `corrections.csv` | Correction percent, then the Backspace count of each position  |
-| `shortcuts.csv`   | The count of each shortcut                                     |
-| `profile.csv`     | The calls and the times of each record handler                 |
-| `report.md`       | A summary of the usage, the profiling and the data quality     |
+| File              | Contents                                                        |
+| ----------------- | --------------------------------------------------------------- |
+| `corpus.txt`      | The typed characters for the Windows US English layout          |
+| `heatmap.csv`     | One `keycode,position,layer` line for each push, with no header |
+| `usage.csv`       | The pushes of each position and layer                           |
+| `corrections.csv` | Correction percent, then the Backspace count of each position   |
+| `shortcuts.csv`   | The count of each shortcut                                      |
+| `profile.csv`     | The calls and the times of each record handler                  |
+| `report.md`       | A summary of the usage, the profiling and the data quality      |
 
 The converter also writes the counts of files, sessions, records, profiling records
 outside sessions and ignored lines to standard output.
@@ -679,9 +678,13 @@ A new key with Ctrl, Alt or GUI is a shortcut, for example `Ctrl+Shift+T`. The n
 the modifiers in the order Ctrl, Shift, Alt, GUI. Left and right modifiers have the same
 name. `shortcuts.csv` starts with the largest count.
 
-The positions are the QMK matrix coordinates of the input records. Rows 0 to 5 are the
-left half, rows 6 to 11 are the right half, and the columns are 0 to 6. QMK gives each
-combo the position (0,0).
+The input records give each position in QMK matrix coordinates. Rows 0 to 5 are the
+left half, rows 6 to 11 are the right half, and the columns are 0 to 6. The output files
+give each position as the keymap names it. A grid key is `"(2,3)"`, which is grid row 2
+and grid column 3, and the quotation marks keep it in one CSV field. The grid columns
+of the right half are 7 to 13. A thumb key is `L0` to `L3` or `R0` to `R3`. A matrix
+position with no grid key and no thumb key is, for example, `"matrix 5,4"`. QMK gives
+each combo the matrix position (0,0).
 
 `usage.csv` and `corrections.csv` contain all 84 matrix positions, also the positions
 with no pushes. `usage.csv` contains each layer from 0 to the highest layer of the
@@ -800,5 +803,4 @@ release-please writes the release notes in [`CHANGELOG.md`](CHANGELOG.md).
 [keymapp]: https://www.zsa.io/keymapp
 [carpalx]: http://mkweb.bcgsc.ca/carpalx/
 [keyboard-layout-optimizer]: https://github.com/dariogoetz/keyboard_layout_optimizer
-[qmk-heatmap]: https://precondition.github.io/qmk-heatmap
 [hid-listen]: https://www.pjrc.com/teensy/hid_listen.html

@@ -20,10 +20,10 @@
 
 ### Busiest positions
 
-| Key and position | Pushes |
-| ---------------- | -----: |
-| A at 4,0 layer 0 |      2 |
-| B at 4,1 layer 0 |      1 |
+| Key and position   | Pushes |
+| ------------------ | -----: |
+| A at (4,0) layer 0 |      2 |
+| B at (4,1) layer 0 |      1 |
 
 ### Top shortcuts
 
