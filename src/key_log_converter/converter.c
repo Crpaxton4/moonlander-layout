@@ -433,8 +433,8 @@ void convert_record(converter_t *converter, const record_t *record) {
     if (stream->has_time && record->time < stream->time) {
         restart_stream(converter, record->time);
     } else if (comes_after_idle_time(stream, record)) {
+        // Input record then starts the next session, as each key record does
         end_session(converter, stream->last_input_time);
-        begin_session(converter, record->time);
     }
     stream->has_time = true;
     stream->time     = record->time;
