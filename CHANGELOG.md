@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.21.0...v1.22.0) (2026-11-21)
+
+
+### Features
+
+* **firmware:** special layer in three rows ([#215](https://github.com/Crpaxton4/moonlander-layout/issues/215)) ([47adecb](https://github.com/Crpaxton4/moonlander-layout/commit/47adecb3f346da2fbe5fd54de5485dfbcc91ef60))
+
 ## [1.21.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.20.0...v1.21.0) (2026-11-21)
 
 
