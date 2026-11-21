@@ -16,6 +16,7 @@
 | Key       | Pushes |
 | --------- | -----: |
 | L         |      3 |
+| Left Ctrl |      2 |
 | O         |      2 |
 | S         |      2 |
 | Backspace |      1 |
@@ -24,22 +25,21 @@
 | E         |      1 |
 | H         |      1 |
 | R         |      1 |
-| Space     |      1 |
 
-### Busiest heatmap rows
+### Busiest positions
 
-| Heatmap row    | Pushes |
-| -------------- | -----: |
-| `0x000F,8,3,0` |      3 |
-| `0x0012,8,4,0` |      2 |
-| `0x0016,3,1,0` |      2 |
-| `0x00E0,3,0,0` |      2 |
-| `0x0006,4,3,0` |      1 |
-| `0x0007,3,2,0` |      1 |
-| `0x0008,2,3,0` |      1 |
-| `0x000B,8,1,0` |      1 |
-| `0x0015,2,4,0` |      1 |
-| `0x001A,2,2,0` |      1 |
+| Key and position           | Pushes |
+| -------------------------- | -----: |
+| L at (2,10) layer 0        |      3 |
+| Left Ctrl at (3,0) layer 0 |      2 |
+| O at (2,11) layer 0        |      2 |
+| S at (3,1) layer 0         |      2 |
+| Backspace at L3 layer 0    |      1 |
+| C at (4,3) layer 0         |      1 |
+| D at (3,2) layer 0         |      1 |
+| E at (2,3) layer 0         |      1 |
+| H at (2,8) layer 0         |      1 |
+| R at (2,4) layer 0         |      1 |
 
 ### Top shortcuts
 

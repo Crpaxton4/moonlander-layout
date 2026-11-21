@@ -62,6 +62,14 @@ typedef struct {
 char usage_character(uint8_t usage, bool shifted);
 
 /**
+ * Gives the name of a key.
+ *
+ * @param usage HID usage of the key.
+ * @return Name, or NULL for a usage with no name.
+ */
+const char *usage_name(uint16_t usage);
+
+/**
  * Writes the name of a shortcut, for example `Ctrl+Shift+T`.
  *
  * @param press Key and modifiers.
