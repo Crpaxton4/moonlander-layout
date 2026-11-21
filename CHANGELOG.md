@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.22.0...v1.23.0) (2026-11-21)
+
+
+### Features
+
+* **firmware:** no bottom row in the plain mode ([#217](https://github.com/Crpaxton4/moonlander-layout/issues/217)) ([3e9d6ac](https://github.com/Crpaxton4/moonlander-layout/commit/3e9d6ac7c53e95e2042087a9e477059b2d87b423))
+
 ## [1.22.0](https://github.com/Crpaxton4/moonlander-layout/compare/v1.21.0...v1.22.0) (2026-11-21)
 
 
