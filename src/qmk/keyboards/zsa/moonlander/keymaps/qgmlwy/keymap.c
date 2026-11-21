@@ -412,39 +412,39 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             {
                 KC_TAB,
                 KC_GRAVE,
-                KC_AMPERSAND,
-                KC_ASTERISK,
                 KC_LEFT_PAREN,
-                KC_NO,
+                KC_ASTERISK,
+                KC_AMPERSAND,
+                KC_EQUAL,
                 KC_NO,
             },
         [LAYER_SPECIAL][LEFT_HOME_ROW] =
             {
                 SPECIAL_MODE_KEY,
                 KC_TILDE,
-                KC_DOLLAR,
-                KC_PERCENT,
                 KC_CIRCUMFLEX,
-                KC_NO,
+                KC_PERCENT,
+                KC_DOLLAR,
+                KC_RIGHT_PAREN,
                 KC_NO,
             },
         [LAYER_SPECIAL][LEFT_BOTTOM_LETTER_ROW] =
             {
                 KC_NO,
                 KC_NO,
-                KC_EXCLAIM,
-                KC_AT,
                 KC_HASH,
-                KC_NO,
+                KC_AT,
+                KC_EXCLAIM,
+                KC_PLUS,
                 NO_PHYSICAL_KEY,
             },
         [LAYER_SPECIAL][LEFT_BOTTOM_ROW] =
             {
                 KC_NO,
                 KC_NO,
-                KC_RIGHT_PAREN,
-                KC_PLUS,
-                KC_EQUAL,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -468,7 +468,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_SPECIAL][RIGHT_TOP_ROW] =
             {
                 KC_NO,
-                KC_NO,
+                KC_COMMA,
                 KC_7,
                 KC_8,
                 KC_9,
@@ -478,7 +478,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_SPECIAL][RIGHT_HOME_ROW] =
             {
                 KC_NO,
-                KC_NO,
+                KC_0,
                 KC_4,
                 KC_5,
                 KC_6,
@@ -488,7 +488,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
         [LAYER_SPECIAL][RIGHT_BOTTOM_LETTER_ROW] =
             {
                 NO_PHYSICAL_KEY,
-                KC_NO,
+                KC_DOT,
                 KC_1,
                 KC_2,
                 KC_3,
@@ -499,9 +499,9 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             {
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
-                KC_0,
-                KC_DOT,
-                KC_COMMA,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 KC_NO,
                 KC_NO,
             },

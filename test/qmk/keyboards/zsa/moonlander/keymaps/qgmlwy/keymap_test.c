@@ -21,6 +21,9 @@
 /** Number of digits 1 to 0 on the numpad of the special layer */
 #define NUMPAD_DIGIT_COUNT 10
 
+/** Matrix column on the right half of the comma, the 0 and the dot of the numpad */
+#define NUMPAD_PUNCTUATION_COLUMN 1
+
 /** Matrix column of the last key of a right half row, for example (3,13) */
 #define LAST_RIGHT_HALF_COLUMN (MATRIX_COLS - 1)
 
@@ -87,14 +90,27 @@ static uint8_t function_keys_in_row(uint8_t layer, uint8_t row) {
 }
 
 /**
+ * Gives the key of the special layer on the left half that is the mirror of a key
+ * on the right half, about the middle of the keyboard.
+ *
+ * @param right_key Matrix position of the key on the right half.
+ * @return Keycode of the mirror key.
+ */
+static uint16_t special_mirror_key(keypos_t right_key) {
+    // The matrix numbers the columns of each half from left to right
+    uint8_t left_row    = (uint8_t)(right_key.row - RIGHT_NUMBER_ROW);
+    uint8_t left_column = (uint8_t)(LAST_RIGHT_HALF_COLUMN - right_key.col);
+    return keycode_at_keymap_location(LAYER_SPECIAL, left_row, left_column);
+}
+
+/**
  * Fails the test if a digit of a right-hand row of the special layer does not have
- * its Shift symbol at the same place in the left-hand block. Both blocks go in the
- * same order from left to right, so the symbols follow the order of the digits.
+ * its Shift symbol at the mirror position of the left-hand block.
  *
  * @param left_row Matrix row of the left half; the right half row is the same row.
  * @return Number of digits in the right-hand row.
  */
-static uint8_t assert_digit_symbols_in_order(uint8_t left_row) {
+static uint8_t assert_digit_symbols_are_mirrored(uint8_t left_row) {
     uint8_t digits    = 0;
     uint8_t right_row = (uint8_t)(left_row + RIGHT_NUMBER_ROW);
     for (uint8_t column = 0; column < MATRIX_COLS; column++) {
@@ -102,10 +118,8 @@ static uint8_t assert_digit_symbols_in_order(uint8_t left_row) {
         if (digit < KC_1 || digit > KC_0) {
             continue;
         }
-        // The matrix numbers the columns of each half from 0, so the same index
-        // is the same place in both blocks
-        uint16_t symbol = keycode_at_keymap_location(LAYER_SPECIAL, left_row, column);
-        assert_int_equal(symbol, LSFT(digit));
+        keypos_t digit_key = {.row = right_row, .col = column};
+        assert_int_equal(special_mirror_key(digit_key), LSFT(digit));
         digits++;
     }
     return digits;
@@ -126,13 +140,26 @@ static void keymap_no_plain_function_key_on_any_layer(void **state) {
     }
 }
 
-static void keymap_special_left_symbols_follow_the_numpad_digit_order(void **state) {
+static void keymap_special_left_symbols_mirror_the_numpad_digits(void **state) {
     (void)state;
     uint8_t digits = 0;
-    for (uint8_t row = LEFT_TOP_ROW; row <= (uint8_t)LEFT_BOTTOM_ROW; row++) {
-        digits += assert_digit_symbols_in_order(row);
+    for (uint8_t row = LEFT_TOP_ROW; row <= (uint8_t)LEFT_BOTTOM_LETTER_ROW; row++) {
+        digits += assert_digit_symbols_are_mirrored(row);
     }
     assert_int_equal(digits, NUMPAD_DIGIT_COUNT);
+}
+
+static void keymap_special_equal_and_plus_mirror_comma_and_dot(void **state) {
+    (void)state;
+    uint8_t  column    = NUMPAD_PUNCTUATION_COLUMN;
+    keypos_t comma_key = {.row = RIGHT_TOP_ROW, .col = column};
+    keypos_t dot_key   = {.row = RIGHT_BOTTOM_LETTER_ROW, .col = column};
+    uint16_t comma = keycode_at_keymap_location(LAYER_SPECIAL, comma_key.row, column);
+    uint16_t dot   = keycode_at_keymap_location(LAYER_SPECIAL, dot_key.row, column);
+    assert_int_equal(comma, KC_COMMA);
+    assert_int_equal(dot, KC_DOT);
+    assert_int_equal(special_mirror_key(comma_key), KC_EQUAL);
+    assert_int_equal(special_mirror_key(dot_key), KC_PLUS);
 }
 
 static void keymap_base_left_number_row(void **state) {
@@ -858,10 +885,10 @@ static void keymap_special_left_top_row(void **state) {
             {
                 KC_TAB,
                 KC_GRAVE,
-                KC_AMPERSAND,
-                KC_ASTERISK,
                 KC_LEFT_PAREN,
-                KC_NO,
+                KC_ASTERISK,
+                KC_AMPERSAND,
+                KC_EQUAL,
                 KC_NO,
             },
     };
@@ -875,10 +902,10 @@ static void keymap_special_left_home_row(void **state) {
             {
                 SPECIAL_MODE_KEY,
                 KC_TILDE,
-                KC_DOLLAR,
-                KC_PERCENT,
                 KC_CIRCUMFLEX,
-                KC_NO,
+                KC_PERCENT,
+                KC_DOLLAR,
+                KC_RIGHT_PAREN,
                 KC_NO,
             },
     };
@@ -892,10 +919,10 @@ static void keymap_special_left_bottom_letter_row(void **state) {
             {
                 KC_NO,
                 KC_NO,
-                KC_EXCLAIM,
-                KC_AT,
                 KC_HASH,
-                KC_NO,
+                KC_AT,
+                KC_EXCLAIM,
+                KC_PLUS,
                 NO_PHYSICAL_KEY,
             },
     };
@@ -909,9 +936,9 @@ static void keymap_special_left_bottom_row(void **state) {
             {
                 KC_NO,
                 KC_NO,
-                KC_RIGHT_PAREN,
-                KC_PLUS,
-                KC_EQUAL,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
             },
@@ -956,7 +983,7 @@ static void keymap_special_right_top_row(void **state) {
         .keys =
             {
                 KC_NO,
-                KC_NO,
+                KC_COMMA,
                 KC_7,
                 KC_8,
                 KC_9,
@@ -973,7 +1000,7 @@ static void keymap_special_right_home_row(void **state) {
         .keys =
             {
                 KC_NO,
-                KC_NO,
+                KC_0,
                 KC_4,
                 KC_5,
                 KC_6,
@@ -990,7 +1017,7 @@ static void keymap_special_right_bottom_letter_row(void **state) {
         .keys =
             {
                 NO_PHYSICAL_KEY,
-                KC_NO,
+                KC_DOT,
                 KC_1,
                 KC_2,
                 KC_3,
@@ -1008,9 +1035,9 @@ static void keymap_special_right_bottom_row(void **state) {
             {
                 NO_PHYSICAL_KEY,
                 NO_PHYSICAL_KEY,
-                KC_0,
-                KC_DOT,
-                KC_COMMA,
+                KC_NO,
+                KC_NO,
+                KC_NO,
                 KC_NO,
                 KC_NO,
             },
@@ -1313,7 +1340,8 @@ static const struct CMUnitTest keymap_cases[] = {
     cmocka_unit_test(keymap_special_right_bottom_letter_row),
     cmocka_unit_test(keymap_special_right_bottom_row),
     cmocka_unit_test(keymap_special_right_thumb_keys),
-    cmocka_unit_test(keymap_special_left_symbols_follow_the_numpad_digit_order),
+    cmocka_unit_test(keymap_special_left_symbols_mirror_the_numpad_digits),
+    cmocka_unit_test(keymap_special_equal_and_plus_mirror_comma_and_dot),
     cmocka_unit_test(keymap_plain_left_number_row),
     cmocka_unit_test(keymap_plain_left_top_row),
     cmocka_unit_test(keymap_plain_left_home_row),

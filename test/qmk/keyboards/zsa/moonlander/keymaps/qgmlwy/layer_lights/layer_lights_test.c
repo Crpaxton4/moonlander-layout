@@ -137,15 +137,13 @@ static const key_run_t nav_mode_lit_keys[] = {
  * The combo keys are dark, because the special mode stops the combos.
  */
 static const key_run_t special_mode_lit_keys[] = {
-    {.row = LEFT_TOP_ROW, .first_column = 0, .last_column = 4},
-    {.row = LEFT_HOME_ROW, .first_column = 0, .last_column = 4},
-    {.row = LEFT_BOTTOM_LETTER_ROW, .first_column = 2, .last_column = 4},
-    {.row = LEFT_BOTTOM_ROW, .first_column = 2, .last_column = 4},
+    {.row = LEFT_TOP_ROW, .first_column = 0, .last_column = 5},
+    {.row = LEFT_HOME_ROW, .first_column = 0, .last_column = 5},
+    {.row = LEFT_BOTTOM_LETTER_ROW, .first_column = 2, .last_column = 5},
     {.row = LEFT_THUMB_KEYS, .first_column = 0, .last_column = LAST_LEFT_HALF_COLUMN},
-    {.row = RIGHT_TOP_ROW, .first_column = 2, .last_column = 4},
-    {.row = RIGHT_HOME_ROW, .first_column = 2, .last_column = 4},
-    {.row = RIGHT_BOTTOM_LETTER_ROW, .first_column = 2, .last_column = 4},
-    {.row = RIGHT_BOTTOM_ROW, .first_column = 2, .last_column = 4},
+    {.row = RIGHT_TOP_ROW, .first_column = 1, .last_column = 4},
+    {.row = RIGHT_HOME_ROW, .first_column = 1, .last_column = 4},
+    {.row = RIGHT_BOTTOM_LETTER_ROW, .first_column = 1, .last_column = 4},
 };
 
 /**
