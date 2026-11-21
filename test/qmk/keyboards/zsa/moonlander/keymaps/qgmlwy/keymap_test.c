@@ -423,10 +423,10 @@ static void keymap_nav_left_thumb_keys(void **state) {
     static const keymap_row_t expected = {
         .keys =
             {
-                [LEFT_LARGE_THUMB] = KC_NO,
+                [LEFT_LARGE_THUMB] = KC_TRANSPARENT,
                 // L1 also ends the nav mode, so either thumb can leave it
                 [LEFT_OUTER_THUMB] = TG(LAYER_NAV),
-                // Backspace and Delete stay for edits with the mouse or the arrows
+                // Enter and the delete keys stay for edits with the mouse or the arrows
                 [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },

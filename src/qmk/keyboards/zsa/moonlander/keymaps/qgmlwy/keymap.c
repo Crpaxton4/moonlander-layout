@@ -218,10 +218,10 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] PROGMEM =
             },
         [LAYER_NAV][LEFT_THUMB_KEYS] =
             {
-                [LEFT_LARGE_THUMB] = KC_NO,
+                [LEFT_LARGE_THUMB] = KC_TRANSPARENT,
                 // L1 also ends the nav mode, so either thumb can leave it
                 [LEFT_OUTER_THUMB] = TG(LAYER_NAV),
-                // Backspace and Delete stay for edits with the mouse or the arrows
+                // Enter and the delete keys stay for edits with the mouse or the arrows
                 [LEFT_MIDDLE_THUMB] = KC_TRANSPARENT,
                 [LEFT_INNER_THUMB]  = KC_TRANSPARENT,
             },
