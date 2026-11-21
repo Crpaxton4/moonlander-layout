@@ -43,32 +43,30 @@ static const char *const thumb_names[HALF_COUNT][MATRIX_COLS] = {
 // #region Static functions
 
 /**
- * Finds the name of the thumb key at a matrix position.
+ * Writes a position that has no grid key and no thumb key.
  *
  * @param position Matrix position.
- * @return Name, or NULL for a position that is not a thumb key.
+ * @param text     Buffer of GRID_POSITION_SIZE bytes that gets the text.
  */
-static const char *find_thumb_name(position_t position) {
-    if (position.row >= MATRIX_ROWS || position.col >= MATRIX_COLS) {
-        return NULL;
-    }
-    if (position.row % HALF_ROWS != THUMB_ROW) {
-        return NULL;
-    }
-    return thumb_names[position.row / HALF_ROWS][position.col];
+static void write_matrix_position(position_t position, char text[GRID_POSITION_SIZE]) {
+    unsigned row = position.row;
+    unsigned col = position.col;
+    snprintf(text, GRID_POSITION_SIZE, "matrix %u,%u", row, col);
 }
 
 /**
- * Tells if a matrix position is in a grid row.
+ * Writes the name of a position in a thumb row.
  *
- * @param position Matrix position.
- * @return true for a position in the matrix that is not in a thumb row.
+ * @param position Matrix position in a thumb row of the matrix.
+ * @param text     Buffer of GRID_POSITION_SIZE bytes that gets the text.
  */
-static bool is_in_grid(position_t position) {
-    if (position.row >= MATRIX_ROWS || position.col >= MATRIX_COLS) {
-        return false;
+static void write_thumb_position(position_t position, char text[GRID_POSITION_SIZE]) {
+    const char *thumb_name = thumb_names[position.row / HALF_ROWS][position.col];
+    if (thumb_name == NULL) {
+        write_matrix_position(position, text);
+        return;
     }
-    return position.row % HALF_ROWS != THUMB_ROW;
+    snprintf(text, GRID_POSITION_SIZE, "%s", thumb_name);
 }
 
 // #endregion
@@ -76,16 +74,14 @@ static bool is_in_grid(position_t position) {
 // #region Public functions
 
 void write_grid_position(position_t position, char text[GRID_POSITION_SIZE]) {
-    const char *thumb_name = find_thumb_name(position);
-    unsigned    row        = position.row;
-    unsigned    col        = position.col;
-    if (thumb_name != NULL) {
-        snprintf(text, GRID_POSITION_SIZE, "%s", thumb_name);
-    } else if (is_in_grid(position)) {
-        unsigned grid_column = col + row / HALF_ROWS * HALF_GRID_COLUMNS;
-        snprintf(text, GRID_POSITION_SIZE, "(%u,%u)", row % HALF_ROWS, grid_column);
+    unsigned row = position.row % HALF_ROWS;
+    unsigned col = position.col + position.row / HALF_ROWS * HALF_GRID_COLUMNS;
+    if (position.row >= MATRIX_ROWS || position.col >= MATRIX_COLS) {
+        write_matrix_position(position, text);
+    } else if (row == THUMB_ROW) {
+        write_thumb_position(position, text);
     } else {
-        snprintf(text, GRID_POSITION_SIZE, "matrix %u,%u", row, col);
+        snprintf(text, GRID_POSITION_SIZE, "(%u,%u)", row, col);
     }
 }
 
