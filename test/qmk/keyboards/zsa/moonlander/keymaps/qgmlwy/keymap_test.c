@@ -390,10 +390,10 @@ static void keymap_nav_left_bottom_letter_row(void **state) {
         .keys =
             {
                 KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
-                KC_NO,
+                KC_LEFT_CTRL,
+                KC_LEFT_ALT,
+                KC_LEFT_GUI,
+                KC_LEFT_SHIFT,
                 KC_NO,
                 NO_PHYSICAL_KEY,
             },
