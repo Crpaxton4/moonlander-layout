@@ -5,7 +5,6 @@
 // #region Includes
 
 #include <stdio.h>
-#include <string.h>
 
 #include "hid_usage.h"
 #include "keycode_name.h"
@@ -15,8 +14,8 @@
 
 // #region Macros
 
-/** Largest basic keycode, which is a HID usage or a mouse key */
-#define LAST_BASIC_KEYCODE 0x00FFU
+/** Bytes of the longest tap key name, with its terminator */
+#define TAP_KEY_NAME_SIZE 16
 
 /** Bits of the tap key in a mod-tap, layer-tap or modified keycode */
 #define TAP_KEY_MASK 0x00FFU
@@ -24,14 +23,11 @@
 /** Bits above the tap key in a mod-tap, layer-tap or modified keycode */
 #define HOLD_SHIFT 8U
 
-/** Modifier bits of a mod-tap or modified keycode, after HOLD_SHIFT */
-#define HOLD_MODIFIER_MASK 0x1FU
+/** Ctrl, Shift, Alt and GUI bits of a mod-tap or modified keycode, after HOLD_SHIFT */
+#define MODIFIER_SET_MASK 0x0FU
 
-/** Bit of HOLD_MODIFIER_MASK that selects the right modifiers */
-#define RIGHT_MODIFIERS_BIT 0x10U
-
-/** Lowest bit of a value */
-#define LOWEST_BIT 1U
+/** Bit of a mod-tap keycode that selects the right modifiers */
+#define RIGHT_MODIFIERS_BIT 0x1000U
 
 /** Layer bits of a layer-tap keycode, after HOLD_SHIFT */
 #define HOLD_LAYER_MASK 0x0FU
@@ -133,41 +129,26 @@ static const keycode_range_t keycode_ranges[] = {
     {0x5260, 0x527F, write_toggle_name},
 };
 
-/** Modifier names, in the order of the modifier bits and of the shortcut names */
-static const char *const modifier_names[] = {"Ctrl", "Shift", "Alt", "GUI"};
+/** Names of the modifier sets, indexed by the Ctrl, Shift, Alt and GUI bits */
+static const char *const modifier_set_names[] = {
+    "",        "Ctrl",         "Shift",         "Ctrl+Shift",
+    "Alt",     "Ctrl+Alt",     "Shift+Alt",     "Ctrl+Shift+Alt",
+    "GUI",     "Ctrl+GUI",     "Shift+GUI",     "Ctrl+Shift+GUI",
+    "Alt+GUI", "Ctrl+Alt+GUI", "Shift+Alt+GUI", "Ctrl+Shift+Alt+GUI",
+};
 
 // #endregion
 
 // #region Static functions
 
 /**
- * Adds text to the end of a name. snprintf() cuts a text that is too long.
+ * Gives the name of the modifier set of a keycode.
  *
- * @param name Buffer of KEYCODE_NAME_SIZE bytes with a name.
- * @param text Text to add.
- */
-static void append_text(char name[KEYCODE_NAME_SIZE], const char *text) {
-    size_t length = strlen(name);
-    snprintf(name + length, KEYCODE_NAME_SIZE - length, "%s", text);
-}
-
-/**
- * Adds the modifier names of a keycode to the end of a name, with `+` between them.
- *
- * @param name    Buffer of KEYCODE_NAME_SIZE bytes with a name.
  * @param keycode Mod-tap or modified keycode.
+ * @return Modifier names with `+` between them.
  */
-static void append_modifiers(char name[KEYCODE_NAME_SIZE], uint16_t keycode) {
-    unsigned    modifiers = (unsigned)keycode >> HOLD_SHIFT;
-    const char *separator = "";
-    for (size_t index = 0; index < COUNT_OF(modifier_names); index++) {
-        if ((modifiers >> index & LOWEST_BIT) == 0) {
-            continue;
-        }
-        append_text(name, separator);
-        append_text(name, modifier_names[index]);
-        separator = "+";
-    }
+static const char *modifier_set_name(uint16_t keycode) {
+    return modifier_set_names[((unsigned)keycode >> HOLD_SHIFT) & MODIFIER_SET_MASK];
 }
 
 /**
@@ -193,10 +174,10 @@ static const char *find_own_name(uint16_t keycode) {
  */
 static const char *find_plain_name(uint16_t keycode) {
     const char *own_name = find_own_name(keycode);
-    if (own_name != NULL || keycode > LAST_BASIC_KEYCODE) {
+    if (own_name != NULL) {
         return own_name;
     }
-    return usage_name((uint8_t)keycode);
+    return usage_name(keycode);
 }
 
 /**
@@ -204,27 +185,26 @@ static const char *find_plain_name(uint16_t keycode) {
  * hexadecimal value.
  *
  * @param keycode QMK keycode.
- * @param name    Buffer of KEYCODE_NAME_SIZE bytes that gets the name.
+ * @param name    Buffer that gets the name.
+ * @param size    Bytes of the buffer.
  */
-static void write_plain_name(uint16_t keycode, char name[KEYCODE_NAME_SIZE]) {
+static void write_plain_name(uint16_t keycode, char *name, size_t size) {
     const char *plain_name = find_plain_name(keycode);
     if (plain_name == NULL) {
-        snprintf(name, KEYCODE_NAME_SIZE, "0x%04X", (unsigned)keycode);
+        snprintf(name, size, "0x%04X", (unsigned)keycode);
         return;
     }
-    snprintf(name, KEYCODE_NAME_SIZE, "%s", plain_name);
+    snprintf(name, size, "%s", plain_name);
 }
 
 /**
- * Adds the name of the tap key of a keycode to the end of a name.
+ * Writes the name of the tap key of a keycode.
  *
- * @param name    Buffer of KEYCODE_NAME_SIZE bytes with a name.
  * @param keycode Mod-tap, layer-tap or modified keycode.
+ * @param tap_key Buffer of TAP_KEY_NAME_SIZE bytes that gets the name.
  */
-static void append_tap_key(char name[KEYCODE_NAME_SIZE], uint16_t keycode) {
-    char tap_key[KEYCODE_NAME_SIZE];
-    write_plain_name(keycode & TAP_KEY_MASK, tap_key);
-    append_text(name, tap_key);
+static void write_tap_key_name(uint16_t keycode, char tap_key[TAP_KEY_NAME_SIZE]) {
+    write_plain_name(keycode & TAP_KEY_MASK, tap_key, TAP_KEY_NAME_SIZE);
 }
 
 /**
@@ -235,10 +215,9 @@ static void append_tap_key(char name[KEYCODE_NAME_SIZE], uint16_t keycode) {
  * @param name    Buffer of KEYCODE_NAME_SIZE bytes that gets the name.
  */
 static void write_modified_name(uint16_t keycode, char name[KEYCODE_NAME_SIZE]) {
-    name[0] = '\0';
-    append_modifiers(name, keycode);
-    append_text(name, "+");
-    append_tap_key(name, keycode);
+    char tap_key[TAP_KEY_NAME_SIZE];
+    write_tap_key_name(keycode, tap_key);
+    snprintf(name, KEYCODE_NAME_SIZE, "%s+%s", modifier_set_name(keycode), tap_key);
 }
 
 /**
@@ -249,12 +228,11 @@ static void write_modified_name(uint16_t keycode, char name[KEYCODE_NAME_SIZE]) 
  * @param name    Buffer of KEYCODE_NAME_SIZE bytes that gets the name.
  */
 static void write_mod_tap_name(uint16_t keycode, char name[KEYCODE_NAME_SIZE]) {
-    unsigned modifiers = ((unsigned)keycode >> HOLD_SHIFT) & HOLD_MODIFIER_MASK;
-    name[0]            = '\0';
-    append_tap_key(name, keycode);
-    append_text(name,
-                (modifiers & RIGHT_MODIFIERS_BIT) == 0 ? " / Left " : " / Right ");
-    append_modifiers(name, keycode);
+    char        tap_key[TAP_KEY_NAME_SIZE];
+    const char *side = (keycode & RIGHT_MODIFIERS_BIT) == 0 ? "Left" : "Right";
+    const char *hold = modifier_set_name(keycode);
+    write_tap_key_name(keycode, tap_key);
+    snprintf(name, KEYCODE_NAME_SIZE, "%s / %s %s", tap_key, side, hold);
 }
 
 /**
@@ -266,11 +244,9 @@ static void write_mod_tap_name(uint16_t keycode, char name[KEYCODE_NAME_SIZE]) {
  */
 static void write_layer_tap_name(uint16_t keycode, char name[KEYCODE_NAME_SIZE]) {
     unsigned layer = ((unsigned)keycode >> HOLD_SHIFT) & HOLD_LAYER_MASK;
-    char     hold[KEYCODE_NAME_SIZE];
-    name[0] = '\0';
-    append_tap_key(name, keycode);
-    snprintf(hold, sizeof(hold), " / layer %u", layer);
-    append_text(name, hold);
+    char     tap_key[TAP_KEY_NAME_SIZE];
+    write_tap_key_name(keycode, tap_key);
+    snprintf(name, KEYCODE_NAME_SIZE, "%s / layer %u", tap_key, layer);
 }
 
 /**
@@ -308,9 +284,10 @@ void write_keycode_name(uint16_t keycode, char name[KEYCODE_NAME_SIZE]) {
     const keycode_range_t *range = find_range(keycode);
     // A keycode with its own name can be in a range, for example the special mode key
     if (range == NULL || find_own_name(keycode) != NULL) {
-        write_plain_name(keycode, name);
+        write_plain_name(keycode, name, KEYCODE_NAME_SIZE);
         return;
     }
+    // mull-ignore-next: cxx_remove_void_call
     range->write(keycode, name);
 }
 

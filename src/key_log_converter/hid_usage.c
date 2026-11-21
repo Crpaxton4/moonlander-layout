@@ -168,7 +168,7 @@ static const modifier_t modifiers[] = {
  * @param usage HID usage.
  * @return Entry, or NULL for a usage that the table does not have.
  */
-static const usage_t *find_usage(uint8_t usage) {
+static const usage_t *find_usage(uint16_t usage) {
     if (usage >= COUNT_OF(usages) || usages[usage].name == NULL) {
         return NULL;
     }
@@ -198,7 +198,7 @@ char usage_character(uint8_t usage, bool shifted) {
     return shifted ? entry->shifted : entry->plain;
 }
 
-const char *usage_name(uint8_t usage) {
+const char *usage_name(uint16_t usage) {
     const usage_t *entry = find_usage(usage);
     if (entry == NULL) {
         return NULL;
