@@ -1,5 +1,5 @@
 /** @file
- * Logging state, idle time and report comparison of the key event log, with no
+ * Logging pause, idle time and report comparison of the key event log, with no
  * QMK code.
  *
  * key_event_log.c gives these functions the QMK values and writes the records that
@@ -21,8 +21,8 @@
 /** Key slots of an output record, as in a 6-key keyboard report */
 #define LOGGED_REPORT_KEY_COUNT 6
 
-/** Time with no key push that switches logging off: 30 minutes */
-#define LOGGING_IDLE_MILLISECONDS (UINT32_C(30) * 60 * 1000)
+/** Time with no key push that ends a pause, so a pause cannot stay by mistake */
+#define PAUSE_IDLE_MILLISECONDS (UINT32_C(5) * 60 * 1000)
 
 // #endregion
 
@@ -30,9 +30,9 @@
 
 /** Value of a state record */
 enum logging_state {
-    LOGGING_OFF,      /**< Operator switched logging off */
-    LOGGING_ON,       /**< Operator switched logging on */
-    LOGGING_IDLE_OFF, /**< Idle time switched logging off */
+    LOGGING_OFF,     /**< Operator paused logging */
+    LOGGING_ON,      /**< Operator ended the pause */
+    LOGGING_IDLE_ON, /**< Idle time ended the pause */
 };
 
 // #endregion
@@ -45,9 +45,9 @@ typedef struct {
     uint8_t keys[LOGGED_REPORT_KEY_COUNT]; /**< HID key codes, 0 for an unused slot */
 } logged_report_t;
 
-/** State of the key event log; all zero is the state at power-up, logging off */
+/** State of the key event log; all zero is the state at power-up, logging on */
 typedef struct {
-    bool            is_on;          /**< Logging is on */
+    bool            is_paused;      /**< Logging has a pause */
     uint32_t        last_push_time; /**< Time of the last key push, in ms */
     logged_report_t last_report;    /**< Last report that the keyboard sent */
 } logging_t;
@@ -57,11 +57,11 @@ typedef struct {
 // #region Functions
 
 /**
- * Switches logging on or off. Switching on starts the idle time.
+ * Pauses logging, or ends the pause. A pause starts the idle time.
  *
  * @param logging Logging state.
  * @param now     Time in ms.
- * @return LOGGING_ON or LOGGING_OFF, the new state.
+ * @return LOGGING_OFF for a new pause, LOGGING_ON for the end of a pause.
  */
 enum logging_state logging_toggle(logging_t *logging, uint32_t now);
 
@@ -74,13 +74,13 @@ enum logging_state logging_toggle(logging_t *logging, uint32_t now);
 void logging_note_push(logging_t *logging, uint32_t now);
 
 /**
- * Switches logging off if it is on and the idle time is over.
+ * Ends a pause if the idle time is over.
  *
  * @param logging Logging state.
  * @param now     Time in ms; the subtraction stays correct when the timer wraps.
- * @return True if logging went off now.
+ * @return True if the pause ended now.
  */
-bool logging_idle_ended(logging_t *logging, uint32_t now);
+bool logging_pause_ended(logging_t *logging, uint32_t now);
 
 /**
  * Tells if a report is different from the last report, then keeps it as the last
@@ -108,7 +108,7 @@ void keys_from_bitmap(uint8_t *keys, const uint8_t *bits, size_t byte_count);
  * Gives the text of a state for a state record.
  *
  * @param state State.
- * @return "on", "off" or "idle-off".
+ * @return "off", "on" or "idle-on".
  */
 const char *logging_state_name(enum logging_state state);
 

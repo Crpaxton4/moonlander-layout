@@ -51,7 +51,7 @@
 enum custom_keycode {
     LOGGING_COMBO_LEFT_POSITION = SAFE_RANGE, /**< Combo key at (1,6), never sent */
     LOGGING_COMBO_RIGHT_POSITION,             /**< Combo key at (1,7), never sent */
-    LOGGING_TOGGLE,                           /**< Logging combo: logging on or off */
+    LOGGING_TOGGLE,                           /**< Logging combo: pause or resume */
     CONSTANT_CASE_KEY,                        /**< Starts or ends CONSTANT_CASE */
     PASCAL_CASE_KEY,                          /**< Starts or ends PascalCase */
     PLAIN_MODE_COMBO_LEFT_POSITION,           /**< Combo key at (2,6), never sent */

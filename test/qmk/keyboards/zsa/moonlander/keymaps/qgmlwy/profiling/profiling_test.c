@@ -15,6 +15,7 @@
 
 #include "case_modes/case_modes.h"
 #include "fake_profiling_hardware.h"
+#include "key_event_log/key_event_log.h"
 #include "keycodes/keycodes.h"
 #include "keymap_introspection.h"
 #include "layers/layers.h"
@@ -127,6 +128,9 @@ static void start_with_profiling(bool on) {
     if (profiling_is_on()) {
         tap_key(PROFILING_TOGGLE);
     }
+    // Key event log has a pause, so the console gets only the profiling records
+    key_event_log_reset();
+    tap_key(LOGGING_TOGGLE);
     if (on) {
         tap_key(PROFILING_TOGGLE);
     }

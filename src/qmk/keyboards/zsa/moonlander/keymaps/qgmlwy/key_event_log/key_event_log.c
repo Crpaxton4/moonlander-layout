@@ -22,7 +22,7 @@
 
 // #region Data
 
-/** Logging state; all zero at power-up, so logging is off */
+/** Logging state; all zero at power-up, so logging is on */
 static logging_t logging;
 
 /** Host driver that QMK set, which sends the reports to the host */
@@ -69,16 +69,16 @@ static void write_input_record(uint16_t keycode, const keyrecord_t *record) {
 }
 
 /**
- * Writes an output record if the report changed and logging is on.
+ * Writes an output record if the report changed and logging has no pause.
  *
- * Logging off still keeps the report, so the first output record after logging
- * goes on shows a real change.
+ * A pause still keeps the report, so the first output record after the pause shows
+ * a real change.
  *
  * @param report Report that the keyboard sent.
  */
 static void log_report(const logged_report_t *report) {
     bool changed = logging_report_changed(&logging, report);
-    if (!changed || !logging.is_on) {
+    if (!changed || logging.is_paused) {
         return;
     }
     uprintf("KL,O,%lu,%02X", record_time(), report->modifiers);
@@ -127,18 +127,18 @@ static void use_logging_driver(void) {
 }
 
 /**
- * Ends logging after the idle time. Housekeeping does not run while the host
+ * Ends a pause after the idle time. Housekeeping does not run while the host
  * sleeps, so the first push after a sleep also checks the idle time.
  */
-static void end_idle_logging(void) {
-    if (logging_idle_ended(&logging, timer_read32())) {
-        write_state_record(LOGGING_IDLE_OFF);
+static void end_idle_pause(void) {
+    if (logging_pause_ended(&logging, timer_read32())) {
+        write_state_record(LOGGING_IDLE_ON);
     }
 }
 
 /**
- * Changes logging on a push of the logging combo. The state record shows the
- * change, so the combo gets no input record.
+ * Pauses logging, or ends the pause, on a push of the logging combo. The state record
+ * shows the change, so the combo gets no input record.
  *
  * Logging combo must not operate in the special mode, but QMK finds combos on each
  * layer. Thus the special mode stops the change here, and the push counts in the
@@ -163,11 +163,11 @@ static bool toggle_logging(const keyrecord_t *record) {
 // #region Public functions
 
 bool process_key_event_log(uint16_t keycode, keyrecord_t *record) {
-    end_idle_logging();
+    end_idle_pause();
     if (keycode == LOGGING_TOGGLE) {
         return toggle_logging(record);
     }
-    if (logging.is_on) {
+    if (!logging.is_paused) {
         write_input_record(keycode, record);
     }
     if (record->event.pressed) {
@@ -178,15 +178,15 @@ bool process_key_event_log(uint16_t keycode, keyrecord_t *record) {
 
 void key_event_log_housekeeping(void) {
     use_logging_driver();
-    end_idle_logging();
+    end_idle_pause();
 }
 
-bool key_event_log_is_on(void) {
-    return logging.is_on;
+bool key_event_log_is_paused(void) {
+    return logging.is_paused;
 }
 
 void key_event_log_reset(void) {
-    logging = (logging_t){.is_on = false};
+    logging = (logging_t){.is_paused = false};
 }
 
 // #endregion

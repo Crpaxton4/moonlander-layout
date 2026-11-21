@@ -46,21 +46,19 @@ static void push_logging_combo(void) {
 }
 
 /**
- * Sets logging on or off, then sets the highest layer and runs one housekeeping
+ * Sets logging on or paused, then sets the highest layer and runs one housekeeping
  * pass.
  *
- * Logging goes on at time 0, so the idle time starts at 0.
+ * A pause starts at time 0, so its idle time starts at 0.
  *
- * @param logging_on True for logging on.
- * @param layer      Highest active layer.
+ * @param logging_paused True for a pause of the logging.
+ * @param layer          Highest active layer.
  */
-static void show_status(bool logging_on, uint8_t layer) {
+static void show_status(bool logging_paused, uint8_t layer) {
     reset_fake_qmk();
     bracket_pairs_clear();
-    if (key_event_log_is_on()) {
-        push_logging_combo();
-    }
-    if (logging_on) {
+    key_event_log_reset();
+    if (logging_paused) {
         push_logging_combo();
     }
     layer_state = ONLY_LAYER(layer);
@@ -103,38 +101,38 @@ static void assert_leds(uint8_t expected_leds) {
     }
 }
 
-static void status_leds_r4_logging_led_on_while_logging_is_on(void **state) {
+static void status_leds_r4_pause_led_on_while_logging_is_paused(void **state) {
     (void)state;
     show_status(true, LAYER_BASE);
-    assert_leds(STATUS_LED_BIT(LOGGING_LED));
+    assert_leds(STATUS_LED_BIT(LOGGING_PAUSE_LED));
 }
 
-static void status_leds_r4_logging_led_off_while_logging_is_off(void **state) {
+static void status_leds_r4_pause_led_off_while_logging_is_on(void **state) {
     (void)state;
     show_status(true, LAYER_BASE);
     show_status(false, LAYER_BASE);
     assert_leds(0);
 }
 
-static void status_leds_r4_logging_led_goes_off_at_idle_off(void **state) {
+static void status_leds_r4_pause_led_goes_off_at_idle_on(void **state) {
     (void)state;
     show_status(true, LAYER_BASE);
-    advance_fake_clock(LOGGING_IDLE_MILLISECONDS);
+    advance_fake_clock(PAUSE_IDLE_MILLISECONDS);
     housekeeping_task_user();
     assert_leds(0);
 }
 
-static void status_leds_r5_no_layer_uses_the_logging_led(void **state) {
+static void status_leds_r5_no_layer_uses_the_pause_led(void **state) {
     (void)state;
     for (uint8_t layer = 0; layer < keymap_layer_count(); layer++) {
         show_status(false, layer);
-        assert_false(fake_status_led_is_on(LOGGING_LED));
+        assert_false(fake_status_led_is_on(LOGGING_PAUSE_LED));
     }
 }
 
-static void status_leds_r5_logging_led_is_led_1(void **state) {
+static void status_leds_r5_pause_led_is_led_1(void **state) {
     (void)state;
-    assert_int_equal(LOGGING_LED, LEFT_OUTER_LED);
+    assert_int_equal(LOGGING_PAUSE_LED, LEFT_OUTER_LED);
     assert_int_equal(LEFT_OUTER_LED, 0);
 }
 
@@ -144,10 +142,10 @@ static void status_leds_nav_layer_lights_led_4(void **state) {
     assert_leds(STATUS_LED_BIT(RIGHT_INNER_LED));
 }
 
-static void status_leds_nav_layer_and_logging(void **state) {
+static void status_leds_nav_layer_and_pause(void **state) {
     (void)state;
     show_status(true, LAYER_NAV);
-    assert_leds(STATUS_LED_BIT(LOGGING_LED) | STATUS_LED_BIT(RIGHT_INNER_LED));
+    assert_leds(STATUS_LED_BIT(LOGGING_PAUSE_LED) | STATUS_LED_BIT(RIGHT_INNER_LED));
 }
 
 static void status_leds_special_layer_lights_leds_2_and_5(void **state) {
@@ -195,7 +193,7 @@ static void status_leds_r25_ac23_led_3_goes_off_after_idle_time(void **state) {
 
 static void status_leds_r25_ac24_held_backspace_turns_led_3_off(void **state) {
     (void)state;
-    // Logging is on, as in the flash test
+    // Logging has a pause, so the pause LED is on with the pair LED
     show_status(true, LAYER_BASE);
     open_pair();
     send_key_event(KC_A, true);
@@ -203,18 +201,18 @@ static void status_leds_r25_ac24_held_backspace_turns_led_3_off(void **state) {
     send_key_event(KC_BACKSPACE, true);
     advance_fake_clock(HELD_BACKSPACE_TIME);
     housekeeping_task_user();
-    assert_leds(STATUS_LED_BIT(LOGGING_LED) | STATUS_LED_BIT(OPEN_PAIR_LED));
+    assert_leds(STATUS_LED_BIT(LOGGING_PAUSE_LED) | STATUS_LED_BIT(OPEN_PAIR_LED));
     send_key_event(KC_BACKSPACE, false);
     housekeeping_task_user();
-    assert_leds(STATUS_LED_BIT(LOGGING_LED));
+    assert_leds(STATUS_LED_BIT(LOGGING_PAUSE_LED));
     show_status(false, LAYER_BASE);
 }
 
-static void status_leds_r26_open_pair_with_logging_and_nav(void **state) {
+static void status_leds_r26_open_pair_with_pause_and_nav(void **state) {
     (void)state;
     show_status(true, LAYER_NAV);
     open_pair();
-    assert_leds(STATUS_LED_BIT(LOGGING_LED) | STATUS_LED_BIT(OPEN_PAIR_LED) |
+    assert_leds(STATUS_LED_BIT(LOGGING_PAUSE_LED) | STATUS_LED_BIT(OPEN_PAIR_LED) |
                 STATUS_LED_BIT(RIGHT_INNER_LED));
     show_status(false, LAYER_BASE);
 }
@@ -225,13 +223,13 @@ static void status_leds_r26_open_pair_with_logging_and_nav(void **state) {
 
 /** Cases of this program */
 static const struct CMUnitTest status_leds_cases[] = {
-    cmocka_unit_test(status_leds_r4_logging_led_on_while_logging_is_on),
-    cmocka_unit_test(status_leds_r4_logging_led_off_while_logging_is_off),
-    cmocka_unit_test(status_leds_r4_logging_led_goes_off_at_idle_off),
-    cmocka_unit_test(status_leds_r5_no_layer_uses_the_logging_led),
-    cmocka_unit_test(status_leds_r5_logging_led_is_led_1),
+    cmocka_unit_test(status_leds_r4_pause_led_on_while_logging_is_paused),
+    cmocka_unit_test(status_leds_r4_pause_led_off_while_logging_is_on),
+    cmocka_unit_test(status_leds_r4_pause_led_goes_off_at_idle_on),
+    cmocka_unit_test(status_leds_r5_no_layer_uses_the_pause_led),
+    cmocka_unit_test(status_leds_r5_pause_led_is_led_1),
     cmocka_unit_test(status_leds_nav_layer_lights_led_4),
-    cmocka_unit_test(status_leds_nav_layer_and_logging),
+    cmocka_unit_test(status_leds_nav_layer_and_pause),
     cmocka_unit_test(status_leds_special_layer_lights_leds_2_and_5),
     cmocka_unit_test(status_leds_plain_layer_lights_leds_3_and_6),
     cmocka_unit_test(status_leds_r25_open_pair_led_is_led_3),
@@ -239,7 +237,7 @@ static const struct CMUnitTest status_leds_cases[] = {
     cmocka_unit_test(status_leds_r25_ac22_jump_out_turns_led_3_off),
     cmocka_unit_test(status_leds_r25_ac23_led_3_goes_off_after_idle_time),
     cmocka_unit_test(status_leds_r25_ac24_held_backspace_turns_led_3_off),
-    cmocka_unit_test(status_leds_r26_open_pair_with_logging_and_nav),
+    cmocka_unit_test(status_leds_r26_open_pair_with_pause_and_nav),
 };
 
 int main(int argc, char **argv) {

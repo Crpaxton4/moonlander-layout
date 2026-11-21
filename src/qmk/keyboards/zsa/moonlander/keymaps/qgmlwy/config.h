@@ -83,7 +83,7 @@
 #define POINTING_DEVICE_HIRES_SCROLL_MULTIPLIER 8
 
 /**
- * Keymap sets all six status LEDs, so that only logging uses the logging LED. The
+ * Keymap sets all six status LEDs, so that only a logging pause uses its LED. The
  * keyboard code then does not show the layer, and the LED_LEVEL key has no effect.
  */
 #define MOONLANDER_USER_LEDS

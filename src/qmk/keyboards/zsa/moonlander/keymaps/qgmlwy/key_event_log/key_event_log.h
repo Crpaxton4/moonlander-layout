@@ -1,6 +1,7 @@
 /** @file
  * Key event log of the qgmlwy keymap: records of the key events and of the reports
- * to the host, written on the QMK console while logging is on.
+ * to the host, written on the QMK console. Logging is on from power-up, and the
+ * logging combo pauses it.
  *
  * Each record is one line that starts with `KL,`. A state record gives the logging
  * state, an input record a key event, and an output record a changed keyboard
@@ -20,8 +21,8 @@
 // #region Functions
 
 /**
- * Writes an input record of a key event while logging is on, and switches logging
- * on or off for the logging combo while the special mode is off.
+ * Writes an input record of a key event while logging has no pause. For the
+ * logging combo, pauses logging or ends the pause while the special mode is off.
  *
  * Runs first in process_record_user(), so it sees each key event.
  *
@@ -32,8 +33,7 @@
 bool process_key_event_log(uint16_t keycode, keyrecord_t *record);
 
 /**
- * Switches logging off after the idle time, and puts the logging host driver in
- * place.
+ * Ends a pause after the idle time, and puts the logging host driver in place.
  *
  * QMK sets its host driver after keyboard_post_init_user(), so this check runs on
  * each housekeeping pass.
@@ -41,14 +41,14 @@ bool process_key_event_log(uint16_t keycode, keyrecord_t *record);
 void key_event_log_housekeeping(void);
 
 /**
- * Tells if logging is on.
+ * Tells if logging has a pause.
  *
- * @return True while logging is on.
+ * @return True while logging has a pause.
  */
-bool key_event_log_is_on(void);
+bool key_event_log_is_paused(void);
 
 /**
- * Puts the logging state back to the power-up state: logging off, with no last push
+ * Puts the logging state back to the power-up state: logging on, with no last push
  * and no last report. Host driver stays in place.
  *
  * Tests use it, so that each case starts from the power-up state.

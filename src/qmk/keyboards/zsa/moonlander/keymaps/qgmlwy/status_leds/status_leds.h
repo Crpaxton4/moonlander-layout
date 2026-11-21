@@ -1,11 +1,11 @@
 /** @file
- * Six status LEDs of the Moonlander: one for logging, one for an open bracket or
- * quote pair, and the others for the highest active layer.
+ * Six status LEDs of the Moonlander: one for a logging pause, one for an open bracket
+ * or quote pair, and the others for the highest active layer.
  *
  * MOONLANDER_USER_LEDS stops the keyboard code from setting the LEDs, and the
  * keyboard then does not call layer_state_set_user(). Thus the housekeeping task
  * sets all six LEDs on each pass. That also overrides the LED sweep at start-up and
- * the LED commands from Oryx, so only logging uses the logging LED.
+ * the LED commands from Oryx, so only a logging pause uses its LED.
  */
 
 #pragma once
@@ -21,8 +21,8 @@
 /** Number of status LEDs */
 #define STATUS_LED_COUNT 6
 
-/** LED that is on while logging is on, and that no layer uses */
-#define LOGGING_LED LEFT_OUTER_LED
+/** LED that is on while logging has a pause, and that no layer uses */
+#define LOGGING_PAUSE_LED LEFT_OUTER_LED
 
 /** LED that is on while a bracket or quote pair is open */
 #define OPEN_PAIR_LED LEFT_INNER_LED
