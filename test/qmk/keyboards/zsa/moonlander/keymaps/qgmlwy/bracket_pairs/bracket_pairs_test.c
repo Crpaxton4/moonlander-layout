@@ -259,6 +259,13 @@ static const grid_position_t right_arrow_key = {
     .column = 11,
 };
 
+/** Q (1,1) of the nav mode, which sends nothing */
+static const grid_position_t free_nav_key = {
+    .layer  = LAYER_NAV,
+    .row    = 1,
+    .column = 1,
+};
+
 /** Precision key D (2,1) of the nav mode */
 static const grid_position_t precision_key = {
     .layer  = LAYER_NAV,
@@ -1612,9 +1619,7 @@ static void bracket_pairs_nav_mode_free_key_keeps_pair(void **state) {
     hold_key(keycode_of(opening_parenthesis_key));
     type_key(KC_A);
     turn_on_nav_mode();
-    // Thumb key L0, Enter in the default mode, sends nothing in the nav mode
-    uint16_t free_key =
-        keycode_at_keymap_location(LAYER_NAV, LEFT_THUMB_KEYS, LEFT_LARGE_THUMB);
+    uint16_t free_key = keycode_of(free_nav_key);
     assert_int_equal(free_key, KC_NO);
     assert_true(push_and_release(free_key, NOT_A_TAP));
     type_key(keycode_of(left_arrow_key));
@@ -1627,6 +1632,20 @@ static void bracket_pairs_nav_mode_free_key_keeps_pair(void **state) {
         {CALLED_TAP_CODE16, KC_RIGHT},
     };
     assert_recorded_calls(expected, ARRAY_SIZE(expected));
+}
+
+static void bracket_pairs_nav_mode_enter_clears_stack(void **state) {
+    (void)state;
+    start_case();
+    hold_key(keycode_of(opening_parenthesis_key));
+    turn_on_nav_mode();
+    // Thumb key L0 is transparent in the nav mode, so QMK gives the hook Enter
+    uint8_t  thumb   = LEFT_LARGE_THUMB;
+    uint16_t nav_key = keycode_at_keymap_location(LAYER_NAV, LEFT_THUMB_KEYS, thumb);
+    assert_int_equal(nav_key, KC_TRANSPARENT);
+    uint16_t enter_key = keycode_at_keymap_location(LAYER_BASE, LEFT_THUMB_KEYS, thumb);
+    assert_true(push_and_release(enter_key, NOT_A_TAP));
+    assert_false(bracket_pairs_are_open());
 }
 
 /**
@@ -1683,6 +1702,7 @@ static const struct CMUnitTest bracket_pairs_cases[] = {
     cmocka_unit_test(bracket_pairs_r10_nav_mode_keys_clear_stack),
     cmocka_unit_test(bracket_pairs_nav_mode_precision_key_keeps_pair),
     cmocka_unit_test(bracket_pairs_nav_mode_free_key_keeps_pair),
+    cmocka_unit_test(bracket_pairs_nav_mode_enter_clears_stack),
     cmocka_unit_test(bracket_pairs_nav_mode_bottom_letter_row_has_no_opener),
     cmocka_unit_test(bracket_pairs_r10_shortcut_clears_stack),
     cmocka_unit_test(bracket_pairs_r10_shift_tab_clears_stack),

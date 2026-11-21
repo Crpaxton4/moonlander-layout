@@ -27,6 +27,14 @@
 | B at 4,1 layer 0 |      1 |
 | C at 4,2 layer 0 |      1 |
 
+### Busiest heatmap rows
+
+| Heatmap row    | Pushes |
+| -------------- | -----: |
+| `0x0004,4,0,0` |      1 |
+| `0x0005,4,1,0` |      1 |
+| `0x0006,4,2,0` |      1 |
+
 ### Top shortcuts
 
 None.
