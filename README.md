@@ -650,16 +650,19 @@ The converter writes these files into the output folder:
 | `profile.csv`     | The calls and the times of each record handler                 |
 | `report.md`       | A summary of the usage, the profiling and the data quality     |
 
-The converter also writes the counts of files, sessions, records, records outside
-sessions and ignored lines to standard output.
+The converter also writes the counts of files, sessions, records, profiling records
+outside sessions and ignored lines to standard output.
 
 ### Conversion rules
 
-A session starts at the state record `on`. It stops at the state record `off` or
-`idle-off`, or at the end of the file. If the time of a record is less than the time of
-the record before it, a new session starts. Only the input, output and profiling
-records of a session go into the outputs, but a clock record applies also outside a
-session.
+A session starts at the state record `on` or `idle-on`. If no session is open, an input
+record or an output record also starts a session. Thus, a file with no state record has
+a session. A session stops at the state record `off` or `idle-off`, or at the end of
+the file. If the time of a record is less than the time of the record before it, a new
+session starts. If an input record comes 30 minutes or more after the input record
+before it, the session stops at the earlier input record and a new session starts. Only
+the profiling records of a session go into the outputs, but a clock record applies also
+outside a session.
 
 The converter ignores and counts each line that is not a complete record. It removes
 the [hid_listen][hid-listen] status text in front of a record, for example
@@ -746,9 +749,10 @@ records divided by their `scan_count`. The section also gives the clock, the sca
 second of the idle intervals and of the typing intervals, and the lowest free stack of
 all stack records. If no session has a profiling record, the section has only one line.
 
-The data quality section gives the ignored lines, the records outside sessions and the
-time with profiling on. It also gives the handler records with no clock record before
-them in their file. A log that starts after profiling changed to on has these records.
+The data quality section gives the ignored lines, the profiling records outside
+sessions and the time with profiling on. It also gives the handler records with no
+clock record before them in their file. A log that starts after profiling changed to on
+has these records.
 
 ## Commits and PRs
 

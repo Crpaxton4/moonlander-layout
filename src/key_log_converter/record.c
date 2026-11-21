@@ -55,7 +55,7 @@ enum {
 
 /** Field positions of a state record */
 enum {
-    STATE_FIELD_STATE = FIELD_TIME + 1, /**< on, off or idle-off */
+    STATE_FIELD_STATE = FIELD_TIME + 1, /**< Word of state_words */
     STATE_FIELD_COUNT,                  /**< Fields of a state record */
 };
 
@@ -218,6 +218,7 @@ static const word_t state_words[] = {
     {"on", LOGGING_ON},
     {"off", LOGGING_OFF},
     {"idle-off", LOGGING_IDLE_OFF},
+    {"idle-on", LOGGING_IDLE_ON},
     {NULL, 0},
 };
 

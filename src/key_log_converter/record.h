@@ -43,6 +43,7 @@ typedef enum {
     LOGGING_ON,       /**< Operator switched logging on */
     LOGGING_OFF,      /**< Operator switched logging off */
     LOGGING_IDLE_OFF, /**< Keyboard switched logging off after an idle time */
+    LOGGING_IDLE_ON,  /**< Keyboard switched logging on after an idle pause */
 } logging_state_t;
 
 // #endregion
