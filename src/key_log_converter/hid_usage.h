@@ -67,7 +67,7 @@ char usage_character(uint8_t usage, bool shifted);
  * @param usage HID usage of the key.
  * @return Name, or NULL for a usage with no name.
  */
-const char *usage_name(uint8_t usage);
+const char *usage_name(uint16_t usage);
 
 /**
  * Writes the name of a shortcut, for example `Ctrl+Shift+T`.
